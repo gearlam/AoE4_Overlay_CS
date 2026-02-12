@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <sys:String x:Key="Menu_File" xmlns:sys="clr-namespace:System;assembly=System.Runtime">File</sys:String>
+    <sys:String x:Key="Menu_File_HtmlFiles" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Html files</sys:String>
+    <sys:String x:Key="Menu_File_ConfigLogs" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Config/logs</sys:String>
+    <sys:String x:Key="Menu_File_Exit" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Exit</sys:String>
+
+    <sys:String x:Key="Menu_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Settings</sys:String>
+    <sys:String x:Key="Menu_Settings_LogMatches" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Log match data</sys:String>
+
+    <sys:String x:Key="Menu_Links" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Links</sys:String>
+    <sys:String x:Key="Menu_Links_Github" xmlns:sys="clr-namespace:System;assembly=System.Runtime">App on Github</sys:String>
+
+    <sys:String x:Key="Menu_Language" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Language</sys:String>
+    <sys:String x:Key="Menu_Language_English" xmlns:sys="clr-namespace:System;assembly=System.Runtime">English</sys:String>
+    <sys:String x:Key="Menu_Language_Chinese" xmlns:sys="clr-namespace:System;assembly=System.Runtime">中文</sys:String>
+
+    <sys:String x:Key="Tab_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Settings</sys:String>
+    <sys:String x:Key="Tab_Games" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Games</sys:String>
+    <sys:String x:Key="Tab_Override" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Override</sys:String>
+
+    <sys:String x:Key="Settings_ProfileHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Profile</sys:String>
+    <sys:String x:Key="Settings_ProfileLinkText" xmlns:sys="clr-namespace:System;assembly=System.Runtime">AoE4 World profile</sys:String>
+    <sys:String x:Key="Settings_SearchPlaceholder" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Steam ID / Profile ID / Name</sys:String>
+    <sys:String x:Key="Settings_SearchButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Search</sys:String>
+
+    <sys:String x:Key="Settings_OverlayHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay</sys:String>
+    <sys:String x:Key="Settings_HotkeyLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Hotkey:</sys:String>
+    <sys:String x:Key="Settings_FontSizeLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay font size:</sys:String>
+    <sys:String x:Key="Settings_OverlayPositionButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Change/fix overlay position</sys:String>
+
+    <sys:String x:Key="Games_Header_Team1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 1</sys:String>
+    <sys:String x:Key="Games_Header_Team2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 2</sys:String>
+    <sys:String x:Key="Games_Header_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Map</sys:String>
+    <sys:String x:Key="Games_Header_Started" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Started</sys:String>
+    <sys:String x:Key="Games_Header_Mode" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Mode</sys:String>
+    <sys:String x:Key="Games_Header_Result" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Result</sys:String>
+    <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Diff</sys:String>
+
+    <sys:String x:Key="Override_Intro1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Override player data shown on the overlay.</sys:String>
+    <sys:String x:Key="Override_Intro2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">This is useful for casting from replays or changing barcode names.</sys:String>
+    <sys:String x:Key="Override_PreventAutoUpdate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Prevent automatic overlay updates</sys:String>
+    <sys:String x:Key="Override_GroupHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Player Data Override</sys:String>
+    <sys:String x:Key="Override_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Map:</sys:String>
+    <sys:String x:Key="Override_Mode" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Mode:</sys:String>
+    <sys:String x:Key="Override_Server" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Server:</sys:String>
+    <sys:String x:Key="Override_Update" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Update Overlay</sys:String>
+</ResourceDictionary>

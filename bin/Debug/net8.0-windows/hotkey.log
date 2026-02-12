@@ -1,0 +1,75 @@
+2026-02-12T17:37:16.9941383+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 167
+2026-02-12T17:50:20.5943746+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 173
+2026-02-12T17:54:06.6331182+08:00 hook-pressed F12
+2026-02-12T17:54:06.8792911+08:00 hook-pressed F12
+2026-02-12T17:54:07.2315580+08:00 hook-pressed F12
+2026-02-12T17:54:07.5431743+08:00 hook-pressed F12
+2026-02-12T17:54:22.9706152+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 173
+2026-02-12T17:57:16.9804600+08:00 registered F11
+2026-02-12T18:05:38.6636727+08:00 registered F11
+2026-02-12T18:05:52.6490326+08:00 registered F11
+2026-02-12T18:06:47.4983883+08:00 pressed F11
+2026-02-12T18:06:47.7863865+08:00 pressed F11
+2026-02-12T18:06:48.0337196+08:00 pressed F11
+2026-02-12T18:06:48.2817117+08:00 pressed F11
+2026-02-12T18:06:48.5381073+08:00 pressed F11
+2026-02-12T18:06:48.9301516+08:00 pressed F11
+2026-02-12T18:06:49.2988300+08:00 pressed F11
+2026-02-12T18:08:48.4230501+08:00 registered F11
+2026-02-12T18:22:14.0206284+08:00 registered F11
+2026-02-12T18:22:53.9986819+08:00 registered F11
+2026-02-12T18:26:20.8922238+08:00 registered F11
+2026-02-12T18:27:42.3593221+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 173
+2026-02-12T18:27:46.5897980+08:00 hook-pressed F12
+2026-02-12T18:27:46.8691761+08:00 hook-pressed F12
+2026-02-12T18:27:47.1256754+08:00 hook-pressed F12
+2026-02-12T18:27:47.3731919+08:00 hook-pressed F12
+2026-02-12T18:27:47.6051981+08:00 hook-pressed F12
+2026-02-12T18:27:47.8532080+08:00 hook-pressed F12
+2026-02-12T18:27:48.0931574+08:00 hook-pressed F12
+2026-02-12T18:27:48.3172721+08:00 hook-pressed F12
+2026-02-12T18:27:48.5732063+08:00 hook-pressed F12
+2026-02-12T18:30:27.8429286+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 173
+2026-02-12T18:31:30.5063213+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 173
