@@ -1,5 +1,6 @@
 # AoE4 Overlay (C# Version) User Guide
 <img width="672" height="223" alt="44-1" src="https://github.com/user-attachments/assets/814d7e31-2069-4a9f-ab76-1310f43c4878" />
+<img width="786" height="592" alt="7" src="https://github.com/user-attachments/assets/5b6b9728-d865-4c9a-b193-b275d56ed33d" />
 <img width="720" height="264" alt="33" src="https://github.com/user-attachments/assets/102dc919-4319-4ecb-a063-2b49d7d8348e" />
 <img width="782" height="590" alt="22" src="https://github.com/user-attachments/assets/540fe8a1-9819-4ad7-a39f-76f6e14cb1da" />
 <img width="781" height="585" alt="11" src="https://github.com/user-attachments/assets/e352f814-61a1-40b7-9951-c2ed2dacb505" />
