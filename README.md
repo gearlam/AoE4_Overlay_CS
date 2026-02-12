@@ -1,9 +1,9 @@
-# AoE4 Overlay (C# Version) User Guide
-<img width="672" height="223" alt="44-1" src="https://github.com/user-attachments/assets/814d7e31-2069-4a9f-ab76-1310f43c4878" />
+# AoE4 Overlay (C# 1.5.1) User Guide
+<img width="661" height="164" alt="SnowShot_2026-02-12_19-38-08" src="https://github.com/user-attachments/assets/67fce948-c13b-439e-a0f9-60d8021ca9af" />
+<img width="774" height="584" alt="SnowShot_2026-02-12_19-40-00" src="https://github.com/user-attachments/assets/c2c4a2bd-4caa-4fba-9c5e-13162ca68000" />
 <img width="786" height="592" alt="7" src="https://github.com/user-attachments/assets/5b6b9728-d865-4c9a-b193-b275d56ed33d" />
-<img width="720" height="264" alt="33" src="https://github.com/user-attachments/assets/102dc919-4319-4ecb-a063-2b49d7d8348e" />
-<img width="782" height="590" alt="22" src="https://github.com/user-attachments/assets/540fe8a1-9819-4ad7-a39f-76f6e14cb1da" />
-<img width="781" height="585" alt="11" src="https://github.com/user-attachments/assets/e352f814-61a1-40b7-9951-c2ed2dacb505" />
+<img width="780" height="588" alt="SnowShot_2026-02-12_19-40-53" src="https://github.com/user-attachments/assets/c008d99b-fdc9-49ff-a8b1-ddc9e994fd41" />
+<img width="711" height="302" alt="SnowShot_2026-02-12_19-41-34" src="https://github.com/user-attachments/assets/1715c68f-a68b-4ffe-9eba-f88f1368df8d" />
 
 This guide is for the C# / WPF refactored version located in the `AoE4_Overlay_CS` directory.
 
