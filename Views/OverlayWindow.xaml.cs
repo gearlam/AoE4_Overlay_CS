@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
+using SixLabors.ImageSharp.Formats.Png;
 
 using Image = System.Windows.Controls.Image;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
@@ -24,6 +25,7 @@ namespace AoE4OverlayCS.Views
     {
         private AppSettings _settings;
         private bool _isLocked = true;
+        private readonly Dictionary<string, ImageSource> _imageCache = new();
         
         // P/Invoke for resizing
         private const int WM_SYSCOMMAND = 0x112;
@@ -142,22 +144,17 @@ namespace AoE4OverlayCS.Views
 
                     var flagImg = new Image { Width = 60, Height = 30, Stretch = Stretch.UniformToFill, HorizontalAlignment = HorizontalAlignment.Left };
                     string civ = p.civ;
+                    string civKey = civ.ToString().Replace(" ", "_").ToLower();
                     string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                    string flagPath = Path.Combine(baseDir, "img", "flags", $"{civ}.webp");
-                    if (!File.Exists(flagPath))
+                    string? resolvedPath = CivIconResolver.Resolve(baseDir, civ, civKey);
+                    if (resolvedPath != null)
                     {
-                        flagPath = Path.Combine(baseDir, "Resources", "img", "flags", $"{civ}.webp");
+                        var source = TryLoadImageSource(resolvedPath);
+                        if (source != null) flagImg.Source = source;
                     }
-                    if (File.Exists(flagPath))
+                    else
                     {
-                        try {
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.UriSource = new Uri(flagPath);
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            flagImg.Source = bitmap;
-                        } catch {}
+                        File.AppendAllText(LogPaths.Get("image_load_error.log"), $"Civ icon not found (Civ: {civ}, Key: {civKey}){Environment.NewLine}");
                     }
                     Grid.SetColumn(flagImg, 0);
                     grid.Children.Add(flagImg);
@@ -279,6 +276,48 @@ namespace AoE4OverlayCS.Views
             if (bold) txt.FontWeight = FontWeights.Bold;
             Grid.SetColumn(txt, col);
             grid.Children.Add(txt);
+        }
+
+        private ImageSource? TryLoadImageSource(string path)
+        {
+            if (_imageCache.TryGetValue(path, out var cached)) return cached;
+
+            try
+            {
+                var ext = Path.GetExtension(path).ToLowerInvariant();
+
+                if (ext == ".webp")
+                {
+                    using var image = SixLabors.ImageSharp.Image.Load(path);
+                    using var ms = new MemoryStream();
+                    image.Save(ms, new PngEncoder());
+                    ms.Position = 0;
+
+                    var bmp = new BitmapImage();
+                    bmp.BeginInit();
+                    bmp.CacheOption = BitmapCacheOption.OnLoad;
+                    bmp.StreamSource = ms;
+                    bmp.EndInit();
+                    bmp.Freeze();
+                    _imageCache[path] = bmp;
+                    return bmp;
+                }
+
+                using var fs = File.OpenRead(path);
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = fs;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                _imageCache[path] = bitmap;
+                return bitmap;
+            }
+            catch (Exception ex)
+            {
+                try { File.AppendAllText(LogPaths.Get("image_load_error.log"), $"Failed to load {path}: {ex.Message}{Environment.NewLine}"); } catch { }
+                return null;
+            }
         }
 
         public void ToggleVisibility()

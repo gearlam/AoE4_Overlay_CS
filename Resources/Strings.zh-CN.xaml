@@ -17,7 +17,6 @@
 
     <sys:String x:Key="Tab_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">设置</sys:String>
     <sys:String x:Key="Tab_Games" xmlns:sys="clr-namespace:System;assembly=System.Runtime">对战</sys:String>
-    <sys:String x:Key="Tab_Override" xmlns:sys="clr-namespace:System;assembly=System.Runtime">覆盖设置</sys:String>
 
     <sys:String x:Key="Settings_ProfileHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">档案</sys:String>
     <sys:String x:Key="Settings_ProfileLinkText" xmlns:sys="clr-namespace:System;assembly=System.Runtime">AoE4World 档案页</sys:String>
@@ -37,12 +36,4 @@
     <sys:String x:Key="Games_Header_Result" xmlns:sys="clr-namespace:System;assembly=System.Runtime">结果</sys:String>
     <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">分差</sys:String>
 
-    <sys:String x:Key="Override_Intro1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">覆盖层中显示的玩家数据可在此手动覆盖。</sys:String>
-    <sys:String x:Key="Override_Intro2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">适用于观战回放或修改条形码名字。</sys:String>
-    <sys:String x:Key="Override_PreventAutoUpdate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">禁止自动更新覆盖层</sys:String>
-    <sys:String x:Key="Override_GroupHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">玩家数据覆盖</sys:String>
-    <sys:String x:Key="Override_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">地图：</sys:String>
-    <sys:String x:Key="Override_Mode" xmlns:sys="clr-namespace:System;assembly=System.Runtime">模式：</sys:String>
-    <sys:String x:Key="Override_Server" xmlns:sys="clr-namespace:System;assembly=System.Runtime">服务器：</sys:String>
-    <sys:String x:Key="Override_Update" xmlns:sys="clr-namespace:System;assembly=System.Runtime">更新覆盖层</sys:String>
 </ResourceDictionary>

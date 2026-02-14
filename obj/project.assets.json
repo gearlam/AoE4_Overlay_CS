@@ -87,6 +87,22 @@
             "related": ".xml"
           }
         }
+      },
+      "SixLabors.ImageSharp/3.1.12": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "build/SixLabors.ImageSharp.props": {}
+        }
       }
     }
   },
@@ -216,6 +232,22 @@
         "serilog.sinks.file.7.0.0.nupkg.sha512",
         "serilog.sinks.file.nuspec"
       ]
+    },
+    "SixLabors.ImageSharp/3.1.12": {
+      "sha512": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A==",
+      "type": "package",
+      "path": "sixlabors.imagesharp/3.1.12",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "build/SixLabors.ImageSharp.props",
+        "lib/net6.0/SixLabors.ImageSharp.dll",
+        "lib/net6.0/SixLabors.ImageSharp.xml",
+        "sixlabors.imagesharp.128.png",
+        "sixlabors.imagesharp.3.1.12.nupkg.sha512",
+        "sixlabors.imagesharp.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -224,20 +256,21 @@
       "NHotkey.Wpf >= 4.0.0",
       "Newtonsoft.Json >= 13.0.4",
       "Serilog >= 4.3.0",
-      "Serilog.Sinks.File >= 7.0.0"
+      "Serilog.Sinks.File >= 7.0.0",
+      "SixLabors.ImageSharp >= 3.1.12"
     ]
   },
   "packageFolders": {
     "C:\\Users\\Administrator\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "1.5.1",
+    "version": "1.6.1",
     "restore": {
-      "projectUniqueName": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+      "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
       "projectName": "AoE4OverlayCS",
-      "projectPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+      "projectPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\obj\\",
+      "outputPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -288,6 +321,10 @@
           "Serilog.Sinks.File": {
             "target": "Package",
             "version": "[7.0.0, )"
+          },
+          "SixLabors.ImageSharp": {
+            "target": "Package",
+            "version": "[3.1.12, )"
           }
         },
         "imports": [
@@ -309,7 +346,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\.dotnet\\sdk\\8.0.418/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

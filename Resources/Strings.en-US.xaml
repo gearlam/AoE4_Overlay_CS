@@ -17,7 +17,6 @@
 
     <sys:String x:Key="Tab_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Settings</sys:String>
     <sys:String x:Key="Tab_Games" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Games</sys:String>
-    <sys:String x:Key="Tab_Override" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Override</sys:String>
 
     <sys:String x:Key="Settings_ProfileHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Profile</sys:String>
     <sys:String x:Key="Settings_ProfileLinkText" xmlns:sys="clr-namespace:System;assembly=System.Runtime">AoE4 World profile</sys:String>
@@ -37,12 +36,4 @@
     <sys:String x:Key="Games_Header_Result" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Result</sys:String>
     <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Diff</sys:String>
 
-    <sys:String x:Key="Override_Intro1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Override player data shown on the overlay.</sys:String>
-    <sys:String x:Key="Override_Intro2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">This is useful for casting from replays or changing barcode names.</sys:String>
-    <sys:String x:Key="Override_PreventAutoUpdate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Prevent automatic overlay updates</sys:String>
-    <sys:String x:Key="Override_GroupHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Player Data Override</sys:String>
-    <sys:String x:Key="Override_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Map:</sys:String>
-    <sys:String x:Key="Override_Mode" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Mode:</sys:String>
-    <sys:String x:Key="Override_Server" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Server:</sys:String>
-    <sys:String x:Key="Override_Update" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Update Overlay</sys:String>
 </ResourceDictionary>

@@ -1,4 +1,5 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+using AoE4OverlayCS.Services;
 using System.Windows;
 
 using System.Threading;
@@ -29,17 +30,19 @@ namespace AoE4OverlayCS
 
         private void CurrentDomain_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
         {
-             System.IO.File.WriteAllText("domain_error.log", e.ExceptionObject.ToString());
+             System.IO.File.WriteAllText(LogPaths.Get("domain_error.log"), e.ExceptionObject.ToString());
         }
 
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-             System.IO.File.WriteAllText("dispatcher_error.log", e.Exception.ToString());
+             System.IO.File.WriteAllText(LogPaths.Get("dispatcher_error.log"), e.Exception.ToString());
         }
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            _ = LogPaths.LogsDirectory;
             
             _viewModel = new MainViewModel();
             var window = new MainWindow();

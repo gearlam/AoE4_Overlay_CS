@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Linq;
+using System.IO;
 
 namespace AoE4OverlayCS.ViewModels
 {
@@ -78,22 +79,11 @@ namespace AoE4OverlayCS.ViewModels
         // Games Tab
         public ObservableCollection<MatchHistoryItem> Games { get; } = new ObservableCollection<MatchHistoryItem>();
 
-        // Override Tab
-        private string _overrideMap = "";
-        public string OverrideMap { get => _overrideMap; set { _overrideMap = value; OnPropertyChanged(); } }
-        private string _overrideMode = "";
-        public string OverrideMode { get => _overrideMode; set { _overrideMode = value; OnPropertyChanged(); } }
-        private string _overrideServer = "";
-        public string OverrideServer { get => _overrideServer; set { _overrideServer = value; OnPropertyChanged(); } }
-        private bool _preventAutoUpdate = false;
-        public bool PreventAutoUpdate { get => _preventAutoUpdate; set { _preventAutoUpdate = value; OnPropertyChanged(); } }
-
         // Commands
         public ICommand SearchPlayerCommand { get; }
         public ICommand SaveSettingsCommand { get; }
         public ICommand ToggleOverlayCommand { get; }
         public ICommand ChangeOverlayPositionCommand { get; }
-        public ICommand UpdateOverrideCommand { get; }
         public ICommand OpenLinkCommand { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -112,7 +102,6 @@ namespace AoE4OverlayCS.ViewModels
             SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
             ToggleOverlayCommand = new RelayCommand(_ => ToggleOverlay());
             ChangeOverlayPositionCommand = new RelayCommand(_ => ChangeOverlayPosition());
-            UpdateOverrideCommand = new RelayCommand(_ => UpdateOverride());
             OpenLinkCommand = new RelayCommand(url => {
                 if (url is string s && !string.IsNullOrEmpty(s))
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(s) { UseShellExecute = true });
@@ -172,17 +161,17 @@ namespace AoE4OverlayCS.ViewModels
                             HotkeyManager.Current.Remove("ToggleOverlay");
                             HotkeyManager.Current.AddOrReplace("ToggleOverlay", key, modifiers, (s, e) =>
                             {
-                                try { System.IO.File.AppendAllText("hotkey.log", $"{DateTime.Now:O} pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
                                 ToggleOverlay();
                             });
-                            try { System.IO.File.AppendAllText("hotkey.log", $"{DateTime.Now:O} registered {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
                         }
                         catch (Exception ex)
                         {
-                            try { System.IO.File.AppendAllText("hotkey.log", $"{DateTime.Now:O} register-failed {Settings.OverlayHotkey} {ex}{Environment.NewLine}"); } catch { }
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed {Settings.OverlayHotkey} {ex}{Environment.NewLine}"); } catch { }
                             _globalHotkey.Configure(Settings.OverlayHotkey, () =>
                             {
-                                try { System.IO.File.AppendAllText("hotkey.log", $"{DateTime.Now:O} hook-pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
                                 ToggleOverlay();
                             });
                             _globalHotkey.Start();
@@ -330,8 +319,6 @@ namespace AoE4OverlayCS.ViewModels
 
         private void OnNewGame(JObject gameData)
         {
-            if (PreventAutoUpdate) return;
-
             var processed = GameProcessor.ProcessGame(gameData, _settingsService.Current);
             
             // Send to WS
@@ -345,14 +332,6 @@ namespace AoE4OverlayCS.ViewModels
                     _overlayWindow?.Show();
                 }
                 
-                // Update Override fields
-                var dict = processed as System.Collections.Generic.Dictionary<string, object>;
-                if (dict != null)
-                {
-                    OverrideMap = dict["map"]?.ToString() ?? "";
-                    OverrideMode = dict["mode"]?.ToString() ?? "";
-                    OverrideServer = dict["server"]?.ToString() ?? "";
-                }
             });
             
             // Refresh history
@@ -383,32 +362,6 @@ namespace AoE4OverlayCS.ViewModels
         {
             Stop();
             Start();
-        }
-
-        public void UpdateOverride()
-        {
-            // Create a fake data object to update overlay
-            // In a real app we might want to preserve players data but change map/server
-            // For now, let's just trigger update with what we have if possible, 
-            // but we don't store the last game data in VM. 
-            // Let's assume user wants to update map info mainly.
-            
-            // Ideally we should cache the last game data.
-            // For this quick implementation, we skip deep player data override from UI (as it wasn't requested in detail)
-            // But we send the signal.
-            
-            var data = new System.Collections.Generic.Dictionary<string, object>
-            {
-                { "map", OverrideMap },
-                { "mode", OverrideMode },
-                { "server", OverrideServer },
-                { "players", new System.Collections.Generic.List<object>() } // Empty players for now or we need cache
-            };
-            
-             System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                _overlayWindow?.UpdateData(data);
-             });
-             _wsServer.Send("player_data", data);
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

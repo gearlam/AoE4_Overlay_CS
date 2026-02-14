@@ -12,11 +12,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("AoE4OverlayCS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.5.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.5.1_Gear")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.6.1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("Gear_1.6.1")]
 [assembly: System.Reflection.AssemblyProductAttribute("AoE4OverlayCS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AoE4OverlayCS")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.5.1.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.6.1.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]
 

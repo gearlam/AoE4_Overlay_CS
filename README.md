@@ -1,4 +1,4 @@
-# AoE4 Overlay (C# 1.5.1) User Guide
+# AoE IV: Overlay (C# Remake) - Gear_1.6.1
 <img width="661" height="164" alt="SnowShot_2026-02-12_19-38-08" src="https://github.com/user-attachments/assets/67fce948-c13b-439e-a0f9-60d8021ca9af" />
 <img width="774" height="584" alt="SnowShot_2026-02-12_19-40-00" src="https://github.com/user-attachments/assets/c2c4a2bd-4caa-4fba-9c5e-13162ca68000" />
 <img width="786" height="592" alt="7" src="https://github.com/user-attachments/assets/5b6b9728-d865-4c9a-b193-b275d56ed33d" />

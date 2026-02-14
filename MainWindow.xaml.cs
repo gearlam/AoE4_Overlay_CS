@@ -1,10 +1,12 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+using AoE4OverlayCS.Services;
 using System.Windows;
 using System;
 using System.Diagnostics;
 using System.Drawing; // For Icon
 using System.Windows.Forms; // For NotifyIcon
 using System.IO;
+using System.Linq;
 using System.Globalization;
 using System.Reflection;
 
@@ -34,6 +36,13 @@ namespace AoE4OverlayCS
             }
 
             if (string.IsNullOrWhiteSpace(version)) return;
+
+            int plusIndex = version.IndexOf('+', StringComparison.Ordinal);
+            if (plusIndex >= 0)
+            {
+                version = version.Substring(0, plusIndex).Trim();
+            }
+
             if (Title.Contains(version, StringComparison.OrdinalIgnoreCase)) return;
 
             var title = Title ?? "";
@@ -90,7 +99,7 @@ namespace AoE4OverlayCS
             }
             catch (Exception ex)
             {
-                System.IO.File.WriteAllText("tray_error.log", ex.ToString());
+                System.IO.File.WriteAllText(LogPaths.Get("tray_error.log"), ex.ToString());
             }
         }
 
@@ -142,31 +151,29 @@ namespace AoE4OverlayCS
 
         private void OpenConfigLogs_Click(object sender, RoutedEventArgs e)
         {
-            var configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AoE4_Overlay_CS");
-            var configFile = Path.Combine(configFolder, "config.json");
-            var logCandidates = new[]
-            {
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "hotkey.log"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dispatcher_error.log"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "domain_error.log"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tray_error.log")
-            };
+            var logsDir = LogPaths.LogsDirectory;
 
-            if (File.Exists(configFile))
+            if (Directory.Exists(logsDir))
             {
-                OpenExplorerSelect(configFile);
-            }
-            else if (Directory.Exists(configFolder))
-            {
-                OpenExplorer(configFolder);
-            }
-
-            foreach (var log in logCandidates)
-            {
-                if (File.Exists(log))
+                var logs = Directory.GetFiles(logsDir, "*.log", SearchOption.TopDirectoryOnly);
+                if (logs.Length == 0)
                 {
-                    OpenExplorerSelect(log);
-                    break;
+                    OpenExplorer(logsDir);
+                    return;
+                }
+
+                var latest = logs
+                    .Select(p => new FileInfo(p))
+                    .OrderByDescending(f => f.LastWriteTimeUtc)
+                    .FirstOrDefault();
+
+                if (latest != null)
+                {
+                    OpenExplorerSelect(latest.FullName);
+                }
+                else
+                {
+                    OpenExplorer(logsDir);
                 }
             }
         }

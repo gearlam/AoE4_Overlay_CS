@@ -7,36 +7,42 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style TargetType="GroupBox">
-            <Setter Property="Margin" Value="0,0,0,10"/>
-            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,18"/>
+            <Setter Property="Padding" Value="16"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="HeaderTemplate">
                 <Setter.Value>
                     <DataTemplate>
-                        <TextBlock Text="{Binding}" FontSize="20" Foreground="#333"/>
+                        <TextBlock Text="{Binding}" FontSize="18" FontWeight="SemiBold" Foreground="#222"/>
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="5"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Height" Value="35"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Height" Value="35"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="Background" Value="#F0F0F0"/>
             <Setter Property="BorderBrush" Value="#CCC"/>
         </Style>
     </UserControl.Resources>
     
     <Grid Margin="20">
-        <StackPanel HorizontalAlignment="Center" Width="450">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid HorizontalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
             <!-- Profile Box -->
-            <GroupBox Header="{DynamicResource Settings_ProfileHeader}">
+            <GroupBox Header="{DynamicResource Settings_ProfileHeader}" Grid.Row="0">
                 <StackPanel>
                     <TextBlock Text="{Binding ProfileInfo}" 
                                FontSize="16" FontWeight="Bold" Foreground="#359c20" 
@@ -67,26 +73,31 @@
             </GroupBox>
 
             <!-- Overlay Box -->
-            <GroupBox Header="{DynamicResource Settings_OverlayHeader}">
+            <GroupBox Header="{DynamicResource Settings_OverlayHeader}" Grid.Row="1">
                 <StackPanel>
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{DynamicResource Settings_HotkeyLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <Button x:Name="HotkeyButton" Content="{Binding Settings.OverlayHotkey, TargetNullValue='Click to set'}" 
-                                Grid.Column="1" HorizontalAlignment="Right" Width="150" Height="35"
+                                Grid.Column="1" HorizontalAlignment="Left" Width="180" Height="34"
                                 Click="HotkeyButton_Click" PreviewKeyDown="HotkeyButton_PreviewKeyDown"/>
                     </Grid>
 
                     <Grid Margin="0,5">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{DynamicResource Settings_FontSizeLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <ComboBox SelectedItem="{Binding Settings.FontSize}" Grid.Column="1" HorizontalAlignment="Right" Width="100" Height="35" FontSize="16" VerticalContentAlignment="Center">
+                        <ComboBox SelectedItem="{Binding Settings.FontSize}" Grid.Column="1" HorizontalAlignment="Left" Width="180" Height="34" FontSize="15" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">10</system:Int32>
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">11</system:Int32>
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">12</system:Int32>
@@ -95,12 +106,15 @@
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">16</system:Int32>
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">18</system:Int32>
                              <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">20</system:Int32>
+                             <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">22</system:Int32>
+                             <system:Int32 xmlns:system="clr-namespace:System;assembly=System.Runtime">24</system:Int32>
                         </ComboBox>
                     </Grid>
 
-                    <Button Content="{DynamicResource Settings_OverlayPositionButton}" Command="{Binding ChangeOverlayPositionCommand}" Margin="0,15,0,0"/>
+                    <Button Content="{DynamicResource Settings_OverlayPositionButton}" Command="{Binding ChangeOverlayPositionCommand}" Margin="0,14,0,0" Height="40"/>
                 </StackPanel>
             </GroupBox>
-        </StackPanel>
+        </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>
