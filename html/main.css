@@ -61,6 +61,34 @@ body {
     padding-left: 4vw
 }
 
+#team1 .stats .losses,
+#team2 .stats .rank {
+    position: relative
+}
+
+.country-flag {
+    width: 3.5vw;
+    height: 2.2vw;
+    max-width: 48px;
+    max-height: 30px;
+    object-fit: contain;
+    display: block
+}
+
+#team1 .stats .losses .country-flag {
+    position: absolute;
+    right: .4vw;
+    top: 50%;
+    transform: translateY(-50%)
+}
+
+#team2 .stats .rank .country-flag {
+    position: absolute;
+    left: .4vw;
+    top: 50%;
+    transform: translateY(-50%)
+}
+
 #team1 .flag {
     padding-right: 1vw
 }

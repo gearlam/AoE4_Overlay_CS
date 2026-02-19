@@ -266,11 +266,11 @@
   "project": {
     "version": "1.6.1",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+      "projectUniqueName": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
       "projectName": "AoE4OverlayCS",
-      "projectPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+      "projectPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\obj\\",
+      "outputPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -346,7 +346,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Users\\Administrator\\Desktop\\AoE4_Overlay_CS\\.dotnet\\sdk\\8.0.418/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.418/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

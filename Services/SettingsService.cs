@@ -12,8 +12,8 @@ namespace AoE4OverlayCS.Services
 
         public SettingsService()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var folder = Path.Combine(appData, "AoE4_Overlay_CS");
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var folder = Path.Combine(baseDir, "config");
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
             _configPath = Path.Combine(folder, "config.json");
             

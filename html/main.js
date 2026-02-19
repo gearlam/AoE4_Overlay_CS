@@ -43,6 +43,36 @@ function reconnect_to_socket() {
 var team_colors = [[74, 255, 2, 0.35], [3, 179, 255, 0.35], [255, 0, 0, 0.35]];
 var custom_func = null;
 
+function normalize_country_codes(country) {
+    if (country == null) return [];
+    let c = `${country}`.trim().toLowerCase();
+    if (c.length == 0) return [];
+    c = c.replaceAll("_", "-");
+    if (c == "uk") return ["gb"];
+    if (c == "usa") return ["us"];
+    if (c == "eng") return ["gb-eng", "gb"];
+    if (c == "sct") return ["gb-sct", "gb"];
+    if (c == "wls") return ["gb-wls", "gb"];
+    if (c == "nir") return ["gb-nir", "gb"];
+    if (c.startsWith("gb-")) return [c, "gb"];
+    if (c.includes("-")) {
+        const last = c.split("-").pop();
+        if (last && last != c) return [c, last];
+    }
+    return [c];
+}
+
+function country_flag_img(country) {
+    const codes = normalize_country_codes(country);
+    if (!codes || codes.length == 0) return "";
+    const src1 = `../img/countries/${codes[0]}.png`;
+    if (codes.length >= 2) {
+        const src2 = `../img/countries/${codes[1]}.png`;
+        return `<img class="country-flag" src="${src1}" onerror="this.onerror=null;this.src='${src2}'">`;
+    }
+    return `<img class="country-flag" src="${src1}" onerror="this.style.display='none'">`;
+}
+
 function parse_message(data) {
     if (data.type == "color")
         team_colors = data.data;
@@ -57,8 +87,8 @@ function update_player_data(data) {
     let second_team = null;
     for (const p of data.players) {
         if (first_team == null) first_team = p.team;
-        // Decide where to place flag 
         let flag = `<td class="flag" rowspan="2"><img src="../img/flags/${p.civ}.webp"></td>`;
+        let country = country_flag_img(p.country);
         let t1f = '';
         let t2f = '';
         if (p.team == first_team) t1f = flag; else t2f = flag;
@@ -67,9 +97,16 @@ function update_player_data(data) {
         if (p.wins == '') wins = ''; else wins = `${p.wins}W`;
         if (p.losses == '') losses = ''; else losses = `${p.losses}L`;
         // Create player element
-        let s = `<tr class="player">${t1f}<td colspan="5" class="name">${p.name}</td>${t2f}</tr>
-        <tr class="stats"><td class="rank">${p.rank}</td><td class="rating">${p.rating}</td>
-        <td class="winrate">${p.winrate}</td><td class="wins">${wins}</td><td class="losses">${losses}</td></tr>`;
+        let s;
+        if (p.team == first_team) {
+            s = `<tr class="player">${t1f}<td colspan="5" class="name">${p.name}</td></tr>
+            <tr class="stats"><td class="rank">${p.rank}</td><td class="rating">${p.rating}</td>
+            <td class="winrate">${p.winrate}</td><td class="wins">${wins}</td><td class="losses">${losses}${country}</td></tr>`;
+        } else {
+            s = `<tr class="player"><td colspan="5" class="name">${p.name}</td>${t2f}</tr>
+            <tr class="stats"><td class="rank">${country}${p.rank}</td><td class="rating">${p.rating}</td>
+            <td class="winrate">${p.winrate}</td><td class="wins">${wins}</td><td class="losses">${losses}</td></tr>`;
+        }
         if ([1, 2].includes(p.team))
             team_data[p.team] += s;
     }

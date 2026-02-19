@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\Administrator\Desktop\AoE4_Overlay_CS\obj\Debug\net8.0-windows\
+D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\obj\Debug\net8.0-windows\
 AoE4OverlayCS
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-C:\Users\Administrator\Desktop\AoE4_Overlay_CS\App.xaml
-6726185624
+D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\App.xaml
+7-935518785
 
-18175846960
-214-1202791755
-MainWindow.xaml;Resources\Strings.en-US.xaml;Resources\Strings.zh-CN.xaml;Views\GamesView.xaml;Views\OverlayWindow.xaml;Views\SettingsView.xaml;
+19-1228603557
+214-1106714967
+MainWindow.xaml;Resources\Strings.en-US.xaml;Resources\Strings.zh-CN.xaml;Views\GamesView.xaml;Views\OverlayWindow.xaml;Views\OverrideView.xaml;Views\SettingsView.xaml;
 
 False
 
