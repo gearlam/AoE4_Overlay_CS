@@ -2,6 +2,7 @@ using AoE4OverlayCS.Models;
 using AoE4OverlayCS.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -48,6 +49,8 @@ namespace AoE4OverlayCS.Views
             InitializeComponent();
             _settings = settings;
             _settings.PropertyChanged += Settings_PropertyChanged;
+
+            MapLabel.FontSize = Math.Max(10, _settings.FontSize - 2);
             
             if (_settings.OverlayGeometry != null && _settings.OverlayGeometry.Length == 4)
             {
@@ -87,17 +90,27 @@ namespace AoE4OverlayCS.Views
              if (e.PropertyName == nameof(AppSettings.FontSize))
              {
                  Dispatcher.Invoke(() => {
-                     MapLabel.FontSize = _settings.FontSize + 1;
-                     foreach (var child in PlayersPanel.Children)
+                     MapLabel.FontSize = Math.Max(10, _settings.FontSize - 2);
+                     foreach (var child in TeamLeftPanel.Children)
                      {
                          if (child is Grid grid)
                          {
                              foreach (var item in grid.Children)
                              {
-                                 if (item is TextBlock tb)
-                                 {
-                                     tb.FontSize = _settings.FontSize;
-                                 }
+                                 if (item is TextBlock tb) tb.FontSize = _settings.FontSize;
+                                 else if (item is Border b && b.Child is TextBlock tbb) tbb.FontSize = _settings.FontSize;
+                             }
+                         }
+                     }
+
+                     foreach (var child in TeamRightPanel.Children)
+                     {
+                         if (child is Grid grid)
+                         {
+                             foreach (var item in grid.Children)
+                             {
+                                 if (item is TextBlock tb) tb.FontSize = _settings.FontSize;
+                                 else if (item is Border b && b.Child is TextBlock tbb) tbb.FontSize = _settings.FontSize;
                              }
                          }
                      }
@@ -122,88 +135,188 @@ namespace AoE4OverlayCS.Views
             Dispatcher.Invoke(() => {
                 MapLabel.Text = data["map"]?.ToString() ?? "";
                 
-                PlayersPanel.Children.Clear();
+                TeamLeftPanel.Children.Clear();
+                TeamRightPanel.Children.Clear();
 
                 var players = data["players"] as IEnumerable<dynamic>;
                 if (players == null) return;
 
-                foreach (var p in players)
+                var playerList = players.ToList();
+                if (playerList.Count == 0) return;
+
+                int firstTeam = SafeGetTeam(playerList[0]);
+                int? secondTeam = null;
+                foreach (var pl in playerList)
                 {
-                    var grid = new Grid { Margin = new Thickness(0, 6, 0, 6) };
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(65) });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                    grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                    var flagImg = new Image { Width = 60, Height = 30, Stretch = Stretch.UniformToFill, HorizontalAlignment = HorizontalAlignment.Left };
-                    string civ = p.civ;
-                    string civKey = civ.ToString().Replace(" ", "_").ToLower();
-                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                    string? resolvedPath = CivIconResolver.Resolve(baseDir, civ, civKey);
-                    if (resolvedPath != null)
+                    var t = SafeGetTeam(pl);
+                    if (t != firstTeam)
                     {
-                        var source = TryLoadImageSource(resolvedPath);
-                        if (source != null) flagImg.Source = source;
+                        secondTeam = t;
+                        break;
                     }
-                    else
-                    {
-                        File.AppendAllText(LogPaths.Get("image_load_error.log"), $"Civ icon not found (Civ: {civ}, Key: {civKey}){Environment.NewLine}");
-                    }
-                    Grid.SetColumn(flagImg, 0);
-                    grid.Children.Add(flagImg);
+                }
 
-                    var nameTxt = new TextBlock { Text = p.name, FontWeight = FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, FontSize = _settings.FontSize, TextTrimming = TextTrimming.CharacterEllipsis };
-                    nameTxt.Foreground = Brushes.White;
-                    var teamColor = GetTeamNameBrush(SafeGetTeam(p));
-                    var nameBg = new Border
-                    {
-                        Background = teamColor,
-                        CornerRadius = new CornerRadius(4),
-                        Padding = new Thickness(6, 2, 6, 2),
-                        Margin = new Thickness(0, 0, 6, 0),
-                        VerticalAlignment = VerticalAlignment.Center
-                    };
-                    nameBg.Child = nameTxt;
-                    Grid.SetColumn(nameBg, 1);
-                    grid.Children.Add(nameBg);
+                IEnumerable<dynamic> leftPlayers = playerList.Where(p => SafeGetTeam(p) == firstTeam);
+                IEnumerable<dynamic> rightPlayers = secondTeam.HasValue
+                    ? playerList.Where(p => SafeGetTeam(p) == secondTeam.Value)
+                    : playerList.Where(p => SafeGetTeam(p) != firstTeam);
 
-                    var countryImg = new Image { Width = 25, Height = 14, Stretch = Stretch.Uniform };
-                    string country = p.country;
-                    if (!string.IsNullOrEmpty(country)) {
-                        string countryPath = Path.Combine(baseDir, "img", "countries", $"{country}.png");
-                        if (!File.Exists(countryPath))
-                        {
-                            countryPath = Path.Combine(baseDir, "Resources", "img", "countries", $"{country}.png");
-                        }
-                        if (File.Exists(countryPath)) {
-                            try {
-                                var bitmap = new BitmapImage(new Uri(countryPath));
-                                countryImg.Source = bitmap;
-                            } catch {}
-                         }
-                    }
-                    Grid.SetColumn(countryImg, 2);
-                    grid.Children.Add(countryImg);
+                foreach (var p in leftPlayers)
+                {
+                    TeamLeftPanel.Children.Add(CreatePlayerRowLeft(p));
+                }
 
-                    AddText(grid, 3, p.rating.ToString(), "#7ab6ff", true);
-                    AddText(grid, 4, p.rank.ToString());
-                    AddText(grid, 5, p.winrate.ToString(), "#fffb78");
-                    AddText(grid, 6, p.wins.ToString(), "#48bd21");
-                    AddText(grid, 7, p.losses.ToString(), "Red");
-                    AddText(grid, 8, p.civ_games.ToString(), _settings.CivStatsColor);
-                    AddText(grid, 9, p.civ_winrate.ToString(), _settings.CivStatsColor);
-                    AddText(grid, 10, p.civ_win_length_median.ToString(), _settings.CivStatsColor);
-
-                    PlayersPanel.Children.Add(grid);
+                foreach (var p in rightPlayers)
+                {
+                    TeamRightPanel.Children.Add(CreatePlayerRowRightMirrored(p));
                 }
             });
+        }
+
+        private Grid CreatePlayerRowLeft(dynamic p)
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var grid = new Grid { Margin = new Thickness(0, 4, 0, 4), HorizontalAlignment = HorizontalAlignment.Left };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(65) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var flagImg = CreateCivFlag(p, baseDir, HorizontalAlignment.Left);
+            Grid.SetColumn(flagImg, 0);
+            grid.Children.Add(flagImg);
+
+            var nameBg = CreateNameBadge(p, margin: new Thickness(0, 0, 6, 0), textAlignment: TextAlignment.Left);
+            Grid.SetColumn(nameBg, 1);
+            grid.Children.Add(nameBg);
+
+            var countryImg = CreateCountryFlag(p, baseDir, HorizontalAlignment.Left);
+            Grid.SetColumn(countryImg, 2);
+            grid.Children.Add(countryImg);
+
+            AddTextCell(grid, 3, p.rating.ToString(), "#7ab6ff", true, HorizontalAlignment.Center, TextAlignment.Center, 56);
+            AddTextCell(grid, 4, p.rank.ToString(), "White", false, HorizontalAlignment.Center, TextAlignment.Center, 86);
+            AddTextCell(grid, 5, p.winrate.ToString(), "#fffb78", false, HorizontalAlignment.Center, TextAlignment.Center, 62);
+            AddTextCell(grid, 6, p.wins.ToString(), "#48bd21", false, HorizontalAlignment.Center, TextAlignment.Center, 44);
+            AddTextCell(grid, 7, p.losses.ToString(), "Red", false, HorizontalAlignment.Center, TextAlignment.Center, 44);
+            AddTextCell(grid, 8, p.civ_games.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            AddTextCell(grid, 9, p.civ_winrate.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            AddTextCell(grid, 10, p.civ_win_length_median.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            return grid;
+        }
+
+        private Grid CreatePlayerRowRightMirrored(dynamic p)
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var grid = new Grid { Margin = new Thickness(0, 4, 0, 4), HorizontalAlignment = HorizontalAlignment.Right };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(65) });
+
+            AddTextCell(grid, 0, p.civ_win_length_median.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            AddTextCell(grid, 1, p.civ_winrate.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            AddTextCell(grid, 2, p.civ_games.ToString(), _settings.CivStatsColor, false, HorizontalAlignment.Center, TextAlignment.Center, 64);
+            AddTextCell(grid, 3, p.losses.ToString(), "Red", false, HorizontalAlignment.Center, TextAlignment.Center, 44);
+            AddTextCell(grid, 4, p.wins.ToString(), "#48bd21", false, HorizontalAlignment.Center, TextAlignment.Center, 44);
+            AddTextCell(grid, 5, p.winrate.ToString(), "#fffb78", false, HorizontalAlignment.Center, TextAlignment.Center, 62);
+            AddTextCell(grid, 6, p.rank.ToString(), "White", false, HorizontalAlignment.Center, TextAlignment.Center, 86);
+            AddTextCell(grid, 7, p.rating.ToString(), "#7ab6ff", true, HorizontalAlignment.Center, TextAlignment.Center, 56);
+
+            var countryImg = CreateCountryFlag(p, baseDir, HorizontalAlignment.Right);
+            Grid.SetColumn(countryImg, 8);
+            grid.Children.Add(countryImg);
+
+            var nameBg = CreateNameBadge(p, margin: new Thickness(6, 0, 0, 0), textAlignment: TextAlignment.Right);
+            Grid.SetColumn(nameBg, 9);
+            grid.Children.Add(nameBg);
+
+            var flagImg = CreateCivFlag(p, baseDir, HorizontalAlignment.Right);
+            Grid.SetColumn(flagImg, 10);
+            grid.Children.Add(flagImg);
+            return grid;
+        }
+
+        private Image CreateCivFlag(dynamic p, string baseDir, HorizontalAlignment hAlign)
+        {
+            var flagImg = new Image { Width = 60, Height = 30, Stretch = Stretch.UniformToFill, HorizontalAlignment = hAlign };
+            string civ = p.civ;
+            string civKey = civ.ToString().Replace(" ", "_").ToLower();
+            string? resolvedPath = CivIconResolver.Resolve(baseDir, civ, civKey);
+            if (resolvedPath != null)
+            {
+                var source = TryLoadImageSource(resolvedPath);
+                if (source != null) flagImg.Source = source;
+            }
+            else
+            {
+                File.AppendAllText(LogPaths.Get("image_load_error.log"), $"Civ icon not found (Civ: {civ}, Key: {civKey}){Environment.NewLine}");
+            }
+            return flagImg;
+        }
+
+        private Border CreateNameBadge(dynamic p, Thickness margin, TextAlignment textAlignment)
+        {
+            var nameTxt = new TextBlock
+            {
+                Text = p.name,
+                FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontSize = _settings.FontSize,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextAlignment = textAlignment
+            };
+            nameTxt.Foreground = Brushes.White;
+
+            var teamColor = GetTeamNameBrush(SafeGetTeam(p));
+            var nameBg = new Border
+            {
+                Background = teamColor,
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(6, 1, 6, 1),
+                Margin = margin,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            nameBg.Child = nameTxt;
+            return nameBg;
+        }
+
+        private Image CreateCountryFlag(dynamic p, string baseDir, HorizontalAlignment hAlign)
+        {
+            var countryImg = new Image { Width = 25, Height = 14, Stretch = Stretch.Uniform, HorizontalAlignment = hAlign };
+            string country = p.country;
+            if (!string.IsNullOrEmpty(country))
+            {
+                string countryPath = Path.Combine(baseDir, "img", "countries", $"{country}.png");
+                if (!File.Exists(countryPath))
+                {
+                    countryPath = Path.Combine(baseDir, "Resources", "img", "countries", $"{country}.png");
+                }
+                if (File.Exists(countryPath))
+                {
+                    try
+                    {
+                        var bitmap = new BitmapImage(new Uri(countryPath));
+                        countryImg.Source = bitmap;
+                    }
+                    catch { }
+                }
+            }
+            return countryImg;
         }
 
         private int SafeGetTeam(dynamic p)
@@ -249,33 +362,34 @@ namespace AoE4OverlayCS.Views
             }
         }
 
-        private void AddText(Grid grid, int col, string text, string colorCode = "White", bool bold = false)
+        private void AddTextCell(Grid grid, int col, string text, string colorCode = "White", bool bold = false, HorizontalAlignment hAlign = HorizontalAlignment.Center, TextAlignment tAlign = TextAlignment.Center, double minWidth = 0)
         {
-            var txt = new TextBlock { 
-                Text = text, 
-                VerticalAlignment = VerticalAlignment.Center, 
-                HorizontalAlignment = HorizontalAlignment.Center,
-                FontSize = _settings.FontSize
+            var txt = new TextBlock
+            {
+                Text = text,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = hAlign,
+                TextAlignment = tAlign,
+                FontSize = _settings.FontSize,
+                Margin = new Thickness(6, 0, 6, 0)
             };
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                txt.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                if (col == 3) txt.MinWidth = 56;
-                else if (col == 4) { txt.MinWidth = 86; txt.TextTrimming = TextTrimming.None; }
-                else if (col == 5) txt.MinWidth = 62;
-                else if (col == 6 || col == 7) txt.MinWidth = 44;
-                else if (col == 8 || col == 9 || col == 10) txt.MinWidth = 64;
-            }
+            if (string.IsNullOrWhiteSpace(text)) txt.Visibility = Visibility.Collapsed;
+            if (minWidth > 0) txt.MinWidth = minWidth;
             try {
                 txt.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colorCode));
             } catch { txt.Foreground = Brushes.White; }
             
             if (bold) txt.FontWeight = FontWeights.Bold;
-            Grid.SetColumn(txt, col);
-            grid.Children.Add(txt);
+            var cell = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+                BorderThickness = new Thickness(0, 0, 1, 0),
+                Padding = new Thickness(0, 0, 2, 0),
+                Child = txt
+            };
+            if (txt.Visibility == Visibility.Collapsed) cell.Visibility = Visibility.Collapsed;
+            Grid.SetColumn(cell, col);
+            grid.Children.Add(cell);
         }
 
         private ImageSource? TryLoadImageSource(string path)
