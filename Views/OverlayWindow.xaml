@@ -15,10 +15,25 @@
     
     <Grid>
         <!-- Content Panel -->
-        <StackPanel Margin="10">
-             <TextBlock x:Name="MapLabel" Text="" FontSize="14" FontWeight="Bold" Foreground="#FFFF00" Margin="0,0,0,10" Effect="{DynamicResource ShadowEffect}"/>
-             <StackPanel x:Name="PlayersPanel" />
-        </StackPanel>
+        <Grid Margin="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock x:Name="MapLabel" Text="" FontSize="12" FontWeight="Bold" Foreground="#29e0f8" Margin="0,0,0,6" HorizontalAlignment="Center" Effect="{DynamicResource ShadowEffect}"/>
+
+            <Grid Grid.Row="1" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition x:Name="TeamGapColumn" Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel x:Name="TeamLeftPanel" Grid.Column="0" HorizontalAlignment="Right"/>
+                <StackPanel x:Name="TeamRightPanel" Grid.Column="2" HorizontalAlignment="Left"/>
+            </Grid>
+        </Grid>
         
         <!-- Unlock UI: Border and Resize Grip -->
         <Border x:Name="UnlockBorder" BorderBrush="Yellow" BorderThickness="2" Visibility="Collapsed" IsHitTestVisible="False"/>

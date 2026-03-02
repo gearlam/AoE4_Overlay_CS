@@ -26,6 +26,7 @@
     <sys:String x:Key="Settings_OverlayHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay</sys:String>
     <sys:String x:Key="Settings_HotkeyLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Hotkey:</sys:String>
     <sys:String x:Key="Settings_FontSizeLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay font size:</sys:String>
+    <sys:String x:Key="Settings_TeamGapLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team gap:</sys:String>
     <sys:String x:Key="Settings_OverlayPositionButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Change/fix overlay position</sys:String>
 
     <sys:String x:Key="Games_Header_Team1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 1</sys:String>

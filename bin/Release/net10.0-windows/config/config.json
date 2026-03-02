@@ -1,0 +1,90 @@
+{
+  "WebsocketPort": 7307,
+  "LogMatches": true,
+  "Interval": 15,
+  "AppWidth": 900.0,
+  "AppHeight": 600.0,
+  "SteamId": "76561199104588448",
+  "ProfileId": "4400720",
+  "PlayerName": "David^im",
+  "OverlayHotkey": "F12",
+  "OverlayGeometry": [
+    1218.0,
+    0.0,
+    972.0,
+    245.0
+  ],
+  "FontSize": 16,
+  "TeamGap": 28.0,
+  "MaxGamesHistory": 100,
+  "CivStatsColor": "#BC8AEA",
+  "OpenOverlayOnNewGame": true,
+  "ShowGraph": {
+    "1": true,
+    "2": true,
+    "3": true,
+    "4": true
+  },
+  "TeamColors": [
+    [
+      74,
+      255,
+      2,
+      0.35
+    ],
+    [
+      3,
+      179,
+      255,
+      0.35
+    ],
+    [
+      255,
+      0,
+      0,
+      0.35
+    ],
+    [
+      255,
+      0,
+      255,
+      0.35
+    ],
+    [
+      255,
+      255,
+      0,
+      0.35
+    ],
+    [
+      74,
+      255,
+      2,
+      0.35
+    ],
+    [
+      3,
+      179,
+      255,
+      0.35
+    ],
+    [
+      255,
+      0,
+      0,
+      0.35
+    ],
+    [
+      255,
+      0,
+      255,
+      0.35
+    ],
+    [
+      255,
+      255,
+      0,
+      0.35
+    ]
+  ]
+}

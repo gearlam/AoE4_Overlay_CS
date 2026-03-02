@@ -46,6 +46,9 @@ namespace AoE4OverlayCS.Models
         private int _fontSize = 12;
         public int FontSize { get => _fontSize; set { _fontSize = value; OnPropertyChanged(); } }
 
+        private double _teamGap = 12;
+        public double TeamGap { get => _teamGap; set { _teamGap = value; OnPropertyChanged(); } }
+
         private int _maxGamesHistory = 100;
         public int MaxGamesHistory { get => _maxGamesHistory; set { _maxGamesHistory = value; OnPropertyChanged(); } }
 

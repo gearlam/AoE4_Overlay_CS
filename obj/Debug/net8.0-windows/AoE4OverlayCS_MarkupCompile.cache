@@ -1,20 +1,20 @@
 ﻿AoE4OverlayCS
-1.6.1.0
+1.6.3.0
 
 winexe
 C#
 .cs
-D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\obj\Debug\net8.0-windows\
+d:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\obj\Debug\net8.0-windows\
 AoE4OverlayCS
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\App.xaml
+d:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\App.xaml
 7-935518785
 
-19-1228603557
+21-973506916
 214-1106714967
 MainWindow.xaml;Resources\Strings.en-US.xaml;Resources\Strings.zh-CN.xaml;Views\GamesView.xaml;Views\OverlayWindow.xaml;Views\OverrideView.xaml;Views\SettingsView.xaml;
 
-False
+True
 
