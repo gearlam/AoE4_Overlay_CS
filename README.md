@@ -1,10 +1,6 @@
 # AoE IV: Overlay (C# Remake) - Gear_1.6.1
-<img width="843" height="634" alt="gear1 6 1" src="https://github.com/user-attachments/assets/e29e7c6b-d998-4482-b90f-ac39f9a45a5e" />
-<img width="661" height="164" alt="SnowShot_2026-02-12_19-38-08" src="https://github.com/user-attachments/assets/67fce948-c13b-439e-a0f9-60d8021ca9af" />
-<img width="774" height="584" alt="SnowShot_2026-02-12_19-40-00" src="https://github.com/user-attachments/assets/c2c4a2bd-4caa-4fba-9c5e-13162ca68000" />
-<img width="786" height="592" alt="7" src="https://github.com/user-attachments/assets/5b6b9728-d865-4c9a-b193-b275d56ed33d" />
-<img width="780" height="588" alt="SnowShot_2026-02-12_19-40-53" src="https://github.com/user-attachments/assets/c008d99b-fdc9-49ff-a8b1-ddc9e994fd41" />
-<img width="711" height="302" alt="SnowShot_2026-02-12_19-41-34" src="https://github.com/user-attachments/assets/1715c68f-a68b-4ffe-9eba-f88f1368df8d" />
+
+
 
 This guide is for the C# / WPF refactored version located in the `AoE4_Overlay_CS` directory.
 
@@ -37,7 +33,10 @@ English | [中文版](./USAGE_CN.md)
 - `File -> Config/logs`
   - Opens the configuration directory and attempts to select the most recent log file if it exists.
 - `Links -> App on Github`
-  - Opens the project URL: `https://github.com/gearlam/AoE4_Overlay_CS`
+  - Opens the project URL: `https://github.com/gearlam<img width="846" height="629" alt="3" src="https://github.com/user-attachments/assets/9f1db3be-40d2-4b5b-b596-a3d65b9382d3" />
+<img width="1149" height="236" alt="2" src="https://github.com/user-attachments/assets/e24325f7-cda0-432e-bdf5-1dbd8ce83d10" />
+/AoE4_Overlay_CS`
+<img width="972" height="245" alt="1" src="https://github.com/user-attachments/assets/9be65e8d-ebb0-4341-8469-6cccc6c20b45" />
 
 ## 4. Settings Page: Player & Hotkey Binding
 
