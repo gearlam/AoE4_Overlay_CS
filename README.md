@@ -1,6 +1,5 @@
 # AoE IV: Overlay (C# Remake) - Gear_1.6.1
 <img width="1149" height="236" alt="2" src="https://github.com/user-attachments/assets/e24325f7-cda0-432e-bdf5-1dbd8ce83d10" />
-/AoE4_Overlay_CS`
 <img width="972" height="245" alt="1" src="https://github.com/user-attachments/assets/9be65e8d-ebb0-4341-8469-6cccc6c20b45" />
 <img width="836" height="624" alt="3" src="https://github.com/user-attachments/assets/4afb1df9-bad1-47e1-a2f9-4d3a05ae3faf" />
 
@@ -35,7 +34,6 @@ English | [中文版](./USAGE_CN.md)
   - Opens the `html` folder in the executable's directory (for viewing/editing HTML resources).
 - `File -> Config/logs`
   - Opens the configuration directory and attempts to select the most recent log file if it exists.
-
 
 
 ## 4. Settings Page: Player & Hotkey Binding
