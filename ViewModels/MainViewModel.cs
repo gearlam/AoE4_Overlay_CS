@@ -194,7 +194,12 @@ namespace AoE4OverlayCS.ViewModels
 
         private async Task SearchPlayer()
         {
-            if (string.IsNullOrWhiteSpace(SearchQuery)) return;
+            if (string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                SearchStatusText = "请输入用户ID";
+                SearchStatusBrush = System.Windows.Media.Brushes.OrangeRed;
+                return;
+            }
             
             var query = SearchQuery.Trim();
             var player = await _apiChecker.FindPlayer(query);
@@ -209,15 +214,33 @@ namespace AoE4OverlayCS.ViewModels
 
                 SearchStatusText = "ID Found";
                 SearchStatusBrush = System.Windows.Media.Brushes.LimeGreen;
-                
+                 
                 // Refresh history
                 await RefreshHistory();
+                await UpdateOverlayWithLastGame();
             }
             else
             {
                 SearchStatusText = "ID not found";
                 SearchStatusBrush = System.Windows.Media.Brushes.OrangeRed;
             }
+        }
+
+        private async Task UpdateOverlayWithLastGame()
+        {
+            var lastGame = await _apiChecker.GetLastGame();
+            if (lastGame == null) return;
+
+            var processed = GameProcessor.ProcessGame(lastGame, _settingsService.Current);
+            _wsServer.Send("player_data", processed);
+
+            System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                _overlayWindow?.UpdateData(processed);
+                if (_settingsService.Current.OpenOverlayOnNewGame)
+                {
+                    _overlayWindow?.Show();
+                }
+            });
         }
 
         private void UpdateProfileDisplay()
@@ -362,6 +385,11 @@ namespace AoE4OverlayCS.ViewModels
         {
             Stop();
             Start();
+        }
+
+        public void SaveCurrentSettings()
+        {
+            _settingsService.Save();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

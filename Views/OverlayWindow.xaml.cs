@@ -33,6 +33,7 @@ namespace AoE4OverlayCS.Views
         private const double WinsWidth = 60;
         private const double LossesWidth = 70;
         private const double CountryFlagWidth = 30;
+        private const byte LockedBackgroundAlpha = 77;
         
         // P/Invoke for resizing
         private const int WM_SYSCOMMAND = 0x112;
@@ -78,7 +79,7 @@ namespace AoE4OverlayCS.Views
             SetWindowLong(helper.Handle, GWL_EXSTYLE, exStyle | WS_EX_NOACTIVATE);
 
             WindowServices.SetWindowExTransparent(this);
-            Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0));
+            Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
             UnlockBorder.Visibility = Visibility.Collapsed;
             ResizeGripControl.Visibility = Visibility.Collapsed;
         }
@@ -645,9 +646,9 @@ namespace AoE4OverlayCS.Views
             }
             else
             {
-                // Lock: Make it click-through and transparent background (50% black)
+                // Lock: Make it click-through and transparent background (30% black)
                 WindowServices.SetWindowExTransparent(this);
-                Background = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0));
+                Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
                 
                 // Hide resize controls
                 UnlockBorder.Visibility = Visibility.Collapsed;

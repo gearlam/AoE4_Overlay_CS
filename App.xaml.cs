@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
 using AoE4OverlayCS.Services;
 using System.Windows;
 
@@ -45,6 +45,7 @@ namespace AoE4OverlayCS
             _ = LogPaths.LogsDirectory;
             
             _viewModel = new MainViewModel();
+            global::AoE4OverlayCS.MainWindow.SetLanguage(_viewModel.Settings.Language);
             var window = new MainWindow();
             window.DataContext = _viewModel;
             MainWindow = window;

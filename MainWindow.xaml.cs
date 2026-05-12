@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
 using AoE4OverlayCS.Services;
 using System.Windows;
 using System;
@@ -26,6 +26,8 @@ namespace AoE4OverlayCS
 
         private void ApplyVersionToWindowTitle()
         {
+            // 主窗口版本信息来自 AoE4OverlayCS.csproj 的 InformationalVersion/Version。
+            // 手动修改版本号请优先改 AoE4OverlayCS.csproj，而不是这里的窗口标题拼接逻辑。
             string? version = Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
@@ -198,16 +200,21 @@ namespace AoE4OverlayCS
 
         private void SetLanguageEnglish_Click(object sender, RoutedEventArgs e)
         {
-            SetLanguage("en-US");
+            SetLanguage("en-US", save: true);
         }
 
         private void SetLanguageChinese_Click(object sender, RoutedEventArgs e)
         {
-            SetLanguage("zh-CN");
+            SetLanguage("zh-CN", save: true);
         }
 
-        private static void SetLanguage(string cultureName)
+        public static void SetLanguage(string cultureName, bool save = false)
         {
+            if (cultureName != "zh-CN")
+            {
+                cultureName = "en-US";
+            }
+
             var culture = new CultureInfo(cultureName);
             CultureInfo.DefaultThreadCurrentCulture = culture;
             CultureInfo.DefaultThreadCurrentUICulture = culture;
@@ -230,6 +237,12 @@ namespace AoE4OverlayCS
                 Source = new Uri($"Resources/Strings.{cultureName}.xaml", UriKind.Relative)
             };
             merged.Add(dict);
+
+            if (save && app.MainWindow?.DataContext is MainViewModel vm)
+            {
+                vm.Settings.Language = cultureName;
+                vm.SaveCurrentSettings();
+            }
         }
     }
 }

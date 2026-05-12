@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj": {}
+    "D:\\bak\\tttttt\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj": {}
   },
   "projects": {
-    "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj": {
-      "version": "1.6.3",
+    "D:\\bak\\tttttt\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj": {
+      "version": "1.6.5",
       "restore": {
-        "projectUniqueName": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+        "projectUniqueName": "D:\\bak\\tttttt\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
         "projectName": "AoE4OverlayCS",
-        "projectPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
+        "projectPath": "D:\\bak\\tttttt\\AoE4_Overlay_CS\\AoE4OverlayCS.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\obj\\",
+        "outputPath": "D:\\bak\\tttttt\\AoE4_Overlay_CS\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "configFilePaths": [
@@ -86,24 +86,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.24, 8.0.24]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.24, 8.0.24]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.24, 8.0.24]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.24, 8.0.24]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -112,7 +94,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.3.32767]",
@@ -459,7 +441,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "D:\\bak\\AoE4_Overlay-main\\AoE4_Overlay_CS\\.dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

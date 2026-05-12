@@ -14,3 +14,19 @@
    at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
    at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
    at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 162
+2026-05-13T02:29:25.2727929+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 162
+2026-05-13T02:29:57.1615551+08:00 register-failed F12 NHotkey.HotkeyAlreadyRegisteredException: 热键已注册。 (0x80070581)
+ ---> System.Runtime.InteropServices.COMException (0x80070581): 热键已注册。 (0x80070581)
+   --- End of inner exception stack trace ---
+   at NHotkey.Hotkey.Register(IntPtr hwnd, String name)
+   at NHotkey.HotkeyManagerBase.AddOrReplace(String name, UInt32 virtualKey, HotkeyFlags flags, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, Boolean noRepeat, EventHandler`1 handler)
+   at NHotkey.Wpf.HotkeyManager.AddOrReplace(String name, Key key, ModifierKeys modifiers, EventHandler`1 handler)
+   at AoE4OverlayCS.ViewModels.MainViewModel.UpdateHotkeyRegistration() in D:\bak\AoE4_Overlay-main\AoE4_Overlay_CS\ViewModels\MainViewModel.cs:line 162

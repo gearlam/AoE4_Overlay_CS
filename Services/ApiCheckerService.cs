@@ -64,11 +64,8 @@ namespace AoE4OverlayCS.Services
 
         private async Task<JObject?> CheckLastGame()
         {
-            var url = $"https://aoe4world.com/api/v0/players/{_settings.Current.ProfileId}/games/last";
-            var resp = await _http.GetStringAsync(url);
-            var json = JObject.Parse(resp);
-
-            if (json.ContainsKey("error")) return null;
+            var json = await GetLastGame();
+            if (json == null) return null;
 
             var startedAtStr = json["started_at"]?.ToString();
             if (startedAtStr != null && DateTime.TryParse(startedAtStr, out var startedAt))
@@ -82,6 +79,25 @@ namespace AoE4OverlayCS.Services
                 }
             }
             return null;
+        }
+
+        public async Task<JObject?> GetLastGame()
+        {
+            if (string.IsNullOrEmpty(_settings.Current.ProfileId)) return null;
+
+            try
+            {
+                var url = $"https://aoe4world.com/api/v0/players/{_settings.Current.ProfileId}/games/last";
+                var resp = await _http.GetStringAsync(url);
+                var json = JObject.Parse(resp);
+
+                if (json.ContainsKey("error")) return null;
+                return json;
+            }
+            catch
+            {
+                return null;
+            }
         }
         
         public async Task<JArray?> GetMatchHistory(int limit = 10)

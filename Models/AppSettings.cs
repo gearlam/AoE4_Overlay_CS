@@ -58,6 +58,9 @@ namespace AoE4OverlayCS.Models
         private bool _openOverlayOnNewGame = true;
         public bool OpenOverlayOnNewGame { get => _openOverlayOnNewGame; set { _openOverlayOnNewGame = value; OnPropertyChanged(); } }
 
+        private string _language = "en-US";
+        public string Language { get => _language; set { _language = value; OnPropertyChanged(); } }
+
         public Dictionary<string, bool> ShowGraph { get; set; } = new() { { "1", true }, { "2", true }, { "3", true }, { "4", true } };
         
         public List<List<object>> TeamColors { get; set; } = new() {
