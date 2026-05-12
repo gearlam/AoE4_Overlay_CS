@@ -11,7 +11,7 @@
     <Version>1.6.5</Version>
     <AssemblyVersion>1.6.5</AssemblyVersion>
     <FileVersion>1.6.5</FileVersion>
-    <InformationalVersion>1.6.5</InformationalVersion>
+    <InformationalVersion>1.6.5.1</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
