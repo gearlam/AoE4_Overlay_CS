@@ -76,5 +76,34 @@ namespace AoE4OverlayCS.Views
                  HotkeyButton.Content = string.IsNullOrEmpty(hotkey) ? "Click to set" : hotkey;
              }
         }
+
+        private void SearchTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+
+            if (DataContext is MainViewModel vm && vm.SearchPlayerCommand.CanExecute(null))
+            {
+                vm.SearchPlayerCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+
+        private void SearchHistoryComboBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is System.Windows.Controls.ComboBox comboBox && !comboBox.IsDropDownOpen)
+            {
+                comboBox.IsDropDownOpen = true;
+            }
+        }
+
+        private void DeleteSearchHistory_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.Button button || button.Tag is not string query) return;
+            if (DataContext is not MainViewModel vm) return;
+
+            vm.RemoveSearchHistory(query);
+            SearchHistoryComboBox.IsDropDownOpen = true;
+            e.Handled = true;
+        }
     }
 }

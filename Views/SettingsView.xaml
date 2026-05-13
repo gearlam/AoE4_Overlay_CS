@@ -24,6 +24,11 @@
             <Setter Property="Height" Value="34"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="10,5"/>
             <Setter Property="FontSize" Value="15"/>
@@ -62,11 +67,36 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" 
-                                 Grid.Column="0" Margin="0,0,10,0" 
-                                 Tag="{DynamicResource Settings_SearchPlaceholder}"/>
-                        <!-- Placeholder handled via style or simple overlay if needed, skipping for simplicity -->
-                        
+                        <ComboBox x:Name="SearchHistoryComboBox"
+                                  Grid.Column="0" Margin="0,0,10,0"
+                                  IsEditable="True"
+                                  IsTextSearchEnabled="False"
+                                  StaysOpenOnEdit="True"
+                                  ItemsSource="{Binding SearchHistory}"
+                                  Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                  KeyDown="SearchTextBox_KeyDown"
+                                  PreviewMouseLeftButtonDown="SearchHistoryComboBox_PreviewMouseLeftButtonDown"
+                                  Tag="{DynamicResource Settings_SearchPlaceholder}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="6,0,8,0"/>
+                                        <Button Grid.Column="1"
+                                                Content="删除"
+                                                Padding="8,2"
+                                                Height="26"
+                                                Margin="0,0,6,0"
+                                                Tag="{Binding}"
+                                                Click="DeleteSearchHistory_Click"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
                         <Button Content="{DynamicResource Settings_SearchButton}" Command="{Binding SearchPlayerCommand}" Grid.Column="1"/>
                     </Grid>
                 </StackPanel>

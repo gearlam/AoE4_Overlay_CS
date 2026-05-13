@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
 using AoE4OverlayCS.Services;
 using System.Windows;
 using System;
@@ -242,6 +242,7 @@ namespace AoE4OverlayCS
             {
                 vm.Settings.Language = cultureName;
                 vm.SaveCurrentSettings();
+                _ = vm.RefreshLocalizedDataAfterLanguageChange();
             }
         }
     }

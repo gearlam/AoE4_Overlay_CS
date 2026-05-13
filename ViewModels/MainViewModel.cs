@@ -78,6 +78,7 @@ namespace AoE4OverlayCS.ViewModels
 
         // Games Tab
         public ObservableCollection<MatchHistoryItem> Games { get; } = new ObservableCollection<MatchHistoryItem>();
+        public ObservableCollection<string> SearchHistory { get; }
 
         // Commands
         public ICommand SearchPlayerCommand { get; }
@@ -94,6 +95,7 @@ namespace AoE4OverlayCS.ViewModels
             _apiChecker = new ApiCheckerService(_settingsService);
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
+            SearchHistory = new ObservableCollection<string>(_settingsService.Current.SearchHistory ?? new List<string>());
 
             _apiChecker.OnNewGame += OnNewGame;
             _apiChecker.OnError += OnApiError;
@@ -205,6 +207,7 @@ namespace AoE4OverlayCS.ViewModels
             var player = await _apiChecker.FindPlayer(query);
             if (player != null)
             {
+                AddSearchHistory(query);
                 Settings.ProfileId = player["profile_id"]?.ToString();
                 Settings.PlayerName = player["name"]?.ToString();
                 Settings.SteamId = player["steam_id"]?.ToString();
@@ -223,6 +226,42 @@ namespace AoE4OverlayCS.ViewModels
             {
                 SearchStatusText = "ID not found";
                 SearchStatusBrush = System.Windows.Media.Brushes.OrangeRed;
+            }
+        }
+
+        private void AddSearchHistory(string query)
+        {
+            var normalized = query.Trim();
+            if (string.IsNullOrEmpty(normalized)) return;
+
+            var existing = SearchHistory.FirstOrDefault(x => string.Equals(x, normalized, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+            {
+                SearchHistory.Remove(existing);
+            }
+
+            SearchHistory.Insert(0, normalized);
+
+            while (SearchHistory.Count > 20)
+            {
+                SearchHistory.RemoveAt(SearchHistory.Count - 1);
+            }
+
+            Settings.SearchHistory = SearchHistory.ToList();
+        }
+
+        public void RemoveSearchHistory(string query)
+        {
+            var existing = SearchHistory.FirstOrDefault(x => string.Equals(x, query, StringComparison.OrdinalIgnoreCase));
+            if (existing == null) return;
+
+            SearchHistory.Remove(existing);
+            Settings.SearchHistory = SearchHistory.ToList();
+            _settingsService.Save();
+
+            if (string.Equals(SearchQuery, existing, StringComparison.OrdinalIgnoreCase))
+            {
+                SearchQuery = "";
             }
         }
 
@@ -271,7 +310,8 @@ namespace AoE4OverlayCS.ViewModels
                             try
                             {
                                 var item = new MatchHistoryItem();
-                                item.Map = gameObject["map"]?.ToString() ?? "?";
+                                item.Map = MapNameTranslator.Translate(gameObject["map"]?.ToString(), Settings.Language);
+                                if (string.IsNullOrEmpty(item.Map)) item.Map = "?";
                                 item.MatchId = gameObject["game_id"]?.ToString() ?? "";
                                 item.Mode = gameObject["kind"]?.ToString() ?? "?";
                                 // Format started time
@@ -390,6 +430,12 @@ namespace AoE4OverlayCS.ViewModels
         public void SaveCurrentSettings()
         {
             _settingsService.Save();
+        }
+
+        public async Task RefreshLocalizedDataAfterLanguageChange()
+        {
+            await RefreshHistory();
+            await UpdateOverlayWithLastGame();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
