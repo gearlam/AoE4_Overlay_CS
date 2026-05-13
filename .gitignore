@@ -7,7 +7,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-README.md
 
 # Build results
 [Dd]ebug/
