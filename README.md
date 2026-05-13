@@ -16,7 +16,9 @@
 
 <img width="1149" height="236" alt="overlay-preview-1" src="https://github.com/user-attachments/assets/e24325f7-cda0-432e-bdf5-1dbd8ce83d10" />
 <img width="972" height="245" alt="overlay-preview-2" src="https://github.com/user-attachments/assets/9be65e8d-ebb0-4341-8469-6cccc6c20b45" />
-<img width="836" height="624" alt="main-window-preview" src="https://github.com/user-attachments/assets/4afb1df9-bad1-47e1-a2f9-4d3a05ae3faf" />
+<img width="845" height="635" alt="image" src="https://github.com/user-attachments/assets/956ad7ca-1a67-4f9e-b718-6307bdb29c00" />
+<img width="842" height="636" alt="image" src="https://github.com/user-attachments/assets/9e09304e-6b8c-47c6-b1e8-fdab989fe7a0" />
+
 
 ## 版本信息
 

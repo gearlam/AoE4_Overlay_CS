@@ -33,6 +33,7 @@ packages/
 
 # VS Code
 .vscode/
+.dotnet/
 
 # Test results
 [Tt]est[Rr]esult*/
