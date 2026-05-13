@@ -1,0 +1,63 @@
+﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+using AoE4OverlayCS.Services;
+using System.Windows;
+
+using System.Threading;
+
+namespace AoE4OverlayCS
+{
+    public partial class App : System.Windows.Application
+    {
+        private MainViewModel? _viewModel;
+        private static Mutex? _mutex;
+
+        public App()
+        {
+            const string appName = "AoE4OverlayCS_Mutex";
+            bool createdNew;
+            _mutex = new Mutex(true, appName, out createdNew);
+
+            if (!createdNew)
+            {
+                System.Windows.MessageBox.Show("App is already running!");
+                Shutdown();
+                return;
+            }
+
+            DispatcherUnhandledException += App_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
+        {
+             System.IO.File.WriteAllText(LogPaths.Get("domain_error.log"), e.ExceptionObject.ToString());
+        }
+
+        private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+             System.IO.File.WriteAllText(LogPaths.Get("dispatcher_error.log"), e.Exception.ToString());
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            _ = LogPaths.LogsDirectory;
+            
+            _viewModel = new MainViewModel();
+            global::AoE4OverlayCS.MainWindow.SetLanguage(_viewModel.Settings.Language);
+            var window = new MainWindow();
+            window.DataContext = _viewModel;
+            MainWindow = window;
+            window.Show();
+
+            _viewModel.Start();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _viewModel?.Stop();
+            base.OnExit(e);
+        }
+    }
+}
