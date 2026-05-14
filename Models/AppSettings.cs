@@ -19,7 +19,7 @@ namespace AoE4OverlayCS.Models
         private bool _logMatches = true;
         public bool LogMatches { get => _logMatches; set { _logMatches = value; OnPropertyChanged(); } }
 
-        private int _interval = 15;
+        private int _interval = 60;
         public int Interval { get => _interval; set { _interval = value; OnPropertyChanged(); } }
 
         private double _appWidth = 900;
@@ -49,7 +49,7 @@ namespace AoE4OverlayCS.Models
         private double _teamGap = 12;
         public double TeamGap { get => _teamGap; set { _teamGap = value; OnPropertyChanged(); } }
 
-        private int _maxGamesHistory = 100;
+        private int _maxGamesHistory = 20;
         public int MaxGamesHistory { get => _maxGamesHistory; set { _maxGamesHistory = value; OnPropertyChanged(); } }
 
         private string _civStatsColor = "#BC8AEA";
