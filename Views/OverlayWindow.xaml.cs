@@ -197,7 +197,7 @@ namespace AoE4OverlayCS.Views
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var nameBg = CreateNameBadge(p, margin: new Thickness(6, 0, 0, 0), textAlignment: TextAlignment.Left);
+            var nameBg = CreateNameBadge(p, margin: new Thickness(2, 0, 0, 0), textAlignment: TextAlignment.Left);
             nameBg.MaxWidth = 300;
             Grid.SetRow(nameBg, 0);
             contentGrid.Children.Add(nameBg);
@@ -248,7 +248,7 @@ namespace AoE4OverlayCS.Views
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var nameBg = CreateNameBadge(p, margin: new Thickness(0, 0, 6, 0), textAlignment: TextAlignment.Right);
+            var nameBg = CreateNameBadge(p, margin: new Thickness(0, 0, 2, 0), textAlignment: TextAlignment.Right);
             nameBg.MaxWidth = 300;
             Grid.SetRow(nameBg, 0);
             contentGrid.Children.Add(nameBg);
@@ -486,7 +486,7 @@ namespace AoE4OverlayCS.Views
             {
                 Background = teamColor,
                 CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(6, 1, 6, 1),
+                Padding = new Thickness(0, 1, 6, 1),
                 Margin = margin,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Stretch
