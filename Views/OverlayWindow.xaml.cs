@@ -435,20 +435,36 @@ namespace AoE4OverlayCS.Views
 
         private Image CreateCivFlag(dynamic p, string baseDir, HorizontalAlignment hAlign)
         {
-            var flagImg = new Image { Width = 72, Height = 36, Stretch = Stretch.UniformToFill, HorizontalAlignment = hAlign };
+            const double targetHeight = 36;
+            var flagImg = new Image { Width = 72, Height = targetHeight, Stretch = Stretch.Uniform, HorizontalAlignment = hAlign };
             string civ = p.civ;
             string civKey = civ.ToString().Replace(" ", "_").ToLower();
             string? resolvedPath = CivIconResolver.Resolve(baseDir, civ, civKey);
             if (resolvedPath != null)
             {
                 var source = TryLoadImageSource(resolvedPath);
-                if (source != null) flagImg.Source = source;
+                if (source != null)
+                {
+                    flagImg.Source = source;
+                    ApplyImageAspectWidth(flagImg, source, targetHeight);
+                }
             }
             else
             {
                 File.AppendAllText(LogPaths.Get("image_load_error.log"), $"Civ icon not found (Civ: {civ}, Key: {civKey}){Environment.NewLine}");
             }
             return flagImg;
+        }
+
+        private static void ApplyImageAspectWidth(Image image, ImageSource source, double targetHeight)
+        {
+            if (source.Width <= 0 || source.Height <= 0)
+            {
+                return;
+            }
+
+            image.Height = targetHeight;
+            image.Width = Math.Max(1, source.Width / source.Height * targetHeight);
         }
 
         private Border CreateNameBadge(dynamic p, Thickness margin, TextAlignment textAlignment)
