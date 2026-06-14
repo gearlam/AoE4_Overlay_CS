@@ -373,7 +373,8 @@ namespace AoE4OverlayCS.ViewModels
                                 item.Map = MapNameTranslator.Translate(gameObject["map"]?.ToString(), Settings.Language);
                                 if (string.IsNullOrEmpty(item.Map)) item.Map = "?";
                                 item.MatchId = gameObject["game_id"]?.ToString() ?? "";
-                                item.Mode = gameObject["kind"]?.ToString() ?? "?";
+                                var rawMode = gameObject["kind"]?.ToString() ?? "?";
+                                item.Mode = TranslateMode(rawMode, Settings.Language);
                                 // Format started time
                                 if (DateTime.TryParse(gameObject["started_at"]?.ToString(), out DateTime dt))
                                 {
@@ -422,7 +423,7 @@ namespace AoE4OverlayCS.ViewModels
                                                 var player = p["player"] as JObject;
                                                 if (player?["profile_id"]?.ToString() == Settings.ProfileId)
                                                 {
-                                                    item.Result = player?["result"]?.ToString() ?? "unknown";
+                                                    item.Result = TranslateResult(player?["result"]?.ToString() ?? "unknown", Settings.Language);
                                                     var diff = player?["rating_diff"]?.ToString();
                                                     if (!string.IsNullOrEmpty(diff)) item.RatingDiff = diff;
                                                     found = true;
@@ -440,6 +441,24 @@ namespace AoE4OverlayCS.ViewModels
                     }
                 });
             }
+        }
+
+        private static string TranslateMode(string mode, string? language)
+        {
+            if (!string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase))
+                return mode;
+            if (mode.StartsWith("rm", StringComparison.OrdinalIgnoreCase))
+                return "排位赛" + mode.Substring(2);
+            return mode;
+        }
+
+        private static string TranslateResult(string result, string? language)
+        {
+            if (!string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase))
+                return result;
+            if (string.Equals(result, "win", StringComparison.OrdinalIgnoreCase)) return "赢";
+            if (string.Equals(result, "loss", StringComparison.OrdinalIgnoreCase)) return "输";
+            return result;
         }
 
         private void OnNewGame(JObject gameData)
