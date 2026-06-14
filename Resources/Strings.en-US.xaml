@@ -36,5 +36,6 @@
     <sys:String x:Key="Games_Header_Mode" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Mode</sys:String>
     <sys:String x:Key="Games_Header_Result" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Result</sys:String>
     <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Diff</sys:String>
+    <sys:String x:Key="Games_Header_Match" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Match</sys:String>
 
 </ResourceDictionary>

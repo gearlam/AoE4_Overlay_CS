@@ -20,7 +20,7 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `1.7.4`
+- Current version: `1.7.5`
 - Target frameworks: `net10.0-windows`
 
 ## Project Purpose
@@ -203,14 +203,17 @@ It is used to:
 - Show civilization, country, rating, rank, win rate, wins and losses
 - Team-colored background for player names
 - Support localized map display
+- Support localized civilization name display (25 civilizations)
 
 ### Overlay Control
 
 - Global hotkey to show / hide overlay
 - Global hotkey to lock / unlock overlay position
+- Customizable position hotkey (with recording)
 - Automatic fallback to low-level keyboard hook if system hotkey registration fails
 - Unlock mode supports drag and resize
 - Lock mode supports click-through behavior
+- Gold thick border when locked, red thick border when unlocked
 
 ### Match History
 
@@ -218,7 +221,10 @@ It is used to:
 - Show both team rosters
 - Show current bound player's result and rating diff
 - Chinese UI displays localized map names
-- English UI preserves original English names
+- Chinese UI localizes mode names (rm prefix → 排位赛)
+- Chinese UI localizes match results (win → 赢, loss → 输)
+- Player names are clickable, linking to their aoe4world.com profile
+- Match IDs are clickable, linking to the aoe4world.com match detail page
 
 ### Multi-Language Support
 

@@ -88,7 +88,9 @@ namespace AoE4OverlayCS.Services
             ["Water Drake"] = "水龙 / 蛟龙",
             ["Waterholes"] = "水坑",
             ["Wetlands"] = "湿地",
-            ["Woodwall"] = "木墙 / 林墙"
+            ["Woodwall"] = "木墙 / 林墙",
+            ["Carmel"] = "卡梅尔",
+            ["Hedgemaze"] = "树篱迷宫"
         };
 
         public static string Translate(string? mapName, string? language)

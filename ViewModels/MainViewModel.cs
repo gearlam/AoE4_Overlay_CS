@@ -23,6 +23,9 @@ namespace AoE4OverlayCS.ViewModels
         public string ProfileIdDisplay { get; set; } = "";
         public string Civ { get; set; } = "";
         public string CivColor { get; set; } = "#BC8AEA";
+        public string ProfileUrl => string.IsNullOrEmpty(ProfileId)
+            ? ""
+            : $"https://aoe4world.com/players/{ProfileId}";
     }
 
     public class MatchHistoryItem
@@ -37,6 +40,10 @@ namespace AoE4OverlayCS.ViewModels
         public string Result { get; set; } = "";
         public string RatingDiff { get; set; } = "";
         public string MatchId { get; set; } = "";
+        public string ProfileId { get; set; } = "";
+        public string GameUrl => string.IsNullOrEmpty(ProfileId) || string.IsNullOrEmpty(MatchId)
+            ? ""
+            : $"https://aoe4world.com/players/{ProfileId}/games/{MatchId}";
     }
 
     public class MainViewModel : INotifyPropertyChanged
@@ -373,6 +380,7 @@ namespace AoE4OverlayCS.ViewModels
                                 item.Map = MapNameTranslator.Translate(gameObject["map"]?.ToString(), Settings.Language);
                                 if (string.IsNullOrEmpty(item.Map)) item.Map = "?";
                                 item.MatchId = gameObject["game_id"]?.ToString() ?? "";
+                                item.ProfileId = Settings.ProfileId ?? "";
                                 var rawMode = gameObject["kind"]?.ToString() ?? "?";
                                 item.Mode = TranslateMode(rawMode, Settings.Language);
                                 // Format started time

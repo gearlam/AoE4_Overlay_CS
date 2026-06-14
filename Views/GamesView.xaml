@@ -21,6 +21,7 @@
                 <ColumnDefinition Width="80"/>  <!-- Mode -->
                 <ColumnDefinition Width="60"/>  <!-- Result -->
                 <ColumnDefinition Width="60"/>  <!-- Diff -->
+                <ColumnDefinition Width="80"/>  <!-- Match -->
             </Grid.ColumnDefinitions>
             
             <TextBlock Text="{DynamicResource Games_Header_Team1}" Grid.Column="0" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -30,6 +31,7 @@
             <TextBlock Text="{DynamicResource Games_Header_Mode}" Grid.Column="4" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             <TextBlock Text="{DynamicResource Games_Header_Result}" Grid.Column="5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             <TextBlock Text="{DynamicResource Games_Header_Diff}" Grid.Column="6" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <TextBlock Text="{DynamicResource Games_Header_Match}" Grid.Column="7" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Grid>
         
         <!-- List -->
@@ -47,6 +49,7 @@
                                     <ColumnDefinition Width="80"/>  <!-- Mode -->
                                     <ColumnDefinition Width="60"/>  <!-- Result -->
                                     <ColumnDefinition Width="60"/>  <!-- Diff -->
+                                    <ColumnDefinition Width="80"/>  <!-- Match -->
                                 </Grid.ColumnDefinitions>
                                 
                                 <ItemsControl ItemsSource="{Binding Team1Players}" Grid.Column="0">
@@ -58,7 +61,11 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="0,1">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock FontWeight="Bold" FontSize="11">
+                                                    <Hyperlink NavigateUri="{Binding ProfileUrl}" RequestNavigate="Hyperlink_RequestNavigate" Foreground="Black">
+                                                        <Run Text="{Binding Name, Mode=OneWay}"/>
+                                                    </Hyperlink>
+                                                </TextBlock>
                                                 <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
                                                 <TextBlock Text="(" FontSize="11"/>
                                                 <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
@@ -77,7 +84,11 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" Margin="0,1">
-                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock FontWeight="Bold" FontSize="11">
+                                                    <Hyperlink NavigateUri="{Binding ProfileUrl}" RequestNavigate="Hyperlink_RequestNavigate" Foreground="Black">
+                                                        <Run Text="{Binding Name, Mode=OneWay}"/>
+                                                    </Hyperlink>
+                                                </TextBlock>
                                                 <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
                                                 <TextBlock Text="(" FontSize="11"/>
                                                 <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
@@ -92,6 +103,11 @@
                                 <TextBlock Text="{Binding Mode}" Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"/>
                                 <TextBlock Text="{Binding Result}" Grid.Column="5" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
                                 <TextBlock Text="{Binding RatingDiff}" Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10">
+                                    <Hyperlink NavigateUri="{Binding GameUrl}" RequestNavigate="Hyperlink_RequestNavigate">
+                                        <Run Text="{Binding MatchId, Mode=OneWay}"/>
+                                    </Hyperlink>
+                                </TextBlock>
                             </Grid>
                         </Border>
                     </DataTemplate>
