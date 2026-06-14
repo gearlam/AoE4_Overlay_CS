@@ -404,8 +404,7 @@ namespace AoE4OverlayCS.ViewModels
                                         var name = player?["name"]?.ToString() ?? "?";
                                         var profileId = player?["profile_id"]?.ToString() ?? "";
                                         var civ = CivNameTranslator.Translate(player?["civilization"]?.ToString(), Settings.Language);
-                                        var profileIdDisplay = string.IsNullOrEmpty(profileId) ? "" : $" [{profileId}]";
-                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, ProfileIdDisplay = profileIdDisplay, Civ = civ, CivColor = Settings.CivStatsColor };
+                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, Civ = civ, CivColor = Settings.CivStatsColor };
                                     }).ToList() ?? new List<PlayerDisplayInfo>();
 
                                     item.Team2Players = t2?.Select(p => {
@@ -413,12 +412,11 @@ namespace AoE4OverlayCS.ViewModels
                                         var name = player?["name"]?.ToString() ?? "?";
                                         var profileId = player?["profile_id"]?.ToString() ?? "";
                                         var civ = CivNameTranslator.Translate(player?["civilization"]?.ToString(), Settings.Language);
-                                        var profileIdDisplay = string.IsNullOrEmpty(profileId) ? "" : $" [{profileId}]";
-                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, ProfileIdDisplay = profileIdDisplay, Civ = civ, CivColor = Settings.CivStatsColor };
+                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, Civ = civ, CivColor = Settings.CivStatsColor };
                                     }).ToList() ?? new List<PlayerDisplayInfo>();
 
-                                    item.Team1Display = string.Join(Environment.NewLine, item.Team1Players.Select(p => $"{p.Name}{p.ProfileIdDisplay} ({p.Civ})"));
-                                    item.Team2Display = string.Join(Environment.NewLine, item.Team2Players.Select(p => $"{p.Name}{p.ProfileIdDisplay} ({p.Civ})"));
+                                    item.Team1Display = string.Join(Environment.NewLine, item.Team1Players.Select(p => $"{p.Name} ({p.Civ})"));
+                                    item.Team2Display = string.Join(Environment.NewLine, item.Team2Players.Select(p => $"{p.Name} ({p.Civ})"));
                                     
                                     // Check result for current profile
                                     bool found = false;

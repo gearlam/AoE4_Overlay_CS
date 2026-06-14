@@ -66,7 +66,6 @@
                                                         <Run Text="{Binding Name, Mode=OneWay}"/>
                                                     </Hyperlink>
                                                 </TextBlock>
-                                                <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
                                                 <TextBlock Text="(" FontSize="11"/>
                                                 <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
                                                 <TextBlock Text=")" FontSize="11"/>
@@ -89,7 +88,6 @@
                                                         <Run Text="{Binding Name, Mode=OneWay}"/>
                                                     </Hyperlink>
                                                 </TextBlock>
-                                                <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
                                                 <TextBlock Text="(" FontSize="11"/>
                                                 <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
                                                 <TextBlock Text=")" FontSize="11"/>
