@@ -36,7 +36,8 @@
         </Grid>
         
         <!-- Unlock UI: Border and Resize Grip -->
-        <Border x:Name="UnlockBorder" BorderBrush="Yellow" BorderThickness="2" Visibility="Collapsed" IsHitTestVisible="False"/>
+        <Border x:Name="LockedBorder" BorderBrush="Gold" BorderThickness="4" Visibility="Visible" IsHitTestVisible="False"/>
+        <Border x:Name="UnlockBorder" BorderBrush="Red" BorderThickness="4" Visibility="Collapsed" IsHitTestVisible="False"/>
         <ResizeGrip x:Name="ResizeGripControl" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="Collapsed" Cursor="SizeNWSE" 
                     MouseLeftButtonDown="ResizeGrip_MouseLeftButtonDown"/>
     </Grid>

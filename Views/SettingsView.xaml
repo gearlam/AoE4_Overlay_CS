@@ -121,6 +121,17 @@
                             <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource Settings_PositionHotkeyLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button x:Name="PositionHotkeyButton" Content="{Binding Settings.OverlayPositionHotkey, TargetNullValue='Click to set'}" 
+                                Grid.Column="1" HorizontalAlignment="Left" Width="180" Height="34"
+                                Click="PositionHotkeyButton_Click" PreviewKeyDown="PositionHotkeyButton_PreviewKeyDown"/>
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
                         <TextBlock Text="{DynamicResource Settings_FontSizeLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <ComboBox SelectedItem="{Binding Settings.FontSize}" Grid.Column="1" HorizontalAlignment="Left" Width="180" Height="34" FontSize="15" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
                             <ComboBox.ItemContainerStyle>
@@ -152,8 +163,6 @@
                             <TextBlock Text="{Binding Settings.TeamGap, StringFormat={}{0:0}}" FontSize="16" Margin="10,0,0,0" VerticalAlignment="Center" Width="40"/>
                         </StackPanel>
                     </Grid>
-
-                    <Button Content="{DynamicResource Settings_OverlayPositionButton}" Command="{Binding ChangeOverlayPositionCommand}" Margin="0,14,0,0" Height="40"/>
                 </StackPanel>
             </GroupBox>
         </Grid>

@@ -14,6 +14,7 @@ namespace AoE4OverlayCS.Views
         }
 
         private bool _isRecording = false;
+        private bool _isRecordingPosition = false;
 
         private void HotkeyButton_Click(object sender, RoutedEventArgs e)
         {
@@ -26,11 +27,8 @@ namespace AoE4OverlayCS.Views
             if (!_isRecording) return;
             e.Handled = true;
             
-            // Handle modifier keys
             var key = (e.Key == Key.System ? e.SystemKey : e.Key);
             
-            // Allow modifiers as standalone only if user wants? Usually we wait for a non-modifier.
-            // But we filter them out from being the "trigger" key.
             if (key == Key.LeftShift || key == Key.RightShift ||
                 key == Key.LeftCtrl || key == Key.RightCtrl ||
                 key == Key.LeftAlt || key == Key.RightAlt ||
@@ -46,11 +44,9 @@ namespace AoE4OverlayCS.Views
             
             if (key == Key.Back || key == Key.Delete || key == Key.Escape)
             {
-                 // Clear hotkey or cancel
                  if (key == Key.Escape) 
                  {
                     _isRecording = false;
-                    // Re-bind to show current value
                     HotkeyButton.GetBindingExpression(System.Windows.Controls.Button.ContentProperty)?.UpdateTarget();
                     return;
                  }
@@ -59,21 +55,72 @@ namespace AoE4OverlayCS.Views
                  return;
             }
 
-            // Fix for F-keys and others
             sb.Append(key.ToString());
             UpdateHotkey(sb.ToString());
             _isRecording = false;
         }
+
+        private void PositionHotkeyButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isRecordingPosition = true;
+            PositionHotkeyButton.Content = "Press any key...";
+        }
+
+        private void PositionHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (!_isRecordingPosition) return;
+            e.Handled = true;
+            
+            var key = (e.Key == Key.System ? e.SystemKey : e.Key);
+            
+            if (key == Key.LeftShift || key == Key.RightShift ||
+                key == Key.LeftCtrl || key == Key.RightCtrl ||
+                key == Key.LeftAlt || key == Key.RightAlt ||
+                key == Key.LWin || key == Key.RWin)
+            {
+                return;
+            }
+
+            var sb = new StringBuilder();
+            if ((Keyboard.Modifiers & ModifierKeys.Control) != 0) sb.Append("Ctrl+");
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) sb.Append("Shift+");
+            if ((Keyboard.Modifiers & ModifierKeys.Alt) != 0) sb.Append("Alt+");
+            
+            if (key == Key.Back || key == Key.Delete || key == Key.Escape)
+            {
+                 if (key == Key.Escape) 
+                 {
+                    _isRecordingPosition = false;
+                    PositionHotkeyButton.GetBindingExpression(System.Windows.Controls.Button.ContentProperty)?.UpdateTarget();
+                    return;
+                 }
+                 UpdatePositionHotkey("");
+                 _isRecordingPosition = false;
+                 return;
+            }
+
+            sb.Append(key.ToString());
+            UpdatePositionHotkey(sb.ToString());
+            _isRecordingPosition = false;
+        }
         
         private void UpdateHotkey(string hotkey)
         {
-             // Update ViewModel
              if (DataContext is MainViewModel vm)
              {
                  vm.Settings.OverlayHotkey = hotkey;
                  vm.UpdateHotkeyRegistration(); 
-                 // Force button update
                  HotkeyButton.Content = string.IsNullOrEmpty(hotkey) ? "Click to set" : hotkey;
+             }
+        }
+
+        private void UpdatePositionHotkey(string hotkey)
+        {
+             if (DataContext is MainViewModel vm)
+             {
+                 vm.Settings.OverlayPositionHotkey = hotkey;
+                 vm.UpdateHotkeyRegistration(); 
+                 PositionHotkeyButton.Content = string.IsNullOrEmpty(hotkey) ? "Click to set" : hotkey;
              }
         }
 

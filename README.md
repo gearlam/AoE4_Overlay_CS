@@ -22,8 +22,8 @@
 
 ## 版本信息
 
-- 当前版本：`1.7.3`
-- 目标框架：`net8.0-windows;net10.0-windows`
+- 当前版本：`1.7.4`
+- 目标框架：`net10.0-windows`
 
 ## 项目定位
 
@@ -58,6 +58,7 @@ AoE4OverlayCS (WPF Desktop App)
 │  ├─ SettingsService
 │  ├─ GlobalHotkeyService
 │  ├─ MapNameTranslator
+│  ├─ CivNameTranslator
 │  ├─ CivIconResolver
 │  ├─ WindowServices
 │  └─ LogPaths
@@ -98,7 +99,7 @@ aoe4world API
 
 - 桌面 UI：`WPF`
 - 语言：`C#`
-- 目标框架：`.NET 8 / .NET 10`
+- 目标框架：`.NET 10`
 - JSON 处理：`Newtonsoft.Json`
 - WebSocket 服务：`Fleck`
 - 全局热键：`NHotkey.Wpf`
@@ -163,10 +164,11 @@ aoe4world API
 `OverlayWindow` 具备以下能力：
 
 - 透明置顶显示
-- 锁定后鼠标穿透
-- 解锁后可拖动和缩放
+- 锁定后鼠标穿透，金色加粗边框
+- 解锁后可拖动和缩放，红色加粗边框
 - 锁定状态下背景透明度为 `30%`
 - 中英文地图名称即时更新
+- 中英文文明名称即时更新
 - 文明图标、国家图标、本地缓存加载
 
 ### 7. WebSocket 输出层
@@ -208,6 +210,7 @@ aoe4world API
 ### Overlay 控制
 
 - 全局热键显示 / 隐藏 Overlay
+- 全局热键锁定 / 解锁 Overlay 位置
 - 系统热键注册失败时自动切换到 Hook 兜底
 - 解锁状态支持拖动、缩放和定位
 - 锁定状态支持鼠标穿透
@@ -257,6 +260,7 @@ AoE4_Overlay_CS/
 ├─ Services/
 │  ├─ ApiCheckerService.cs
 │  ├─ CivIconResolver.cs
+│  ├─ CivNameTranslator.cs
 │  ├─ GameProcessor.cs
 │  ├─ GlobalHotkeyService.cs
 │  ├─ LogPaths.cs
@@ -267,7 +271,6 @@ AoE4_Overlay_CS/
 ├─ Views/
 │  ├─ GamesView.xaml
 │  ├─ OverlayWindow.xaml
-│  ├─ OverrideView.xaml
 │  └─ SettingsView.xaml
 ├─ Resources/
 │  ├─ Strings.zh-CN.xaml
@@ -289,7 +292,7 @@ AoE4_Overlay_CS/
 ### 环境要求
 
 - Windows
-- .NET SDK `10.0.103` 或可兼容 `global.json` 的 SDK
+- .NET SDK `10.0.301` 或可兼容 `global.json` 的 SDK
 
 ### 开发运行
 
@@ -324,10 +327,12 @@ config/config.json
 
 - 绑定玩家信息
 - 语言设置
-- Overlay 热键
+- Overlay 显示/隐藏热键
+- Overlay 位置锁定/解锁热键
 - Overlay 几何位置
 - 字体大小
 - 队伍间距
+- 文明统计颜色
 - 是否自动打开 Overlay
 - 搜索历史记录
 
@@ -347,8 +352,9 @@ config/config.json
 
 - 中英文界面切换
 - 地图名称中英双语映射
-- 切换语言后即时刷新 Overlay 地图名
-- 切换语言后即时刷新历史对战记录中的地图名
+- 文明名称中英双语映射（25个文明）
+- 切换语言后即时刷新 Overlay 地图名和文明名
+- 切换语言后即时刷新历史对战记录中的地图名和文明名
 
 ## 当前实现特点
 

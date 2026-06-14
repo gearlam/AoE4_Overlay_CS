@@ -49,8 +49,43 @@
                                     <ColumnDefinition Width="60"/>  <!-- Diff -->
                                 </Grid.ColumnDefinitions>
                                 
-                                <TextBlock Text="{Binding Team1Display}" Grid.Column="0" TextWrapping="Wrap" FontSize="11" />
-                                <TextBlock Text="{Binding Team2Display}" Grid.Column="1" TextWrapping="Wrap" FontSize="11" />
+                                <ItemsControl ItemsSource="{Binding Team1Players}" Grid.Column="0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,1">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
+                                                <TextBlock Text="(" FontSize="11"/>
+                                                <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
+                                                <TextBlock Text=")" FontSize="11"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <ItemsControl ItemsSource="{Binding Team2Players}" Grid.Column="1">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="0,1">
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Text="{Binding ProfileIdDisplay}" Foreground="Gray" FontSize="11"/>
+                                                <TextBlock Text="(" FontSize="11"/>
+                                                <TextBlock Text="{Binding Civ}" Foreground="{Binding CivColor}" FontSize="11"/>
+                                                <TextBlock Text=")" FontSize="11"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
                                 <TextBlock Text="{Binding Map}" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="11"/>
                                 <TextBlock Text="{Binding Started}" Grid.Column="3" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10"/>

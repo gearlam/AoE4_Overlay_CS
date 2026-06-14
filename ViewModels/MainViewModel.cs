@@ -16,10 +16,19 @@ using System.IO;
 
 namespace AoE4OverlayCS.ViewModels
 {
+    public class PlayerDisplayInfo
+    {
+        public string Name { get; set; } = "";
+        public string ProfileId { get; set; } = "";
+        public string ProfileIdDisplay { get; set; } = "";
+        public string Civ { get; set; } = "";
+        public string CivColor { get; set; } = "#BC8AEA";
+    }
+
     public class MatchHistoryItem
     {
-        public List<string> Team1Players { get; set; } = new List<string>();
-        public List<string> Team2Players { get; set; } = new List<string>();
+        public List<PlayerDisplayInfo> Team1Players { get; set; } = new List<PlayerDisplayInfo>();
+        public List<PlayerDisplayInfo> Team2Players { get; set; } = new List<PlayerDisplayInfo>();
         public string Team1Display { get; set; } = "";
         public string Team2Display { get; set; } = "";
         public string Map { get; set; } = "";
@@ -36,6 +45,7 @@ namespace AoE4OverlayCS.ViewModels
         private readonly ApiCheckerService _apiChecker;
         private readonly WebSocketServerService _wsServer;
         private readonly GlobalHotkeyService _globalHotkey;
+        private readonly GlobalHotkeyService _globalHotkeyPosition;
         private OverlayWindow? _overlayWindow;
 
         public AppSettings Settings => _settingsService.Current;
@@ -95,6 +105,7 @@ namespace AoE4OverlayCS.ViewModels
             _apiChecker = new ApiCheckerService(_settingsService);
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
+            _globalHotkeyPosition = new GlobalHotkeyService();
             SearchHistory = new ObservableCollection<string>(_settingsService.Current.SearchHistory ?? new List<string>());
 
             _apiChecker.OnNewGame += OnNewGame;
@@ -180,6 +191,54 @@ namespace AoE4OverlayCS.ViewModels
                         }
                     }
                 }
+
+                // Position hotkey
+                HotkeyManager.Current.Remove("ToggleOverlayPosition");
+                _globalHotkeyPosition.Stop();
+                if (!string.IsNullOrEmpty(Settings.OverlayPositionHotkey))
+                {
+                    var posParts = Settings.OverlayPositionHotkey.Split('+');
+                    ModifierKeys posModifiers = ModifierKeys.None;
+                    Key posKey = Key.None;
+
+                    foreach (var part in posParts)
+                    {
+                        if (Enum.TryParse(part, true, out Key k))
+                        {
+                             if (k == Key.LeftCtrl || k == Key.RightCtrl) posModifiers |= ModifierKeys.Control;
+                             else if (k == Key.LeftShift || k == Key.RightShift) posModifiers |= ModifierKeys.Shift;
+                             else if (k == Key.LeftAlt || k == Key.RightAlt) posModifiers |= ModifierKeys.Alt;
+                             else posKey = k;
+                        }
+                        else if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Control;
+                        else if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Shift;
+                        else if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Alt;
+                    }
+
+                    if (posKey != Key.None)
+                    {
+                        try
+                        {
+                            HotkeyManager.Current.Remove("ToggleOverlayPosition");
+                            HotkeyManager.Current.AddOrReplace("ToggleOverlayPosition", posKey, posModifiers, (s, e) =>
+                            {
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
+                                ChangeOverlayPosition();
+                            });
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed position {Settings.OverlayPositionHotkey} {ex}{Environment.NewLine}"); } catch { }
+                            _globalHotkeyPosition.Configure(Settings.OverlayPositionHotkey, () =>
+                            {
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
+                                ChangeOverlayPosition();
+                            });
+                            _globalHotkeyPosition.Start();
+                        }
+                    }
+                }
             }
             catch { /* Ignore invalid hotkeys */ }
         }
@@ -189,6 +248,7 @@ namespace AoE4OverlayCS.ViewModels
             _apiChecker.Stop();
             _wsServer.Stop();
             _globalHotkey.Stop();
+            _globalHotkeyPosition.Stop();
             _overlayWindow?.SaveState();
             _overlayWindow?.Close();
             _settingsService.Save();
@@ -334,20 +394,22 @@ namespace AoE4OverlayCS.ViewModels
                                         var player = p["player"] as JObject;
                                         var name = player?["name"]?.ToString() ?? "?";
                                         var profileId = player?["profile_id"]?.ToString() ?? "";
-                                        var civ = player?["civilization"]?.ToString() ?? "";
-                                        return string.IsNullOrEmpty(profileId) ? $"{name} ({civ})" : $"{name} [{profileId}] ({civ})";
-                                    }).ToList() ?? new List<string>();
+                                        var civ = CivNameTranslator.Translate(player?["civilization"]?.ToString(), Settings.Language);
+                                        var profileIdDisplay = string.IsNullOrEmpty(profileId) ? "" : $" [{profileId}]";
+                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, ProfileIdDisplay = profileIdDisplay, Civ = civ, CivColor = Settings.CivStatsColor };
+                                    }).ToList() ?? new List<PlayerDisplayInfo>();
 
                                     item.Team2Players = t2?.Select(p => {
                                         var player = p["player"] as JObject;
                                         var name = player?["name"]?.ToString() ?? "?";
                                         var profileId = player?["profile_id"]?.ToString() ?? "";
-                                        var civ = player?["civilization"]?.ToString() ?? "";
-                                        return string.IsNullOrEmpty(profileId) ? $"{name} ({civ})" : $"{name} [{profileId}] ({civ})";
-                                    }).ToList() ?? new List<string>();
+                                        var civ = CivNameTranslator.Translate(player?["civilization"]?.ToString(), Settings.Language);
+                                        var profileIdDisplay = string.IsNullOrEmpty(profileId) ? "" : $" [{profileId}]";
+                                        return new PlayerDisplayInfo { Name = name, ProfileId = profileId, ProfileIdDisplay = profileIdDisplay, Civ = civ, CivColor = Settings.CivStatsColor };
+                                    }).ToList() ?? new List<PlayerDisplayInfo>();
 
-                                    item.Team1Display = string.Join(Environment.NewLine, item.Team1Players);
-                                    item.Team2Display = string.Join(Environment.NewLine, item.Team2Players);
+                                    item.Team1Display = string.Join(Environment.NewLine, item.Team1Players.Select(p => $"{p.Name}{p.ProfileIdDisplay} ({p.Civ})"));
+                                    item.Team2Display = string.Join(Environment.NewLine, item.Team2Players.Select(p => $"{p.Name}{p.ProfileIdDisplay} ({p.Civ})"));
                                     
                                     // Check result for current profile
                                     bool found = false;

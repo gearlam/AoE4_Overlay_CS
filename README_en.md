@@ -20,8 +20,8 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `1.7.3`
-- Target frameworks: `net8.0-windows;net10.0-windows`
+- Current version: `1.7.4`
+- Target frameworks: `net10.0-windows`
 
 ## Project Purpose
 
@@ -56,6 +56,7 @@ AoE4OverlayCS (WPF Desktop App)
 │  ├─ SettingsService
 │  ├─ GlobalHotkeyService
 │  ├─ MapNameTranslator
+│  ├─ CivNameTranslator
 │  ├─ CivIconResolver
 │  ├─ WindowServices
 │  └─ LogPaths
@@ -96,7 +97,7 @@ aoe4world API
 
 - Desktop UI: `WPF`
 - Language: `C#`
-- Frameworks: `.NET 8 / .NET 10`
+- Frameworks: `.NET 10`
 - JSON: `Newtonsoft.Json`
 - WebSocket server: `Fleck`
 - Global hotkeys: `NHotkey.Wpf`
@@ -161,10 +162,10 @@ aoe4world API
 `OverlayWindow` provides:
 
 - transparent topmost rendering
-- click-through mode when locked
-- drag/resize when unlocked
+- click-through mode when locked, gold thick border
+- drag/resize when unlocked, red thick border
 - `30%` background opacity when locked
-- immediate map localization updates
+- immediate map and civilization localization updates
 - civilization and country icon loading with caching
 
 ### 7. WebSocket Output Layer
@@ -206,6 +207,7 @@ It is used to:
 ### Overlay Control
 
 - Global hotkey to show / hide overlay
+- Global hotkey to lock / unlock overlay position
 - Automatic fallback to low-level keyboard hook if system hotkey registration fails
 - Unlock mode supports drag and resize
 - Lock mode supports click-through behavior
@@ -255,6 +257,7 @@ AoE4_Overlay_CS/
 ├─ Services/
 │  ├─ ApiCheckerService.cs
 │  ├─ CivIconResolver.cs
+│  ├─ CivNameTranslator.cs
 │  ├─ GameProcessor.cs
 │  ├─ GlobalHotkeyService.cs
 │  ├─ LogPaths.cs
@@ -265,7 +268,6 @@ AoE4_Overlay_CS/
 ├─ Views/
 │  ├─ GamesView.xaml
 │  ├─ OverlayWindow.xaml
-│  ├─ OverrideView.xaml
 │  └─ SettingsView.xaml
 ├─ Resources/
 │  ├─ Strings.zh-CN.xaml
@@ -287,7 +289,7 @@ AoE4_Overlay_CS/
 ### Requirements
 
 - Windows
-- .NET SDK `10.0.103` or a compatible SDK resolved by `global.json`
+- .NET SDK `10.0.301` or a compatible SDK resolved by `global.json`
 
 ### Development Run
 
@@ -322,10 +324,12 @@ Stored settings include:
 
 - bound player info
 - selected language
-- overlay hotkey
+- overlay show/hide hotkey
+- overlay position lock/unlock hotkey
 - overlay geometry
 - font size
 - team gap
+- civilization stats color
 - auto-open overlay setting
 - search history
 
@@ -345,8 +349,9 @@ The current project already supports:
 
 - Chinese and English UI switching
 - bilingual map name translation
-- immediate overlay map refresh after language change
-- immediate match history map refresh after language change
+- bilingual civilization name translation (25 civilizations)
+- immediate overlay map and civ name refresh after language change
+- immediate match history map and civ name refresh after language change
 
 ## Project Characteristics
 

@@ -40,6 +40,9 @@ namespace AoE4OverlayCS.Models
         private string _overlayHotkey = "";
         public string OverlayHotkey { get => _overlayHotkey; set { _overlayHotkey = value; OnPropertyChanged(); } }
 
+        private string _overlayPositionHotkey = "";
+        public string OverlayPositionHotkey { get => _overlayPositionHotkey; set { _overlayPositionHotkey = value; OnPropertyChanged(); } }
+
         private double[]? _overlayGeometry;
         public double[]? OverlayGeometry { get => _overlayGeometry; set { _overlayGeometry = value; OnPropertyChanged(); } } // x, y, w, h
 
@@ -62,8 +65,6 @@ namespace AoE4OverlayCS.Models
         public string Language { get => _language; set { _language = value; OnPropertyChanged(); } }
 
         public List<string> SearchHistory { get; set; } = new();
-
-        public Dictionary<string, bool> ShowGraph { get; set; } = new() { { "1", true }, { "2", true }, { "3", true }, { "4", true } };
         
         public List<List<object>> TeamColors { get; set; } = new() {
             new List<object> { 74, 255, 2, 0.35 },

@@ -80,6 +80,7 @@ namespace AoE4OverlayCS.Views
 
             WindowServices.SetWindowExTransparent(this);
             Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
+            LockedBorder.Visibility = Visibility.Visible;
             UnlockBorder.Visibility = Visibility.Collapsed;
             ResizeGripControl.Visibility = Visibility.Collapsed;
         }
@@ -654,7 +655,8 @@ namespace AoE4OverlayCS.Views
                 WindowServices.RemoveWindowExTransparent(this);
                 Background = new SolidColorBrush(Colors.Black); 
                 
-                // Show resize controls
+                // Show resize controls, hide locked border
+                LockedBorder.Visibility = Visibility.Collapsed;
                 UnlockBorder.Visibility = Visibility.Visible;
                 ResizeGripControl.Visibility = Visibility.Visible;
                 
@@ -666,7 +668,8 @@ namespace AoE4OverlayCS.Views
                 WindowServices.SetWindowExTransparent(this);
                 Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
                 
-                // Hide resize controls
+                // Show locked border, hide resize controls
+                LockedBorder.Visibility = Visibility.Visible;
                 UnlockBorder.Visibility = Visibility.Collapsed;
                 ResizeGripControl.Visibility = Visibility.Collapsed;
                 

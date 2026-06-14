@@ -39,6 +39,7 @@ namespace AoE4OverlayCS
             { "jda", "JeanneDArc" },
             { "jeanne_darc", "JeanneDArc" },
             { "jeanne d'arc", "JeanneDArc" },
+            { "jeanne darc", "JeanneDArc" },
             { "jeanne", "JeanneDArc" },
             { "kte", "KnightsTemplar" },
             { "koc", "KnightsTemplar" },
@@ -73,7 +74,9 @@ namespace AoE4OverlayCS
             { "venetians", "Venetians" },
             { "zxl", "ZhuXiLegacy" },
             { "zhu_xi_legacy", "ZhuXiLegacy" },
+            { "zhu_xis_legacy", "ZhuXiLegacy" },
             { "zhu xi's legacy", "ZhuXiLegacy" },
+            { "zhu xis legacy", "ZhuXiLegacy" },
             { "zhuxi", "ZhuXiLegacy" },
         };
 

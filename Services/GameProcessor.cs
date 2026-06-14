@@ -119,7 +119,8 @@ namespace AoE4OverlayCS.Services
                 int teamIdx = p["team"]?.ToObject<int>() ?? 0;
 
                 processedPlayers.Add(new {
-                    civ = currentCiv.Replace("_", " "), // Capitalize handled by WPF converter if needed
+                    civ = currentCiv.Replace("_", " "),
+                    civ_display = CivNameTranslator.Translate(currentCiv.Replace("_", " "), settings.Language),
                     name = name,
                     team = teamIdx + 1,
                     country = p["country"]?.ToString() ?? "",
