@@ -20,7 +20,7 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `1.7.5`
+- Current version: `1.7.6`
 - Target frameworks: `net10.0-windows`
 
 ## Project Purpose

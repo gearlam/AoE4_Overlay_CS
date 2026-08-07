@@ -28,6 +28,12 @@ namespace AoE4OverlayCS.Views
         private bool _isLocked = true;
         private readonly Dictionary<string, ImageSource> _imageCache = new();
 
+        private readonly ScaleTransform _contentScale = new ScaleTransform(1, 1);
+        private double _baseContentWidth;
+        private double _baseContentHeight;
+        private bool _hasBaseSize;
+        private bool _hasSavedGeometry;
+
         private const double RatingWidth = 70;
         private const double WinrateWidth = 70;
         private const double WinsWidth = 60;
@@ -67,6 +73,9 @@ namespace AoE4OverlayCS.Views
                 this.Width = _settings.OverlayGeometry[2];
                 this.Height = _settings.OverlayGeometry[3];
             }
+
+            _hasSavedGeometry = _settings.OverlayGeometry != null && _settings.OverlayGeometry.Length == 4;
+            SizeChanged += OnWindowSizeChanged;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -175,7 +184,47 @@ namespace AoE4OverlayCS.Views
                 {
                     TeamRightPanel.Children.Add(CreatePlayerRowRightMirrored(p));
                 }
+
+                TryEstablishBaseSize();
             });
+        }
+
+        private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (!_hasBaseSize) return;
+            ApplyScale();
+        }
+
+        private void TryEstablishBaseSize()
+        {
+            if (_hasBaseSize) return;
+
+            // 手动测量内容自然尺寸（未显示时也可测量；此时 LayoutTransform 尚未设置，不受缩放影响）
+            ContentRoot.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            if (ContentRoot.DesiredSize.Width <= 0 || ContentRoot.DesiredSize.Height <= 0) return;
+
+            _baseContentWidth = ContentRoot.DesiredSize.Width;
+            _baseContentHeight = ContentRoot.DesiredSize.Height;
+            _hasBaseSize = true;
+
+            // 无历史几何时把窗口贴合到内容自然尺寸，作为 100% 基准状态
+            if (!_hasSavedGeometry)
+            {
+                Width = _baseContentWidth;
+                Height = _baseContentHeight;
+            }
+
+            ApplyScale();
+        }
+
+        private void ApplyScale()
+        {
+            double scale = OverlayScaleCalculator.ComputeScale(
+                ActualWidth, ActualHeight, _baseContentWidth, _baseContentHeight);
+
+            _contentScale.ScaleX = scale;
+            _contentScale.ScaleY = scale;
+            ContentRoot.LayoutTransform = _contentScale;
         }
 
         private Grid CreatePlayerRowLeft(dynamic p)

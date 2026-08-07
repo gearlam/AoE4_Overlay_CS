@@ -15,7 +15,7 @@
     
     <Grid>
         <!-- Content Panel -->
-        <Grid Margin="6">
+        <Grid x:Name="ContentRoot" Margin="6" HorizontalAlignment="Center" VerticalAlignment="Top">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
