@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using AoE4OverlayCS.ViewModels;
 using AoE4OverlayCS.Services;
 using System.Windows;
 using System;
@@ -21,13 +21,13 @@ namespace AoE4OverlayCS
         {
             InitializeComponent();
             InitializeTrayIcon();
-            ApplyVersionToWindowTitle();
+            ApplyVersionToTitle();
         }
 
-        private void ApplyVersionToWindowTitle()
+        private void ApplyVersionToTitle()
         {
-            // 主窗口版本信息来自 AoE4OverlayCS.csproj 的 InformationalVersion/Version。
-            // 手动修改版本号请优先改 AoE4OverlayCS.csproj，而不是这里的窗口标题拼接逻辑。
+            // 版本信息来自 AoE4OverlayCS.csproj 的 InformationalVersion/Version，写入窗口标题括号内。
+            // 手动修改版本号请改 AoE4OverlayCS.csproj，而不是这里。
             string? version = Assembly.GetExecutingAssembly()
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
@@ -45,18 +45,7 @@ namespace AoE4OverlayCS
                 version = version.Substring(0, plusIndex).Trim();
             }
 
-            if (Title.Contains(version, StringComparison.OrdinalIgnoreCase)) return;
-
-            var title = Title ?? "";
-            int close = title.LastIndexOf(')');
-            int open = close >= 0 ? title.LastIndexOf('(', close) : -1;
-            if (open >= 0 && close > open)
-            {
-                Title = title.Insert(close, $" {version}");
-                return;
-            }
-
-            Title = $"{title} ({version})";
+            Title = $"AoE IV: Overlay ({version})";
         }
 
         private void InitializeTrayIcon()
