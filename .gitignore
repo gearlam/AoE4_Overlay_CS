@@ -22,6 +22,7 @@ bld/
 
 # Visual Studio cache/options directory
 .vs/
+.vscode/
 
 # NuGet packages
 packages/
@@ -64,3 +65,5 @@ PublishScripts/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+docs/

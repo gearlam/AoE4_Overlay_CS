@@ -131,6 +131,8 @@ function update_player_data(data) {
         if (first_team == null) first_team = p.team;
         let civFlag = `<td class="flag" rowspan="2"><img src="../img/flags/${p.civ}.webp"></td>`;
         let country = country_flag_img(p.country);
+        // 国家名独立栏：中文界面下由服务端提供（country_display），英文界面为空自动折叠
+        let countryName = `<td class="country-name">${p.country_display || ""}</td>`;
         let wins, losses;
         // Whether to add W/L or not
         if (p.wins == '') wins = ''; else wins = `${p.wins}W`;
@@ -139,7 +141,7 @@ function update_player_data(data) {
         let s;
         const teamBg = rgba_from_team(p.team);
         if (p.team == first_team) {
-            s = `<tr class="player">${civFlag}<td colspan="6" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td></tr>
+            s = `<tr class="player">${civFlag}<td colspan="7" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td></tr>
             <tr class="stats">
               <td class="rm">${p.rank}</td>
               <td class="rating stat">${p.rating}</td>
@@ -147,11 +149,13 @@ function update_player_data(data) {
               <td class="wins stat">${wins}</td>
               <td class="losses stat">${losses}</td>
               <td class="country">${country}</td>
+              ${countryName}
             </tr>
-            <tr class="spacer"><td colspan="7"></td></tr>`;
+            <tr class="spacer"><td colspan="8"></td></tr>`;
         } else {
-            s = `<tr class="player"><td colspan="6" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td>${civFlag}</tr>
+            s = `<tr class="player"><td colspan="7" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td>${civFlag}</tr>
             <tr class="stats">
+              ${countryName}
               <td class="country">${country}</td>
               <td class="losses stat">${losses}</td>
               <td class="wins stat">${wins}</td>
@@ -159,7 +163,7 @@ function update_player_data(data) {
               <td class="rating stat">${p.rating}</td>
               <td class="rm">${p.rank}</td>
             </tr>
-            <tr class="spacer"><td colspan="7"></td></tr>`;
+            <tr class="spacer"><td colspan="8"></td></tr>`;
         }
         if ([1, 2].includes(p.team))
             team_data[p.team] += s;

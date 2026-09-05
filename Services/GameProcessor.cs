@@ -118,12 +118,18 @@ namespace AoE4OverlayCS.Services
                 
                 int teamIdx = p["team"]?.ToObject<int>() ?? 0;
 
+                var country = p["country"]?.ToString() ?? "";
+                // 中文界面下输出翻译后的国家名（英文界面或未命中映射时为空，HTML 端据此决定是否显示该栏）
+                var countryDisplay = CountryNameTranslator.Translate(country, settings.Language);
+                if (countryDisplay == country) countryDisplay = "";
+
                 processedPlayers.Add(new {
                     civ = currentCiv.Replace("_", " "),
                     civ_display = CivNameTranslator.Translate(currentCiv.Replace("_", " "), settings.Language),
                     name = name,
                     team = teamIdx + 1,
-                    country = p["country"]?.ToString() ?? "",
+                    country = country,
+                    country_display = countryDisplay,
                     rating = modeData?["rating"]?.ToString() ?? "0",
                     rank = $"{modeStr}#{modeData?["rank"]?.ToString() ?? "0"}",
                     wins = modeData?["wins_count"]?.ToString() ?? "0",

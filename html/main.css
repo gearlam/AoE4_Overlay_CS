@@ -19,7 +19,6 @@ body {
 
 #score {
     position: relative;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0), rgba(0, 0, 0, .9), rgba(0, 0, 0, 0), rgba(0, 0, 0, 0));
     padding: 0 .2vw;
     text-align: center;
     color: white;
@@ -107,6 +106,24 @@ body {
 .country {
     width: var(--country-flag-width);
     text-align: center
+}
+
+.country-name {
+    color: #ddd;
+    white-space: nowrap
+}
+
+#team1 .country-name {
+    text-align: left
+}
+
+#team2 .country-name {
+    text-align: right
+}
+
+/* 英文界面（无国家名）时该栏完全折叠，不占宽度 */
+.country-name:empty {
+    padding: 0
 }
 
 .spacer td {

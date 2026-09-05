@@ -39,8 +39,7 @@ namespace AoE4OverlayCS.Views
         private const double WinsWidth = 60;
         private const double LossesWidth = 70;
         private const double CountryFlagWidth = 30;
-        private const byte LockedBackgroundAlpha = 77;
-        
+
         // P/Invoke for resizing
         private const int WM_SYSCOMMAND = 0x112;
         private const int SC_SIZE = 0xF000;
@@ -88,7 +87,7 @@ namespace AoE4OverlayCS.Views
             SetWindowLong(helper.Handle, GWL_EXSTYLE, exStyle | WS_EX_NOACTIVATE);
 
             WindowServices.SetWindowExTransparent(this);
-            Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
+            Background = Brushes.Transparent;
             LockedBorder.Visibility = Visibility.Visible;
             UnlockBorder.Visibility = Visibility.Collapsed;
             ResizeGripControl.Visibility = Visibility.Collapsed;
@@ -197,7 +196,12 @@ namespace AoE4OverlayCS.Views
 
         private void TryEstablishBaseSize()
         {
-            if (_hasBaseSize) return;
+            // 已有基准：内容可能因语言切换（如新增国家名）而变化，重测基准并重算缩放，窗口尺寸不动
+            if (_hasBaseSize)
+            {
+                RefreshBaseSize();
+                return;
+            }
 
             // 手动测量内容自然尺寸（未显示时也可测量；此时 LayoutTransform 尚未设置，不受缩放影响）
             ContentRoot.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -214,6 +218,23 @@ namespace AoE4OverlayCS.Views
                 Height = _baseContentHeight;
             }
 
+            ApplyScale();
+        }
+
+        private void RefreshBaseSize()
+        {
+            // 临时摘除 LayoutTransform 后测量，得到未缩放的自然尺寸
+            var savedTransform = ContentRoot.LayoutTransform;
+            ContentRoot.LayoutTransform = null;
+            ContentRoot.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
+            double w = ContentRoot.DesiredSize.Width;
+            double h = ContentRoot.DesiredSize.Height;
+            ContentRoot.LayoutTransform = savedTransform;
+
+            if (w <= 0 || h <= 0) return;
+
+            _baseContentWidth = w;
+            _baseContentHeight = h;
             ApplyScale();
         }
 
@@ -247,8 +268,7 @@ namespace AoE4OverlayCS.Views
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var nameBg = CreateNameBadge(p, margin: new Thickness(2, 0, 0, 0), textAlignment: TextAlignment.Left);
-            nameBg.MaxWidth = 300;
+            var nameBg = CreateNameBadge(p, margin: new Thickness(2, 0, 0, 0), textAlignment: TextAlignment.Center);
             Grid.SetRow(nameBg, 0);
             contentGrid.Children.Add(nameBg);
 
@@ -259,6 +279,7 @@ namespace AoE4OverlayCS.Views
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WinsWidth) });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(LossesWidth) });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CountryFlagWidth) });
+            statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var rankBadge = CreateRankBadge(p.rank?.ToString() ?? "", alignRight: false);
             Grid.SetColumn(rankBadge, 0);
@@ -269,6 +290,7 @@ namespace AoE4OverlayCS.Views
             AddTextCell(statsGrid, row: 0, col: 3, text: FormatWins(p.wins), colorCode: "#48bd21", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: WinsWidth);
             AddTextCell(statsGrid, row: 0, col: 4, text: FormatLosses(p.losses), colorCode: "Red", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: LossesWidth);
             AddCountryFlagCell(statsGrid, row: 0, col: 5, country: p.country?.ToString() ?? "", baseDir: baseDir, minWidth: CountryFlagWidth);
+            AddCountryNameCell(statsGrid, row: 0, col: 6, country: p.country?.ToString() ?? "", hAlign: HorizontalAlignment.Left, tAlign: TextAlignment.Left);
 
             Grid.SetRow(statsGrid, 1);
             contentGrid.Children.Add(statsGrid);
@@ -298,12 +320,12 @@ namespace AoE4OverlayCS.Views
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var nameBg = CreateNameBadge(p, margin: new Thickness(0, 0, 2, 0), textAlignment: TextAlignment.Right);
-            nameBg.MaxWidth = 300;
+            var nameBg = CreateNameBadge(p, margin: new Thickness(0, 0, 2, 0), textAlignment: TextAlignment.Center);
             Grid.SetRow(nameBg, 0);
             contentGrid.Children.Add(nameBg);
 
             var statsGrid = new Grid { HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
+            statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CountryFlagWidth) });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(LossesWidth) });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WinsWidth) });
@@ -311,14 +333,15 @@ namespace AoE4OverlayCS.Views
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(RatingWidth) });
             statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            AddCountryFlagCell(statsGrid, row: 0, col: 0, country: p.country?.ToString() ?? "", baseDir: baseDir, minWidth: CountryFlagWidth);
-            AddTextCell(statsGrid, row: 0, col: 1, text: FormatLosses(p.losses), colorCode: "Red", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: LossesWidth);
-            AddTextCell(statsGrid, row: 0, col: 2, text: FormatWins(p.wins), colorCode: "#48bd21", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: WinsWidth);
-            AddTextCell(statsGrid, row: 0, col: 3, text: p.winrate.ToString(), colorCode: "#fffb78", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: WinrateWidth);
-            AddTextCell(statsGrid, row: 0, col: 4, text: p.rating.ToString(), colorCode: "#7ab6ff", bold: true, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: RatingWidth);
+            AddCountryNameCell(statsGrid, row: 0, col: 0, country: p.country?.ToString() ?? "", hAlign: HorizontalAlignment.Right, tAlign: TextAlignment.Right);
+            AddCountryFlagCell(statsGrid, row: 0, col: 1, country: p.country?.ToString() ?? "", baseDir: baseDir, minWidth: CountryFlagWidth);
+            AddTextCell(statsGrid, row: 0, col: 2, text: FormatLosses(p.losses), colorCode: "Red", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: LossesWidth);
+            AddTextCell(statsGrid, row: 0, col: 3, text: FormatWins(p.wins), colorCode: "#48bd21", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: WinsWidth);
+            AddTextCell(statsGrid, row: 0, col: 4, text: p.winrate.ToString(), colorCode: "#fffb78", bold: false, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: WinrateWidth);
+            AddTextCell(statsGrid, row: 0, col: 5, text: p.rating.ToString(), colorCode: "#7ab6ff", bold: true, hAlign: HorizontalAlignment.Center, tAlign: TextAlignment.Center, minWidth: RatingWidth);
 
             var rankBadge = CreateRankBadge(p.rank?.ToString() ?? "", alignRight: true);
-            Grid.SetColumn(rankBadge, 5);
+            Grid.SetColumn(rankBadge, 6);
             statsGrid.Children.Add(rankBadge);
 
             Grid.SetRow(statsGrid, 1);
@@ -483,6 +506,40 @@ namespace AoE4OverlayCS.Views
             grid.Children.Add(cell);
         }
 
+        /// <summary>
+        /// 国家名列：仅中文界面且能翻译出国家名时显示，作为独立一栏与国旗相邻。
+        /// </summary>
+        private void AddCountryNameCell(Grid grid, int row, int col, string country, HorizontalAlignment hAlign, TextAlignment tAlign)
+        {
+            bool isZhCn = string.Equals(_settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+            string? countryName = isZhCn && !string.IsNullOrEmpty(country)
+                ? CountryNameTranslator.Translate(country, _settings.Language)
+                : null;
+            if (string.IsNullOrEmpty(countryName) || countryName == country) return;
+
+            var txt = new TextBlock
+            {
+                Text = countryName,
+                FontSize = _settings.FontSize,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ddd")),
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = hAlign,
+                TextAlignment = tAlign,
+                Margin = new Thickness(4, 0, 4, 0)
+            };
+
+            var cell = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+                BorderThickness = new Thickness(0, 0, 1, 0),
+                Padding = new Thickness(0, 0, 2, 0),
+                Child = txt
+            };
+            Grid.SetRow(cell, row);
+            Grid.SetColumn(cell, col);
+            grid.Children.Add(cell);
+        }
+
         private Image CreateCivFlag(dynamic p, string baseDir, HorizontalAlignment hAlign)
         {
             const double targetHeight = 36;
@@ -527,7 +584,8 @@ namespace AoE4OverlayCS.Views
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 FontSize = _settings.FontSize,
                 TextTrimming = TextTrimming.CharacterEllipsis,
-                TextAlignment = textAlignment
+                TextAlignment = textAlignment,
+                MaxWidth = 300
             };
             nameTxt.Foreground = Brushes.White;
 
@@ -536,7 +594,7 @@ namespace AoE4OverlayCS.Views
             {
                 Background = teamColor,
                 CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(0, 1, 6, 1),
+                Padding = new Thickness(2, 1, 2, 1),
                 Margin = margin,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Stretch
@@ -700,22 +758,22 @@ namespace AoE4OverlayCS.Views
         {
             if (_isLocked)
             {
-                // Unlock: Make it interactive and visible background (100% black)
+                // Unlock: Make it interactive, background stays fully transparent
                 WindowServices.RemoveWindowExTransparent(this);
-                Background = new SolidColorBrush(Colors.Black); 
-                
+                Background = Brushes.Transparent;
+
                 // Show resize controls, hide locked border
                 LockedBorder.Visibility = Visibility.Collapsed;
                 UnlockBorder.Visibility = Visibility.Visible;
                 ResizeGripControl.Visibility = Visibility.Visible;
-                
+
                 _isLocked = false;
             }
             else
             {
-                // Lock: Make it click-through and transparent background (30% black)
+                // Lock: Make it click-through, background stays fully transparent
                 WindowServices.SetWindowExTransparent(this);
-                Background = new SolidColorBrush(Color.FromArgb(LockedBackgroundAlpha, 0, 0, 0));
+                Background = Brushes.Transparent;
                 
                 // Show locked border, hide resize controls
                 LockedBorder.Visibility = Visibility.Visible;
