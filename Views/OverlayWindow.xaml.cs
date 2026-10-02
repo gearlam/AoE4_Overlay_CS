@@ -33,6 +33,7 @@ namespace AoE4OverlayCS.Views
         private double _baseContentHeight;
         private bool _hasBaseSize;
         private bool _hasSavedGeometry;
+        private double _userScale = 1.0;   // 用户拖拽倍率：默认 1.0 = 纯字体大小基准
 
         private const double RatingWidth = 70;
         private const double WinrateWidth = 70;
@@ -42,10 +43,27 @@ namespace AoE4OverlayCS.Views
 
         // P/Invoke for resizing
         private const int WM_SYSCOMMAND = 0x112;
+        private const int WM_SIZING = 0x0214;
         private const int SC_SIZE = 0xF000;
+        private const int WMSZ_LEFT = 1;
+        private const int WMSZ_RIGHT = 2;
+        private const int WMSZ_TOP = 3;
+        private const int WMSZ_TOPLEFT = 4;
+        private const int WMSZ_TOPRIGHT = 5;
+        private const int WMSZ_BOTTOM = 6;
+        private const int WMSZ_BOTTOMLEFT = 7;
         private const int WMSZ_BOTTOMRIGHT = 8;
         private const int WS_EX_NOACTIVATE = 0x08000000;
         private const int GWL_EXSTYLE = -20;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
         
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
@@ -64,6 +82,7 @@ namespace AoE4OverlayCS.Views
 
             MapLabel.FontSize = Math.Max(10, _settings.FontSize - 2);
             TeamGapColumn.Width = new GridLength(Math.Clamp(_settings.TeamGap, 0, 40));
+            ApplyBackground();
             
             if (_settings.OverlayGeometry != null && _settings.OverlayGeometry.Length == 4)
             {
@@ -91,6 +110,107 @@ namespace AoE4OverlayCS.Views
             LockedBorder.Visibility = Visibility.Visible;
             UnlockBorder.Visibility = Visibility.Collapsed;
             ResizeGripControl.Visibility = Visibility.Collapsed;
+
+            // 拖拽缩放时锁定为内容比例（手柄 = 等比缩放内容大小）
+            HwndSource.FromHwnd(helper.Handle)?.AddHook(WndProc);
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_SIZING && _hasBaseSize)
+            {
+                var rect = Marshal.PtrToStructure<RECT>(lParam);
+                ApplyContentAspect(ref rect, wParam.ToInt32());
+                Marshal.StructureToPtr(rect, lParam, false);
+                handled = true;
+            }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// 把拖拽中的窗口矩形约束为内容比例：任意方向拖动都会等比缩放内容，
+        /// 缩放限制在 [MinScale, MaxScale]，保证内容始终完整显示、不被裁切。
+        /// </summary>
+        private void ApplyContentAspect(ref RECT rect, int edge)
+        {
+            if (_baseContentWidth <= 0 || _baseContentHeight <= 0) return;
+
+            var dpi = VisualTreeHelper.GetDpi(this);
+            double widthDip = (rect.Right - rect.Left) / dpi.DpiScaleX;
+            double heightDip = (rect.Bottom - rect.Top) / dpi.DpiScaleY;
+
+            // Margin 不随 LayoutTransform 缩放：倍率只作用于内容部分，边距单独保留（恒定 1px 间隙）
+            double marginWidth = ContentRoot.Margin.Left + ContentRoot.Margin.Right;
+            double marginHeight = ContentRoot.Margin.Top + ContentRoot.Margin.Bottom;
+            double contentBaseWidth = Math.Max(1e-6, _baseContentWidth - marginWidth);
+            double contentBaseHeight = Math.Max(1e-6, _baseContentHeight - marginHeight);
+
+            bool horizontal = edge == WMSZ_LEFT || edge == WMSZ_RIGHT;
+            bool vertical = edge == WMSZ_TOP || edge == WMSZ_BOTTOM;
+
+            // 以拖动幅度较大的方向为准，另一方向按内容比例跟随
+            bool driveByWidth = horizontal || (!vertical &&
+                Math.Abs(widthDip - ActualWidth) >= Math.Abs(heightDip - ActualHeight));
+
+            double scale = driveByWidth
+                ? (widthDip - marginWidth) / contentBaseWidth
+                : (heightDip - marginHeight) / contentBaseHeight;
+            scale = Math.Clamp(scale, OverlayScaleCalculator.MinScale, OverlayScaleCalculator.MaxScale);
+            _userScale = scale; // 记录用户选择的倍率，窗口贴合尺寸始终以此为准
+
+            int w = Math.Max(1, (int)Math.Round((contentBaseWidth * scale + marginWidth) * dpi.DpiScaleX));
+            int h = Math.Max(1, (int)Math.Round((contentBaseHeight * scale + marginHeight) * dpi.DpiScaleY));
+
+            // 按拖动边锚定：对边（或对角）保持不动
+            switch (edge)
+            {
+                case WMSZ_LEFT:
+                    rect.Left = rect.Right - w;
+                    CenterVertically(ref rect, h);
+                    break;
+                case WMSZ_RIGHT:
+                    rect.Right = rect.Left + w;
+                    CenterVertically(ref rect, h);
+                    break;
+                case WMSZ_TOP:
+                    rect.Top = rect.Bottom - h;
+                    CenterHorizontally(ref rect, w);
+                    break;
+                case WMSZ_BOTTOM:
+                    rect.Bottom = rect.Top + h;
+                    CenterHorizontally(ref rect, w);
+                    break;
+                case WMSZ_TOPLEFT:
+                    rect.Left = rect.Right - w;
+                    rect.Top = rect.Bottom - h;
+                    break;
+                case WMSZ_TOPRIGHT:
+                    rect.Right = rect.Left + w;
+                    rect.Top = rect.Bottom - h;
+                    break;
+                case WMSZ_BOTTOMLEFT:
+                    rect.Left = rect.Right - w;
+                    rect.Bottom = rect.Top + h;
+                    break;
+                default:
+                    rect.Right = rect.Left + w;
+                    rect.Bottom = rect.Top + h;
+                    break;
+            }
+        }
+
+        private static void CenterVertically(ref RECT rect, int height)
+        {
+            int center = (rect.Top + rect.Bottom) / 2;
+            rect.Top = center - height / 2;
+            rect.Bottom = rect.Top + height;
+        }
+
+        private static void CenterHorizontally(ref RECT rect, int width)
+        {
+            int center = (rect.Left + rect.Right) / 2;
+            rect.Left = center - width / 2;
+            rect.Right = rect.Left + width;
         }
 
         private void ResizeGrip_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -110,13 +230,20 @@ namespace AoE4OverlayCS.Views
                      MapLabel.FontSize = Math.Max(10, _settings.FontSize - 2);
                      UpdateFontSizeRecursive(TeamLeftPanel);
                      UpdateFontSizeRecursive(TeamRightPanel);
+                     RefreshBaseSize();
                  });
              }
              else if (e.PropertyName == nameof(AppSettings.TeamGap))
              {
                  Dispatcher.Invoke(() => {
                      TeamGapColumn.Width = new GridLength(Math.Clamp(_settings.TeamGap, 0, 40));
+                     RefreshBaseSize();
                  });
+             }
+             else if (e.PropertyName == nameof(AppSettings.OverlayBackgroundColor) ||
+                      e.PropertyName == nameof(AppSettings.OverlayBackgroundOpacity))
+             {
+                 Dispatcher.Invoke(ApplyBackground);
              }
         }
 
@@ -129,6 +256,26 @@ namespace AoE4OverlayCS.Views
                 if (child is TextBlock tb) tb.FontSize = _settings.FontSize;
                 UpdateFontSizeRecursive(child);
             }
+        }
+
+        private void ApplyBackground()
+        {
+            var color = ParseColor(_settings.OverlayBackgroundColor);
+            ContentRoot.Background = new SolidColorBrush(color)
+            {
+                Opacity = Math.Clamp(_settings.OverlayBackgroundOpacity, 0, 1)
+            };
+        }
+
+        private static Color ParseColor(string? hex)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(hex) && ColorConverter.ConvertFromString(hex) is Color color)
+                    return color;
+            }
+            catch { }
+            return Colors.Black;
         }
 
         protected override void OnClosed(EventArgs e)
@@ -191,12 +338,14 @@ namespace AoE4OverlayCS.Views
         private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (!_hasBaseSize) return;
-            ApplyScale();
+            // 内容缩放只跟随用户倍率；窗口尺寸由 FitWindowToBase/拖拽驱动，
+            // 绝不从窗口尺寸反推缩放（否则内容反复变化时会逐次变小）
+            SetContentScale(_userScale);
         }
 
         private void TryEstablishBaseSize()
         {
-            // 已有基准：内容可能因语言切换（如新增国家名）而变化，重测基准并重算缩放，窗口尺寸不动
+            // 已有基准：内容可能因搜索/新对局/语言切换而变化，重测基准并按当前倍率重新贴合窗口
             if (_hasBaseSize)
             {
                 RefreshBaseSize();
@@ -204,6 +353,7 @@ namespace AoE4OverlayCS.Views
             }
 
             // 手动测量内容自然尺寸（未显示时也可测量；此时 LayoutTransform 尚未设置，不受缩放影响）
+            InvalidateMeasureTree(ContentRoot);
             ContentRoot.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
             if (ContentRoot.DesiredSize.Width <= 0 || ContentRoot.DesiredSize.Height <= 0) return;
 
@@ -211,21 +361,32 @@ namespace AoE4OverlayCS.Views
             _baseContentHeight = ContentRoot.DesiredSize.Height;
             _hasBaseSize = true;
 
-            // 无历史几何时把窗口贴合到内容自然尺寸，作为 100% 基准状态
-            if (!_hasSavedGeometry)
+            // 默认以内容自然尺寸（由字体大小决定）为基准；仅当存在历史几何时，按历史窗口尺寸恢复用户倍率
+            _userScale = 1.0;
+            if (_hasSavedGeometry && _settings.OverlayGeometry is { Length: 4 })
             {
-                Width = _baseContentWidth;
-                Height = _baseContentHeight;
+                double savedWidth = _settings.OverlayGeometry[2];
+                double savedHeight = _settings.OverlayGeometry[3];
+                if (savedWidth > 0 && savedHeight > 0)
+                {
+                    _userScale = Math.Clamp(
+                        Math.Min(savedWidth / _baseContentWidth, savedHeight / _baseContentHeight),
+                        OverlayScaleCalculator.MinScale,
+                        OverlayScaleCalculator.MaxScale);
+                }
             }
 
-            ApplyScale();
+            FitWindowToBase();
         }
 
         private void RefreshBaseSize()
         {
-            // 临时摘除 LayoutTransform 后测量，得到未缩放的自然尺寸
+            // 字体/内容变化只会标记部分节点失效，中间容器可能仍为 measure-valid，
+            // 导致 Measure 直接返回旧缓存（实测调大字体后尺寸不变、内容被裁切）。
+            // 因此先递归失效整棵可视子树，再摘除 LayoutTransform 测量未缩放的自然尺寸。
             var savedTransform = ContentRoot.LayoutTransform;
             ContentRoot.LayoutTransform = null;
+            InvalidateMeasureTree(ContentRoot);
             ContentRoot.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));
             double w = ContentRoot.DesiredSize.Width;
             double h = ContentRoot.DesiredSize.Height;
@@ -235,17 +396,58 @@ namespace AoE4OverlayCS.Views
 
             _baseContentWidth = w;
             _baseContentHeight = h;
-            ApplyScale();
+            FitWindowToBase();
         }
 
-        private void ApplyScale()
+        /// <summary>递归失效整棵可视子树的测量缓存，确保字体/内容变化后测量拿到的是最新尺寸。</summary>
+        private static void InvalidateMeasureTree(DependencyObject root)
         {
-            double scale = OverlayScaleCalculator.ComputeScale(
-                ActualWidth, ActualHeight, _baseContentWidth, _baseContentHeight);
+            if (root is UIElement element) element.InvalidateMeasure();
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                InvalidateMeasureTree(VisualTreeHelper.GetChild(root, i));
+            }
+        }
 
+        /// <summary>
+        /// 重置为“字体大小基准”：缩放回到 1.0，窗口尺寸贴合内容自然尺寸（四周 1px 边距）。
+        /// 每次搜索玩家时调用，保证覆盖层尺寸只由字体大小决定，不会随多次搜索逐次变小。
+        /// </summary>
+        public void ResetToBaseSize()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _userScale = 1.0;
+                if (_hasBaseSize) RefreshBaseSize();
+                else TryEstablishBaseSize();
+            });
+        }
+
+        private void SetContentScale(double scale)
+        {
             _contentScale.ScaleX = scale;
             _contentScale.ScaleY = scale;
             ContentRoot.LayoutTransform = _contentScale;
+        }
+
+        /// <summary>
+        /// 窗口尺寸贴合为“内容自然尺寸 × 用户倍率 + 固定 1px 边距”。
+        /// Margin 不随 LayoutTransform 缩放（实测），必须减出去再单独加回，
+        /// 才能在任意倍率下保持上下左右恒定 1px 间隙；向上取整避免贴边裁切。
+        /// </summary>
+        private void FitWindowToBase()
+        {
+            SetContentScale(_userScale);
+            Width = Math.Ceiling(ScaleWithMargin(_baseContentWidth, ContentRoot.Margin.Left + ContentRoot.Margin.Right));
+            Height = Math.Ceiling(ScaleWithMargin(_baseContentHeight, ContentRoot.Margin.Top + ContentRoot.Margin.Bottom));
+        }
+
+        /// <summary>把“含边距的自然长度”换算为缩放后的窗口长度（边距恒定不缩放）。</summary>
+        private double ScaleWithMargin(double baseLength, double marginTotal)
+        {
+            double content = Math.Max(0, baseLength - marginTotal);
+            return content * _userScale + marginTotal;
         }
 
         private Grid CreatePlayerRowLeft(dynamic p)

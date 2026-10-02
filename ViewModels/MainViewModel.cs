@@ -79,6 +79,13 @@ namespace AoE4OverlayCS.ViewModels
             set { _profileLink = value; OnPropertyChanged(); }
         }
 
+        private string _profileRankInfo = "";
+        public string ProfileRankInfo
+        {
+            get => _profileRankInfo;
+            set { _profileRankInfo = value; OnPropertyChanged(); }
+        }
+
         private string _searchStatusText = "";
         public string SearchStatusText
         {
@@ -139,10 +146,10 @@ namespace AoE4OverlayCS.ViewModels
                 _overlayWindow = new OverlayWindow(_settingsService.Current);
                 UpdateHotkeyRegistration();
 
-                // Load history if profile exists
+                // Load history & rank if profile exists
                 if (!string.IsNullOrEmpty(Settings.ProfileId))
                 {
-                   Task.Run(() => RefreshHistory());
+                   Task.Run(async () => { await RefreshHistory(); await RefreshProfileRank(); });
                 }
             });
         }
@@ -287,7 +294,18 @@ namespace AoE4OverlayCS.ViewModels
                  
                 // Refresh history
                 await RefreshHistory();
+                await RefreshProfileRank();
                 await UpdateOverlayWithLastGame();
+
+                // 每次搜索都回到“字体大小基准”尺寸并贴合内容（1px 边距），避免多次搜索后覆盖层逐次变小
+                _overlayWindow?.ResetToBaseSize();
+            }
+            else if (!string.IsNullOrEmpty(_apiChecker.LastError))
+            {
+                SearchStatusText = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase)
+                    ? "网络错误，请检查网络连接"
+                    : "Network error, please check your connection";
+                SearchStatusBrush = System.Windows.Media.Brushes.OrangeRed;
             }
             else
             {
@@ -351,6 +369,8 @@ namespace AoE4OverlayCS.ViewModels
 
         private void UpdateProfileDisplay()
         {
+            ProfileRankInfo = "";
+
             if (string.IsNullOrEmpty(Settings.ProfileId))
             {
                 ProfileInfo = "No player identified";
@@ -449,6 +469,69 @@ namespace AoE4OverlayCS.ViewModels
             }
         }
 
+        /// <summary>刷新信息栏中的排位段位分显示。</summary>
+        private async Task RefreshProfileRank()
+        {
+            var profile = await _apiChecker.GetPlayerProfile();
+            var text = BuildRankText(profile?["modes"] as JObject);
+            System.Windows.Application.Current.Dispatcher.Invoke(() => ProfileRankInfo = text);
+        }
+
+        /// <summary>从玩家档案 modes 中提取当前排位（1v1 / 团队）段位分并拼接显示文本。</summary>
+        private string BuildRankText(JObject? modes)
+        {
+            if (modes == null) return "";
+
+            bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+            var parts = new List<string>();
+            AddRankPart(parts, modes, "1v1", zh, "rm_solo", "rm_1v1");
+            AddRankPart(parts, modes, zh ? "团队" : "Team", zh, "rm_team");
+
+            string label = zh ? "段位分：" : "Ranked: ";
+            return parts.Count == 0 ? label + (zh ? "未定级" : "Unranked") : label + string.Join(" · ", parts);
+        }
+
+        private static void AddRankPart(List<string> parts, JObject modes, string modeName, bool zh, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (modes[key] is not JObject mode) continue;
+                var rating = mode["rating"];
+                if (rating == null || rating.Type == JTokenType.Null) continue;
+
+                var level = FormatRankLevel(mode["rank_level"]?.ToString(), zh);
+                parts.Add(string.IsNullOrEmpty(level)
+                    ? $"{modeName} {rating}"
+                    : zh ? $"{modeName} {rating}（{level}）" : $"{modeName} {rating} ({level})");
+                return;
+            }
+        }
+
+        private static string FormatRankLevel(string? level, bool zh)
+        {
+            if (string.IsNullOrEmpty(level) || string.Equals(level, "unranked", StringComparison.OrdinalIgnoreCase))
+                return "";
+
+            var segments = level.Split('_');
+            string tierName = segments[0].ToLowerInvariant() switch
+            {
+                "bronze" => zh ? "青铜" : "Bronze",
+                "silver" => zh ? "白银" : "Silver",
+                "gold" => zh ? "黄金" : "Gold",
+                "platinum" => zh ? "白金" : "Platinum",
+                "diamond" => zh ? "钻石" : "Diamond",
+                "conqueror" => zh ? "征服者" : "Conqueror",
+                _ => segments[0]
+            };
+
+            string roman = segments.Length > 1
+                ? segments[1] switch { "1" => "I", "2" => "II", "3" => "III", _ => segments[1] }
+                : "";
+
+            if (string.IsNullOrEmpty(roman)) return tierName;
+            return zh ? tierName + roman : $"{tierName} {roman}";
+        }
+
         private static string TranslateMode(string mode, string? language)
         {
             if (!string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase))
@@ -522,6 +605,7 @@ namespace AoE4OverlayCS.ViewModels
         public async Task RefreshLocalizedDataAfterLanguageChange()
         {
             await RefreshHistory();
+            await RefreshProfileRank();
             await UpdateOverlayWithLastGame();
         }
 

@@ -14,26 +14,29 @@
     </Window.Resources>
     
     <Grid>
-        <!-- Content Panel -->
-        <Grid x:Name="ContentRoot" Margin="6" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- Content Panel（背景色/不透明度由设置控制，见 ApplyBackground） -->
+        <Border x:Name="ContentRoot" Margin="1" Padding="8" CornerRadius="6" Background="Transparent"
+                HorizontalAlignment="Center" VerticalAlignment="Top">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-            <TextBlock x:Name="MapLabel" Text="" FontSize="12" FontWeight="Bold" Foreground="#29e0f8" Margin="0,0,0,6" HorizontalAlignment="Center" Effect="{DynamicResource ShadowEffect}"/>
+                <TextBlock x:Name="MapLabel" Text="" FontSize="12" FontWeight="Bold" Foreground="#29e0f8" Margin="0,0,0,6" HorizontalAlignment="Center" Effect="{DynamicResource ShadowEffect}"/>
 
-            <Grid Grid.Row="1" HorizontalAlignment="Center">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition x:Name="TeamGapColumn" Width="12"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid Grid.Row="1" HorizontalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition x:Name="TeamGapColumn" Width="12"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel x:Name="TeamLeftPanel" Grid.Column="0" HorizontalAlignment="Right"/>
-                <StackPanel x:Name="TeamRightPanel" Grid.Column="2" HorizontalAlignment="Left"/>
+                    <StackPanel x:Name="TeamLeftPanel" Grid.Column="0" HorizontalAlignment="Right"/>
+                    <StackPanel x:Name="TeamRightPanel" Grid.Column="2" HorizontalAlignment="Left"/>
+                </Grid>
             </Grid>
-        </Grid>
+        </Border>
         
         <!-- Unlock UI: Border and Resize Grip -->
         <Border x:Name="LockedBorder" BorderBrush="Gold" BorderThickness="1.5" Visibility="Visible" IsHitTestVisible="False"/>

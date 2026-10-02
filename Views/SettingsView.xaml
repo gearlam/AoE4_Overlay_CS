@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -52,6 +53,20 @@
                     <TextBlock Text="{Binding ProfileInfo}" 
                                FontSize="16" FontWeight="Bold" Foreground="#359c20" 
                                TextWrapping="Wrap" Margin="0,0,0,5"/>
+
+                    <TextBlock Text="{Binding ProfileRankInfo}" 
+                               FontSize="15" FontWeight="SemiBold" Foreground="#444" 
+                               TextWrapping="Wrap" Margin="0,0,0,5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value="{x:Static sys:String.Empty}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     
                     <TextBlock Margin="0,0,0,10">
                         <Hyperlink Command="{Binding OpenLinkCommand}" CommandParameter="{Binding ProfileLink}">
@@ -161,6 +176,25 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <Slider Value="{Binding Settings.TeamGap}" Minimum="0" Maximum="80" Width="180" Height="34" TickFrequency="4" IsSnapToTickEnabled="True"/>
                             <TextBlock Text="{Binding Settings.TeamGap, StringFormat={}{0:0}}" FontSize="16" Margin="10,0,0,0" VerticalAlignment="Center" Width="40"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{DynamicResource Settings_BackgroundColorLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BackgroundColorButton" Width="150" Height="34" Click="BackgroundColorButton_Click">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border x:Name="BackgroundColorSwatch" Width="18" Height="18" CornerRadius="3" BorderBrush="#999" BorderThickness="1"/>
+                                    <TextBlock x:Name="BackgroundColorText" FontSize="14" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="{DynamicResource Settings_BackgroundOpacityLabel}" FontSize="16" VerticalAlignment="Center" Margin="20,0,10,0"/>
+                            <Slider Value="{Binding Settings.OverlayBackgroundOpacity}" Minimum="0" Maximum="1" Width="120" Height="34" TickFrequency="0.05" IsSnapToTickEnabled="True"/>
+                            <TextBlock Text="{Binding Settings.OverlayBackgroundOpacity, StringFormat={}{0:P0}}" FontSize="16" Margin="10,0,0,0" VerticalAlignment="Center" MinWidth="46"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>

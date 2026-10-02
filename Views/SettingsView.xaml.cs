@@ -11,6 +11,7 @@ namespace AoE4OverlayCS.Views
         public SettingsView()
         {
             InitializeComponent();
+            Loaded += (_, _) => RefreshBackgroundColorUi();
         }
 
         private bool _isRecording = false;
@@ -151,6 +152,49 @@ namespace AoE4OverlayCS.Views
             vm.RemoveSearchHistory(query);
             SearchHistoryComboBox.IsDropDownOpen = true;
             e.Handled = true;
+        }
+
+        private void BackgroundColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not MainViewModel vm) return;
+
+            using var dialog = new System.Windows.Forms.ColorDialog
+            {
+                FullOpen = true,
+                Color = ToDrawingColor(vm.Settings.OverlayBackgroundColor)
+            };
+
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                vm.Settings.OverlayBackgroundColor = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+                RefreshBackgroundColorUi();
+            }
+        }
+
+        private void RefreshBackgroundColorUi()
+        {
+            if (DataContext is not MainViewModel vm) return;
+
+            var hex = vm.Settings.OverlayBackgroundColor;
+            BackgroundColorSwatch.Background = new System.Windows.Media.SolidColorBrush(ParseColor(hex));
+            BackgroundColorText.Text = hex;
+        }
+
+        private static System.Windows.Media.Color ParseColor(string? hex)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(hex) && System.Windows.Media.ColorConverter.ConvertFromString(hex) is System.Windows.Media.Color color)
+                    return color;
+            }
+            catch { }
+            return System.Windows.Media.Colors.Black;
+        }
+
+        private static System.Drawing.Color ToDrawingColor(string? hex)
+        {
+            var color = ParseColor(hex);
+            return System.Drawing.Color.FromArgb(color.R, color.G, color.B);
         }
     }
 }

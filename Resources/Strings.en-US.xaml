@@ -28,6 +28,8 @@
     <sys:String x:Key="Settings_PositionHotkeyLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Position hotkey:</sys:String>
     <sys:String x:Key="Settings_FontSizeLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay font size:</sys:String>
     <sys:String x:Key="Settings_TeamGapLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team gap:</sys:String>
+    <sys:String x:Key="Settings_BackgroundColorLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay background:</sys:String>
+    <sys:String x:Key="Settings_BackgroundOpacityLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Background opacity:</sys:String>
 
     <sys:String x:Key="Games_Header_Team1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 1</sys:String>
     <sys:String x:Key="Games_Header_Team2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 2</sys:String>

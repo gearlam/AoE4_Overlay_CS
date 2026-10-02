@@ -94,7 +94,7 @@ AoE4OverlayCS (WPF Desktop App)
 │  ├─ CivNameTranslator       文明名中英翻译（29 条）
 │  ├─ CivIconResolver         文明图标多路径查找（根命名空间）
 │  ├─ WindowServices          Win32 鼠标穿透封装
-│  ├─ OverlayScaleCalculator  Overlay 内容等比缩放算法
+│  ├─ OverlayScaleCalculator  Overlay 缩放倍率边界（MinScale/MaxScale）
 │  └─ LogPaths                日志目录工具（根命名空间）
 │
 ├─ Model 层
@@ -168,7 +168,7 @@ AoE4_Overlay_CS/
 │  ├─ CivNameTranslator.cs      文明名翻译表
 │  ├─ CivIconResolver.cs        文明图标解析（注意：位于根命名空间 AoE4OverlayCS）
 │  ├─ WindowServices.cs         鼠标穿透 Win32 封装
-│  ├─ OverlayScaleCalculator.cs 等比缩放算法
+│  ├─ OverlayScaleCalculator.cs 缩放倍率边界
 │  └─ LogPaths.cs               日志目录工具（位于根命名空间 AoE4OverlayCS）
 │
 ├─ Views/
@@ -217,7 +217,7 @@ AoE4_Overlay_CS/
 | 本地化          | MapNameTranslator / CivNameTranslator                                    | 地图名、文明名的 zh-CN 翻译              |
 | 图标解析         | [Services/CivIconResolver.cs](Services/CivIconResolver.cs)               | 文明名 → 图标文件路径（多路径按序查找）          |
 | 窗口互操作        | [Services/WindowServices.cs](Services/WindowServices.cs)                 | `WS_EX_TRANSPARENT` 鼠标穿透样式     |
-| 缩放算法         | [Services/OverlayScaleCalculator.cs](Services/OverlayScaleCalculator.cs) | Overlay 内容等比缩放比例计算             |
+| 缩放边界         | [Services/OverlayScaleCalculator.cs](Services/OverlayScaleCalculator.cs) | Overlay 用户倍率边界（MinScale/MaxScale） |
 | 日志路径         | [Services/LogPaths.cs](Services/LogPaths.cs)                             | `logs/` 目录懒创建与路径拼接             |
 | 设置页          | [Views/SettingsView.xaml.cs](Views/SettingsView.xaml.cs)                 | 热键录制状态机、搜索交互、历史下拉              |
 | 战绩页          | [Views/GamesView.xaml.cs](Views/GamesView.xaml.cs)                       | 超链接跳转                          |
@@ -534,23 +534,25 @@ Win32 封装，操作窗口扩展样式（`GWL_EXSTYLE = -20`）：
 
 调用点：`OverlayWindow.OnSourceInitialized`（初始锁定）、`OverlayWindow.ToggleLock`。
 
-#### 5.5.10 OverlayScaleCalculator — 缩放算法
+#### 5.5.10 OverlayScaleCalculator — 缩放边界
 
 位置：[Services/OverlayScaleCalculator.cs](Services/OverlayScaleCalculator.cs)
 
 ```csharp
-ComputeScale(clientW, clientH, baseW, baseH)
+MinScale = 0.5;  MaxScale = 3.0;
 ```
 
-- 任一尺寸 ≤ 0 → 返回 1.0（防除零）
+覆盖层缩放模型：**窗口尺寸 = 内容自然尺寸（由字体大小决定）× 用户倍率**。
 
-- `scale = min(clientW/baseW, clientH/baseH)`
+- 用户倍率默认 `1.0`，仅由用户拖拽（`WM_SIZING` → `ApplyContentAspect`）或历史几何恢复时改变，Clamp 到 `[0.5, 3.0]`
 
-- 再与 `(clientW-2)/baseW`、`(clientH-2)/baseH` 取 min（四周各留 1px 防贴边裁剪）
+- 内容变化（搜索/新对局）只重测自然尺寸基准再按当前倍率重新贴合窗口，**绝不从窗口尺寸反推倍率**（旧实现如此，会导致多次搜索后逐次变小）
 
-- `Clamp` 到 `[MinScale=0.5, MaxScale=3.0]`
+- 每次搜索玩家时 `OverlayWindow.ResetToBaseSize()` 把倍率重置回 1.0，窗口贴合内容（四周 1px 边距）
 
-调用点：`OverlayWindow.ApplyScale`。
+- 窗口尺寸 = **内容自然尺寸（不含 Margin）× 倍率 + Margin**，并向上取整：实测 `Margin` 不随 `LayoutTransform` 缩放，减出去再加回才能保证任意倍率下四周恒定 1px 间隙且不裁切
+
+- 重测基准前必须 `InvalidateMeasureTree(ContentRoot)` 递归失效整棵子树：字体变化只会标记部分节点，中间容器仍是 measure-valid，直接 `Measure` 会返回旧缓存（表现为调大字体后尺寸不变、内容被裁切）
 
 #### 5.5.11 LogPaths — 日志目录
 
@@ -615,7 +617,7 @@ ComputeScale(clientW, clientH, baseW, baseH)
 
 ```
 Grid
-├─ ContentRoot (Margin=6，承载 LayoutTransform 缩放)
+├─ ContentRoot (Margin=1，承载 LayoutTransform 缩放)
 │  ├─ MapLabel            顶部地图名（#29e0f8 加粗）
 │  └─ [TeamLeftPanel] TeamGapColumn [TeamRightPanel]   三列 StackPanel
 ├─ LockedBorder    Gold 4px，锁定时可见，IsHitTestVisible=False
@@ -632,14 +634,18 @@ Grid
 | 构造函数                             | 订阅 `Settings.PropertyChanged`（FontSize/TeamGap 即时生效）；`MapLabel.FontSize = max(10, FontSize-2)`；`TeamGapColumn` clamp 0\~40；从 `OverlayGeometry` 恢复位置尺寸；记录 `_hasSavedGeometry`；挂 `SizeChanged` |
 | `OnSourceInitialized`            | 追加 `WS_EX_NOACTIVATE`（不抢焦点，利于游戏前台+热键）→ `SetWindowExTransparent`（初始锁定穿透）→ 30% 黑背景 → 金边框显示、红边框/缩放手柄隐藏                                                                                          |
 | `UpdateData(dynamic)`            | 公开入口。Dispatcher 内：更新地图名 → 清空两面板 → 按队号分组（首队左、其余右）→ 逐个 `CreatePlayerRowLeft` / `CreatePlayerRowRightMirrored` → `TryEstablishBaseSize()`                                                       |
-| `TryEstablishBaseSize()`         | 首次数据到达时 Measure 内容自然尺寸作为 100% 基准；**无历史几何时窗口贴合内容**；随后 `ApplyScale`                                                                                                                            |
-| `ApplyScale()`                   | `ComputeScale(ActualWidth, ActualHeight, baseW, baseH)` → 更新 `ScaleTransform` → 挂到 `ContentRoot.LayoutTransform`                                                                             |
-| `OnWindowSizeChanged`            | 已有基准尺寸时重算缩放                                                                                                                                                                                  |
+| `TryEstablishBaseSize()`         | 首次数据到达时 Measure 内容自然尺寸作为基准（由字体大小决定）；有历史几何时按历史尺寸恢复用户倍率；随后 `FitWindowToBase()`                                                                                                          |
+| `RefreshBaseSize()`              | 递归 `InvalidateMeasureTree` → 摘除 LayoutTransform 重测自然尺寸，按当前倍率重新贴合窗口（字体/间距/内容变化时调用）                                                                                                                                    |
+| `FitWindowToBase()`              | 窗口尺寸 = (内容基准 − Margin) × 倍率 + Margin（向上取整）；`ScaleTransform` 同步为倍率 → `ContentRoot.LayoutTransform`                                                                                     |
+| `ScaleWithMargin()`              | 把“含边距的自然长度”换算为缩放后的窗口长度（Margin 不随 LayoutTransform 缩放，恒定保留）                                                                                                                    |
+| `ResetToBaseSize()`              | 公开方法：倍率回到 1.0 并重新贴合内容（每次搜索玩家时由 MainViewModel 调用）                                                                                                                        |
+| `OnWindowSizeChanged`            | 内容缩放只跟随用户倍率（不再从窗口尺寸反推）                                                                                                                                                          |
+| `ApplyContentAspect(ref RECT)`   | `WM_SIZING` 钩子：按拖动方向等比计算倍率、记录 `_userScale`，窗口矩形锁定为内容比例（Clamp [0.5, 3.0]）                                                                                                    |
 | `ToggleVisibility()`             | `Show()/Hide()` 切换（永不 Close）                                                                                                                                                                 |
 | `ToggleLock()`                   | **解锁**：去穿透 + 100% 黑背景 + 红边框 + 显示缩放手柄；**锁定**：反向（穿透 + 30% 背景 + 金边框 + 藏手柄）                                                                                                                      |
 | `SaveState()`                    | `OverlayGeometry = [Left, Top, Width, Height]`                                                                                                                                               |
 | `ResizeGrip_MouseLeftButtonDown` | `SendMessage(WM_SYSCOMMAND, SC_SIZE+WMSZ_BOTTOMRIGHT)` 走系统原生缩放                                                                                                                               |
-| `Settings_PropertyChanged`       | FontSize → 递归刷新两面板所有 TextBlock + MapLabel；TeamGap → 更新中列宽（clamp 0\~40）                                                                                                                       |
+| `Settings_PropertyChanged`       | FontSize → 递归刷新两面板所有 TextBlock + MapLabel → `RefreshBaseSize()`；TeamGap → 更新中列宽（clamp 0\~40）→ `RefreshBaseSize()`                                                                        |
 | `OnClosed`                       | 解除 Settings 订阅                                                                                                                                                                               |
 
 **玩家行构建**（核心 UI 工厂方法）：
@@ -872,12 +878,14 @@ MainViewModel.UpdateHotkeyRegistration()   [显隐热键与位置热键各一套
  ├─ 背景 → 30% 黑(Alpha=77)；边框 → 金；隐藏 ResizeGrip
  └─ SaveState 在 Stop() 时统一写回 OverlayGeometry
 
-缩放
- ├─ 首次 UpdateData → TryEstablishBaseSize (Measure 自然尺寸=100%基准)
- │    └─ 无历史几何 → 窗口贴合内容
- └─ 之后每次窗口尺寸变化 → ApplyScale
-      → ComputeScale → ScaleTransform → ContentRoot.LayoutTransform
-      (等比缩放全部内容，Clamp [0.5, 3.0])
+缩放（窗口尺寸 = (内容自然尺寸 − Margin) × 用户倍率 + Margin，向上取整；倍率仅由拖拽/历史几何决定）
+ ├─ 首次 UpdateData → TryEstablishBaseSize (递归失效 → Measure 自然尺寸基准)
+ │    ├─ 无历史几何 → 倍率 = 1.0
+ │    └─ 有历史几何 → 按历史窗口尺寸恢复倍率
+ ├─ 内容变化（搜索/新对局/字体/间距）→ RefreshBaseSize（先 InvalidateMeasureTree 递归失效，防 Measure 命中旧缓存）→ FitWindowToBase
+ ├─ 每次搜索玩家 → ResetToBaseSize（倍率=1.0，窗口贴合内容，1px 边距）
+ └─ 拖拽 (WM_SIZING) → ApplyContentAspect 记录倍率（边距不参与缩放），Clamp [0.5, 3.0]
+      → ScaleTransform → ContentRoot.LayoutTransform
 ```
 
 ***

@@ -52,6 +52,12 @@ namespace AoE4OverlayCS.Models
         private double _teamGap = 12;
         public double TeamGap { get => _teamGap; set { _teamGap = value; OnPropertyChanged(); } }
 
+        private string _overlayBackgroundColor = "#000000";
+        public string OverlayBackgroundColor { get => _overlayBackgroundColor; set { _overlayBackgroundColor = value; OnPropertyChanged(); } }
+
+        private double _overlayBackgroundOpacity = 0.5;
+        public double OverlayBackgroundOpacity { get => _overlayBackgroundOpacity; set { _overlayBackgroundOpacity = value; OnPropertyChanged(); } }
+
         private int _maxGamesHistory = 20;
         public int MaxGamesHistory { get => _maxGamesHistory; set { _maxGamesHistory = value; OnPropertyChanged(); } }
 
