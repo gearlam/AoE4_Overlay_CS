@@ -143,8 +143,8 @@ namespace AoE4OverlayCS.ViewModels
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
             _globalHotkeyPosition = new GlobalHotkeyService();
+            // 输入闸门钩子不常驻：仅宏运行期间挂载（引擎 Start 挂载，结束/停止时经 OnMacroStatus 卸载）
             _inputGate = new InputGateService();
-            _inputGate.Start(); // UI 线程安装键盘钩子：宏注入期间屏蔽物理按键
             _globalHotkeyMacro = new GlobalHotkeyService();
             _macroRunner = new MacroRunnerService(msg => {
                 try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} macro {msg}{Environment.NewLine}"); } catch { }
@@ -361,6 +361,7 @@ namespace AoE4OverlayCS.ViewModels
                     MacroStatusBrush = status.IsError ? System.Windows.Media.Brushes.OrangeRed
                                    : status.IsRunning ? System.Windows.Media.Brushes.LimeGreen
                                    : System.Windows.Media.Brushes.Gray;
+                    if (!status.IsRunning) _inputGate.Stop(); // 宏结束即卸载输入闸门钩子，恢复全系统零开销
                 });
             }
             catch { /* Dispatcher 可能正在关闭 */ }

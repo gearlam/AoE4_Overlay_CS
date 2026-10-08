@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-04T05:51:54Z",
-  "updated_at": "2026-10-08T05:52:10Z",
+  "updated_at": "2026-10-08T08:09:23Z",
   "files": {
     ".codegraph/.gitignore": {
       "role": "index",
@@ -149,9 +149,9 @@
     },
     "Services/MacroRunnerService.cs": {
       "role": "index",
-      "sha256": "96b8af5f6aa0d7a45e7536bdd3e4d6b0ce0bb27a8d34caac54962e568a8eea22",
-      "size": 20664,
-      "normalized_sha256": "96b8af5f6aa0d7a45e7536bdd3e4d6b0ce0bb27a8d34caac54962e568a8eea22"
+      "sha256": "488b30b20069843bc1eaaf36267741fbf5452f950c11c3f43d3226d3974b227b",
+      "size": 20414,
+      "normalized_sha256": "488b30b20069843bc1eaaf36267741fbf5452f950c11c3f43d3226d3974b227b"
     },
     "Services/MapNameTranslator.cs": {
       "role": "index",
@@ -185,9 +185,9 @@
     },
     "ViewModels/MainViewModel.cs": {
       "role": "index",
-      "sha256": "d836ba00bfa1dccfc4f4f4202b17bb10cc02f4d3e99cc0f8942ed9ca5eecd235",
-      "size": 36660,
-      "normalized_sha256": "d836ba00bfa1dccfc4f4f4202b17bb10cc02f4d3e99cc0f8942ed9ca5eecd235"
+      "sha256": "616e01f1c0a0fe25ebf2877a70a82dbf1208817290ed46b280b4f1e3dee0906a",
+      "size": 36828,
+      "normalized_sha256": "616e01f1c0a0fe25ebf2877a70a82dbf1208817290ed46b280b4f1e3dee0906a"
     },
     "ViewModels/RelayCommand.cs": {
       "role": "index",
@@ -233,9 +233,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "2805867ae78157ca085e680659d5fae271013c1f58c984a6ba8f8ec4a7827867",
-      "size": 13192,
-      "normalized_sha256": "2805867ae78157ca085e680659d5fae271013c1f58c984a6ba8f8ec4a7827867"
+      "sha256": "7d03874067db1f92cc9670e3b00b68e0ac42bef997d93a191994bb08d95c5f44",
+      "size": 13250,
+      "normalized_sha256": "7d03874067db1f92cc9670e3b00b68e0ac42bef997d93a191994bb08d95c5f44"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -262,6 +262,12 @@
       "normalized_sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef"
     },
     "bin/Release/AoE4_Overlay_CS_1.7.8/html/jquery.min.js": {
+      "role": "observe",
+      "sha256": "4fe68fa216176e6d1f4580e924bafecc9f519984ecc06b1a840a08b0d88c95de",
+      "size": 86929,
+      "normalized_sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef"
+    },
+    "bin/Release/AoE4_Overlay_CS_2.0/html/jquery.min.js": {
       "role": "observe",
       "sha256": "4fe68fa216176e6d1f4580e924bafecc9f519984ecc06b1a840a08b0d88c95de",
       "size": 86929,

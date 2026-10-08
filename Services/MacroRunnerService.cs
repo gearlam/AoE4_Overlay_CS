@@ -60,11 +60,13 @@ namespace AoE4OverlayCS.Services
                 return;
             }
 
+            // 输入闸门钩子仅宏运行期间挂载（Start 由 UI 线程调用），平时对全系统零开销
+            _gate?.Start();
+
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
             _isRunning = true;
             Report(L(settings, "热键自动化已启动", "Macro automation started"), true, false);
-            _log?.Invoke("start");
             var thread = new Thread(() => RunLoopSync(settings, ct))
             {
                 IsBackground = true,
@@ -79,7 +81,7 @@ namespace AoE4OverlayCS.Services
             if (!_isRunning) return;
             _cts?.Cancel();
             _isRunning = false;
-            _log?.Invoke("stop");
+            _gate?.Stop();
             Report(L(settings, "已停止", "Stopped"), false, false);
         }
 
@@ -226,7 +228,6 @@ namespace AoE4OverlayCS.Services
                     var steps = ParseSequence(settings.MacroSequence);
                     if (steps.Count == 0)
                     {
-                        _log?.Invoke("stopped: empty sequence");
                         Report(L(settings, "热键序列为空，已自动停止", "Key sequence is empty, stopped automatically"), false, true);
                         return;
                     }
@@ -239,12 +240,10 @@ namespace AoE4OverlayCS.Services
                                    $"Sending keys (round {executed + 1}{roundSuffix})"), true, false);
                     ExecuteSequence(steps);
                     executed++;
-                    _log?.Invoke($"round {executed}/{(repeats > 0 ? repeats.ToString() : "∞")} sent");
 
                     if (repeats > 0 && executed >= repeats) break;
 
                     var waitSeconds = Math.Clamp(settings.MacroIntervalSeconds, MinIntervalSeconds, MaxIntervalSeconds);
-                    _log?.Invoke($"waiting {waitSeconds}s before round {executed + 1}");
                     WaitInterval(settings, executed, ct);
                 }
                 Report(L(settings, "热键序列执行完成", "Macro sequence finished"), false, false);
@@ -298,7 +297,6 @@ namespace AoE4OverlayCS.Services
                 if (!reported)
                 {
                     reported = true;
-                    _log?.Invoke($"idle-wait: last input {idleMs}ms ago, quiet >= {quietMs}ms");
                     Report(L(settings, "检测到操作，等待空闲后发送…", "Input detected, waiting for idle..."), true, false);
                 }
                 Thread.Sleep(PollMs);
