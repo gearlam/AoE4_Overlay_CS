@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              mc:Ignorable="d" 
+             PreviewKeyDown="SettingsView_PreviewKeyDown"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style TargetType="GroupBox">
@@ -43,6 +44,7 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid HorizontalAlignment="Stretch">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -199,6 +201,138 @@
                     </Grid>
                 </StackPanel>
             </GroupBox>
+
+            <!-- Macro Automation Panel（点击标题展开热键自动化设置面板） -->
+            <Expander Grid.Row="2" IsExpanded="False" Margin="0,0,0,18">
+                <Expander.Header>
+                    <TextBlock Text="{DynamicResource Settings_MacroHeader}" FontSize="18" FontWeight="SemiBold" Foreground="#222"/>
+                </Expander.Header>
+                <Border BorderBrush="#E0E0E0" BorderThickness="1" Padding="16" Margin="0,8,0,0">
+                    <StackPanel>
+                        <!-- 启用开关 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroEnableLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1">
+                                <CheckBox x:Name="MacroEnabledCheckBox" IsChecked="{Binding Settings.MacroEnabled}" FontSize="15" HorizontalAlignment="Left"
+                                          Checked="MacroEnabledCheckBox_Changed" Unchecked="MacroEnabledCheckBox_Changed"/>
+                                <TextBlock Text="{DynamicResource Settings_MacroEnableHint}" FontSize="12" Foreground="#888" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 触发热键 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroTriggerLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Button x:Name="MacroTriggerHotkeyButton" Content="{Binding Settings.MacroTriggerHotkey, TargetNullValue='Click to set'}"
+                                    Grid.Column="1" HorizontalAlignment="Left" Width="180" Height="34"
+                                    Click="MacroTriggerHotkeyButton_Click" PreviewKeyDown="MacroTriggerHotkeyButton_PreviewKeyDown"/>
+                        </Grid>
+
+                        <!-- 热键序列（手动输入 + 录制 + 按键芯片可视化） -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroSequenceLabel}" FontSize="16" VerticalAlignment="Top" Margin="0,7,10,0"/>
+                            <StackPanel Grid.Column="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="MacroSequenceTextBox" Width="240" MaxLength="400"
+                                             Text="{Binding Settings.MacroSequence, UpdateSourceTrigger=PropertyChanged, Delay=300}"/>
+                                    <Button x:Name="MacroRecordButton" Content="{DynamicResource Settings_MacroRecordButton}" Margin="10,0,0,0" Click="MacroRecordButton_Click"/>
+                                    <Button Content="{DynamicResource Settings_MacroClearButton}" Margin="10,0,0,0" Click="MacroClearButton_Click"/>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding MacroKeyChips}" Margin="0,10,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#F7F7F7" BorderBrush="#C5C5C5" BorderThickness="1" CornerRadius="4" Padding="9,4" Margin="0,0,6,6">
+                                                <TextBlock Text="{Binding}" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{DynamicResource Settings_MacroSequenceHint}" FontSize="12" Foreground="#888" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 触发间隔（秒） -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroIntervalLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBox x:Name="MacroIntervalTextBox" Width="60" TextAlignment="Center"
+                                         Text="{Binding Settings.MacroIntervalSeconds, UpdateSourceTrigger=Explicit}"
+                                         LostFocus="MacroIntervalTextBox_LostFocus"/>
+                                <Slider Value="{Binding Settings.MacroIntervalSeconds}" Minimum="1" Maximum="300"
+                                        Width="180" Height="34" Margin="12,0,0,0" VerticalAlignment="Center"
+                                        SmallChange="1" LargeChange="10"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 操作避让（毫秒）：键鼠空闲后才注入，避免打断游戏操作 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroIdleLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBox x:Name="MacroIdleTextBox" Width="60" TextAlignment="Center"
+                                         Text="{Binding Settings.MacroIdleWaitMs, UpdateSourceTrigger=Explicit}"
+                                         LostFocus="MacroIdleTextBox_LostFocus"/>
+                                <TextBlock Text="{DynamicResource Settings_MacroIdleHint}" FontSize="12" Foreground="#888"
+                                           Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 重复次数（1-99 或无限循环） -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroRepeatLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBox x:Name="MacroRepeatTextBox" Width="60" TextAlignment="Center"
+                                         Text="{Binding Settings.MacroRepeatCount, UpdateSourceTrigger=Explicit}"
+                                         LostFocus="MacroRepeatTextBox_LostFocus"/>
+                                <CheckBox x:Name="MacroInfiniteCheckBox" Content="{DynamicResource Settings_MacroInfiniteLabel}" FontSize="15"
+                                          Margin="16,0,0,0" VerticalAlignment="Center"
+                                          Checked="MacroInfiniteCheckBox_Changed" Unchecked="MacroInfiniteCheckBox_Changed"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 测试 + 运行状态实时显示 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{DynamicResource Settings_MacroStatusLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="{DynamicResource Settings_MacroTestButton}" Command="{Binding MacroTestCommand}" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding MacroStatusText}" Foreground="{Binding MacroStatusBrush}"
+                                           FontSize="14" FontWeight="Bold" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Expander>
         </Grid>
         </ScrollViewer>
     </Grid>

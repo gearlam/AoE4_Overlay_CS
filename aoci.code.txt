@@ -1,0 +1,63 @@
+#AOCI-CODE-VOLUME: 1
+
+===D:/bak/tttttt/AoE4_Overlay_CS/===
+.gitattributes[FV2T]: F:Git跨平台行尾策略声明，二进制自动识别 | R:- | A:- | S:文本强制检出为LF，保证AOCI基线在所有平台字节一致
+.gitignore[FC3S]: F:仓库git忽略清单：构建产物、IDE缓存、日志与临时文件 | R:- | A:- | S:认知资产aoci*.txt与AGENTS.md不可加入忽略，否则scan静默跳过
+AGENTS.md[SG6T]: F:AOCI接入规则区块，规定认知使用、刷新门禁与收尾维护的Agent行为合同 | R:- | A:- | S:aoci:begin与aoci:end之间的内容由AOCI管理勿手改；AOCI状态判断优先于历史Memory
+AoE4OverlayCS.csproj[FV6T]: F:.NET项目声明：net10.0-windows单项目、WPF+WinForms双桌面栈、Fleck/Newtonsoft.Json/NHotkey/Serilog/ImageSharp依赖与html/img/Resources输出复制 | R:- | A:- | S:版本号分散在Version/AssemblyVersion/FileVersion/InformationalVersion四处，升级需同步修改；当前2.0.0
+App.xaml[EL4T]: F:WPF应用声明：合并默认英文字符串资源字典 | R:code:Resources/Strings.en-US.xaml | A:- | S:ShutdownMode=OnMainWindowClose，但主窗口OnClosing默认取消关闭转入托盘，真退出走托盘菜单
+App.xaml.cs[ER7T]: F:应用启动入口：互斥锁保证单实例，注册Dispatcher与AppDomain全局异常日志 | R:code:MainWindow.xaml.cs | A:OnStartup先SetLanguage再创建MainWindow | S:非首个实例直接退出；未捕获异常仅写logs/dispatcher_error.log与domain_error.log，不弹窗
+AssemblyInfo.cs[FC1T]: F:程序集ThemeInfo声明主题与通用资源字典位置 | R:- | A:- | S:-
+CodeWiki.md[SG5L]: F:中文架构Wiki：模块划分、数据流、UI行为与构建说明的全景文档，含MacroRunnerService热键自动化专节 | R:- | A:- | S:主体基于1.7.6快照逐文件分析，2.0.0增补热键自动化章节；其余章节落后于后续改动，与代码冲突时以代码为准
+MainWindow.xaml[EU5S]: F:主窗口XAML：文件/设置/链接/语言四菜单与设置、历史两Tab，内嵌TabControl与TabItem自定义模板 | R:code:MainWindow.xaml.cs | A:- | S:-
+MainWindow.xaml.cs[EU7M]: F:主窗口代码后置：托盘化关闭、中英语言切换、菜单动作与语言归一化 | R:code:App.xaml,code:Resources/Strings.zh-CN.xaml,code:Resources/Strings.en-US.xaml | A:OnClosing默认取消关闭并隐藏到托盘 | S:仅_isExitRequested为真才真正退出；语言代码非zh-CN一律归一化为en-US，切换靠替换MergedDictionaries
+README.md[SG3L]: F:中文主文档：功能清单、架构、数据流、配置与构建说明，含热键自动化功能清单 | R:- | A:- | S:版本信息与功能清单随2.0.0更新；细节以代码为准
+README_en.md[SG3M]: F:英文主文档，与README.md对应的English说明，含Macro Automation功能清单 | R:- | A:- | S:-
+dotnet-install.ps1[XV1L]: F:.NET官方SDK安装脚本 | R:- | A:- | S:上游官方脚本vendored副本，升级SDK应整体替换而非修改
+global.json[FV5T]: F:SDK版本固定声明 | R:code:AoE4OverlayCS.csproj | A:- | S:固定SDK 10.0.301且rollForward=latestFeature，保证net10.0-windows构建可复现
+
+===D:/bak/tttttt/AoE4_Overlay_CS/.codegraph/===
+.gitignore[XV2T]: F:CodeGraph工具本地数据目录的git忽略声明，配合自维护工具资产 | R:- | A:- | S:目录内除本ignore文件外全部被忽略，数据库/daemon.pid/日志等运行文件不入库
+
+===D:/bak/tttttt/AoE4_Overlay_CS/Models/===
+AppSettings.cs[CD6T]: F:配置模型：绑定玩家、语言、热键、字体、OverlayGeometry、TeamColors及Macro*宏配置（MacroRepeatCount=0无限循环为默认、MacroIdleWaitMs操作避让毫秒）等持久化字段 | R:- | A:- | S:-
+
+===D:/bak/tttttt/AoE4_Overlay_CS/Resources/===
+Strings.en-US.xaml[FL4T]: F:英文字符串资源字典，全部UI文案的en-US键值，含热键自动化Macro面板与操作避让文案 | R:- | A:- | S:-
+Strings.zh-CN.xaml[FL4T]: F:中文字符串资源字典，与en-US键集对齐的zh-CN文案，含热键自动化Macro面板与操作避让文案 | R:- | A:- | S:新增文案键必须在zh-CN与en-US两字典同步添加，缺键的DynamicResource显示为空
+
+===D:/bak/tttttt/AoE4_Overlay_CS/Services/===
+ApiCheckerService.cs[IN8M]: F:aoe4world API访问层：按名称或ProfileId搜索玩家、拉取最近对局与历史战绩、轮询新对局 | R:code:Services/GameProcessor.cs,code:Models/AppSettings.cs | A:纯数字输入先按profile_id直查 | S:新对局判定为started_at>内存_lastMatchTime，进程重启会重推最近一场；IPv4同族并发竞速(单地址10s)失败才回退IPv6，总预算30s
+CivIconResolver.cs[CU5S]: F:文明代号到图标资源路径解析 | R:- | A:teu等历史代号经别名表映射到实际资源名 | S:-
+CivNameTranslator.cs[CL4T]: F:文明代号中英文名称翻译，覆盖25个文明 | R:- | A:- | S:-
+CountryNameTranslator.cs[CL4M]: F:ISO 3166国家代码到中文名称翻译，含gb-eng等子区域码 | R:- | A:仅zh-CN语言生效，未命中原样返回国家码 | S:-
+GameProcessor.cs[DB8S]: F:对局JSON到Overlay展示数据的加工：地图/模式/服务器、队伍排序、段位胜率、文明与国家 | R:code:Services/ApiCheckerService.cs,code:Services/MapNameTranslator.cs,code:Services/CivNameTranslator.cs,code:Services/CountryNameTranslator.cs | A:主队排最前 | S:模式键缺失时rm_与qm_互换重查一次；country_display翻译结果等于原码时置空；civ_win_length_median恒为空串
+GlobalHotkeyService.cs[IR6S]: F:WH_KEYBOARD_LL低阶键盘钩子全局热键，NHotkey注册失败时的兜底 | R:- | A:ParseHotkey按+分段解析修饰键与按键 | S:触发要求当前修饰键组合与配置完全相等；_isTriggerKeyDown保证按下沿单次触发；Stop前钩子常驻需成对启停
+LogPaths.cs[CO4T]: F:日志文件路径集中管理，基于exe目录logs/懒创建 | R:- | A:- | S:-
+MapNameTranslator.cs[CL5S]: F:地图名本地化：中文界面映射中文名，英文界面保留原名 | R:- | A:同时作用于Overlay地图名与历史对战地图名 | S:-
+OverlayScaleCalculator.cs[KU7T]: F:覆盖层等比缩放计算：窗口尺寸=内容自然尺寸×用户倍率 | R:code:Models/AppSettings.cs | A:- | S:倍率钳制0.5~3.0；禁止从当前窗口尺寸反推倍率回写，会产生越缩越小的棘轮效应
+SettingsService.cs[PC7T]: F:config/config.json的加载与保存 | R:code:Models/AppSettings.cs | A:配置存exe目录，便携式 | S:Load/Save双向吞异常，缺失或损坏时静默回退默认值
+WebSocketServerService.cs[IN7T]: F:Fleck本地WebSocket服务，向外部广播player_data驱动HTML Overlay | R:code:Models/AppSettings.cs | A:新连接补发历史首末两条消息 | S:监听ws://0.0.0.0:{port}无鉴权，仅限本机可信环境；启动失败静默不抛出
+WindowServices.cs[IU4T]: F:Win32窗口扩展样式辅助：锁定态WS_EX_TRANSPARENT鼠标穿透 | R:- | A:- | S:-
+MacroRunnerService.cs[IW5L]: F:按键精灵式宏引擎：SendInput扫描码模拟按键序列（不切换窗口焦点），按设定间隔与次数循环执行，注入前按键鼠空闲避让，运行期动态读取间隔/次数/序列/避让阈值 | R:code:Models/AppSettings.cs,code:Services/InputGateService.cs | A:序列语法H+Q+Q+Q，修饰键作用于其后主键；数字1-9映射主键盘、R1-R9映射小键盘（控制组编队）；间隔1~300秒、重复1~99（0无限默认）、避让0~5000ms；RunOnce测试发到焦点窗口且不避让 | S:专用后台线程全同步Sleep防调度冻结；SendInput带KEYEVENTF_SCANCODE兼容DirectX；每轮经InputGateService屏蔽键鼠500ms保证原子性；start/round/waiting/stop写hotkey.log
+InputGateService.cs[RS4T]: F:输入闸门：WH_KEYBOARD_LL+WH_MOUSE_LL钩子，宏注入期间屏蔽物理键鼠输入至窗口结束，注入事件经INJECTED标志放行 | R:code:Services/MacroRunnerService.cs | A:SetSuppress开关屏蔽窗口；Start/Stop幂等，钩子须在UI线程安装（回调依赖安装线程消息循环） | S:窗口500ms含注入后补足，键鼠物理输入被吞；钩子须UI线程常驻，UI卡顿拖慢全系统输入
+
+===D:/bak/tttttt/AoE4_Overlay_CS/ViewModels/===
+MainViewModel.cs[AW9L]: F:核心协调层：搜索绑定、轮询刷新、Overlay数据与设置生命周期及宏引擎的编排，含MacroKeyChips与宏状态绑定 | R:code:Services/ApiCheckerService.cs,code:Services/GameProcessor.cs,code:Services/WebSocketServerService.cs,code:Services/SettingsService.cs,code:Services/GlobalHotkeyService.cs,code:Services/OverlayScaleCalculator.cs,code:Services/MacroRunnerService.cs,code:Services/InputGateService.cs | A:搜索成功后调用ResetToBaseSize()重置覆盖层基准尺寸 | S:SaveSettings()=Stop()+Start()全量重建服务并重注册热键；热键NHotkey优先失败回退GlobalHotkeyService并记hotkey.log；跨线程UI更新一律经Dispatcher.BeginInvoke；宏触发热键经NormalizeHotkeyString比较冲突即拒注册；MacroEnabled=false或程序退出(Stop)停止运行中宏并卸载InputGate
+RelayCommand.cs[CU3T]: F:ICommand通用包装，CommandManager.RequerySuggested驱动CanExecute刷新 | R:- | A:- | S:-
+
+===D:/bak/tttttt/AoE4_Overlay_CS/Views/===
+GamesView.xaml[EU4S]: F:历史对战列表视图：双方阵容/地图/时间/模式/结果/分差/对局链接八列 | R:code:MainWindow.xaml | A:玩家名与对局ID为Hyperlink跳转aoe4world | S:-
+GamesView.xaml.cs[EU4T]: F:历史对战视图代码后置：处理玩家名与对局ID超链接导航 | R:code:Views/GamesView.xaml | A:Process.Start(UseShellExecute=true)用系统浏览器打开链接 | S:-
+OverlayWindow.xaml[EU7T]: F:对战数据覆盖层窗口：无边框透明置顶显示双方队伍、文明、地图与比分，支持拖拽等比缩放与位置记忆 | R:code:Views/OverlayWindow.xaml.cs | A:窗口尺寸=内容自然尺寸×用户倍率，缩放钳制50%~300% | S:必须ShowActivated=False且Focusable=False，配合WS_EX_NOACTIVATE保证覆盖层永不夺取前台焦点，否则SendInput宏按键会误入覆盖层
+OverlayWindow.xaml.cs[EU8L]: F:覆盖层显示引擎：动态构建双方玩家行（文明旗/段位/评分/胜率/胜负/国旗/国家名）、等比缩放、锁定穿透与几何持久化 | R:code:Services/OverlayScaleCalculator.cs,code:Services/CivIconResolver.cs,code:Services/CountryNameTranslator.cs,code:Services/WindowServices.cs,code:Services/LogPaths.cs,code:Models/AppSettings.cs | A:UpdateData按队伍分组构建左右镜像两栏；ToggleLock切换WS_EX_TRANSPARENT与金/红边框 | S:拖拽经WM_SIZING钩子ApplyContentAspect约束为内容比例，倍率钳制0.5~3.0；Margin恒1px不随LayoutTransform缩放（先减出再加回）；RefreshBaseSize必须先摘除LayoutTransform并递归InvalidateMeasure再Measure，否则测量缓存返回旧尺寸导致裁切；webp图标经ImageSharp转PNG并Freeze缓存；WS_EX_NOACTIVATE防止覆盖层抢焦点
+SettingsView.xaml[EU5M]: F:设置页XAML：玩家搜索与历史下拉、显示/位置热键录制、字体档位、队伍间距、背景色与不透明度，含热键自动化Macro面板（触发键/序列芯片/间隔/避让/重复/测试与状态） | R:code:ViewModels/MainViewModel.cs | A:- | S:TeamGap滑条上限80但OverlayWindow端钳制0~40；字体下拉仅10~24固定档位；宏间隔/避让/重复TextBox为Explicit提交、LostFocus钳制写回
+SettingsView.xaml.cs[EU6L]: F:设置页代码后置：热键录制、回车搜索、历史下拉展开与删除、背景色选择，含宏触发热键录制、全页按键序列录制与间隔/避让/重复参数钳制 | R:code:ViewModels/MainViewModel.cs,code:Services/MacroRunnerService.cs | A:热键经PreviewKeyDown录制组合键；序列录制经UserControl级PreviewKeyDown隧道捕获整页按键，按键经KeyToDisplay人性化显示 | S:热键录入为Ctrl+Shift+Alt+前缀加主键，Esc取消、Back/Delete清空；序列录制Esc结束、Backspace删末位；无限循环存为MacroRepeatCount=0；参数改动直写Settings并立即生效无需显式保存
+
+===D:/bak/tttttt/AoE4_Overlay_CS/docs/superpowers/plans/===
+2026-08-07-overlay-content-scaling.md[SG3M]: F:覆盖层等比缩放功能的历史实施计划文档：目标、约束与任务分解 | R:- | A:- | S:计划中的ComputeScale方案已废弃，现行实现禁止从窗口尺寸反推倍率；本文为历史方案存档
+
+===D:/bak/tttttt/AoE4_Overlay_CS/html/===
+main.css[EU3S]: F:HTML Overlay样式：队伍间距/字号/列宽CSS变量与居中布局 | R:code:html/main.js | A:- | S:--team-gap与--overlay-font-size由main.js按URL参数在运行时覆盖
+main.js[EU5S]: F:HTML Overlay数据端：连接WebSocket渲染双方玩家表格与地图名 | R:code:html/overlay.html,code:html/main.css,code:Services/WebSocketServerService.cs | A:断线后500ms自动重连 | S:默认端口7307可经?port=覆盖，font与gap也可URL注入；国旗路径硬编码../img/相对层级；uk/usa/eng等别名归一化为gb系双回退
+overlay.html[EU4T]: F:HTML Overlay宿主页：team1/map/team2三区骨架 | R:code:html/main.js,code:html/main.css | A:底部依次加载jquery/main.js/custom.js，custom为用户定制入口 | S:-

@@ -1,6 +1,6 @@
 # AoE4 Overlay CS — Code Wiki
 
-> 本文档基于仓库全部源码（版本 `1.7.6`，commit `8305cec` 之后）逐文件分析生成。
+> 本文档基于仓库全部源码（版本 `2.0.0`，commit `8305cec` 之后）逐文件分析生成。
 > 生成时间：2026-09-05。
 
 ## 目录
@@ -57,7 +57,7 @@
 
 ### 版本信息
 
-- 程序集版本：`1.7.6`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
+- 程序集版本：`2.0.0`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
 
 - 目标框架：`net10.0-windows`
 
@@ -164,6 +164,7 @@ AoE4_Overlay_CS/
 │  ├─ WebSocketServerService.cs Fleck WebSocket 服务端
 │  ├─ SettingsService.cs        配置读写 (config/config.json)
 │  ├─ GlobalHotkeyService.cs    WH_KEYBOARD_LL 热键兜底
+│  ├─ MacroRunnerService.cs    按键精灵式热键自动化引擎（2.0 新增）
 │  ├─ MapNameTranslator.cs      地图名翻译表
 │  ├─ CivNameTranslator.cs      文明名翻译表
 │  ├─ CivIconResolver.cs        文明图标解析（注意：位于根命名空间 AoE4OverlayCS）
@@ -214,6 +215,7 @@ AoE4_Overlay_CS/
 | WS 广播        | [Services/WebSocketServerService.cs](Services/WebSocketServerService.cs) | Fleck 服务端、历史消息回放、全量广播          |
 | 配置持久化        | [Services/SettingsService.cs](Services/SettingsService.cs)               | config/config.json 加载与保存       |
 | 热键兜底         | [Services/GlobalHotkeyService.cs](Services/GlobalHotkeyService.cs)       | NHotkey 失败时的低阶键盘 Hook          |
+| 热键自动化       | [Services/MacroRunnerService.cs](Services/MacroRunnerService.cs)         | SendInput 循环按键宏引擎（2.0 新增）      |
 | 本地化          | MapNameTranslator / CivNameTranslator                                    | 地图名、文明名的 zh-CN 翻译              |
 | 图标解析         | [Services/CivIconResolver.cs](Services/CivIconResolver.cs)               | 文明名 → 图标文件路径（多路径按序查找）          |
 | 窗口互操作        | [Services/WindowServices.cs](Services/WindowServices.cs)                 | `WS_EX_TRANSPARENT` 鼠标穿透样式     |
@@ -561,6 +563,27 @@ MinScale = 0.5;  MaxScale = 3.0;
 - `LogsDirectory`：懒创建单例，`{BaseDirectory}/logs/`（double-check lock）
 
 - `Get(fileName)`：拼接完整路径
+
+#### 5.5.12 MacroRunnerService — 按键精灵式热键自动化（2.0 新增）
+
+位置：[Services/MacroRunnerService.cs](Services/MacroRunnerService.cs)
+
+`sealed class`，实现 `IDisposable`。通过 `SendInput` 以扫描码方式后台模拟按键序列；循环跑在**专用后台线程**（全同步 `Thread.Sleep`，不使用 Task/计时器，杜绝异步调度导致的冻结）。
+
+| 成员                     | 说明                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| `Start(settings)`      | 校验序列非空后启动循环线程                                                                        |
+| `Stop(settings)`       | 幂等停止（`CancellationTokenSource.Cancel`）                                                       |
+| `RunOnce(settings)`    | 测试模式：向当前焦点窗口发送一轮（不避让）                                                                 |
+| `ParseSequence(seq)`   | `static`。`+` 分隔；修饰键（Ctrl/Shift/Alt）作用于其后第一个主键；数字 0-9 映射主键盘（控制组编队）；无效记号重置悬挂修饰键；上限 40 键 |
+| `StatusChanged`        | 事件，回报运行/倒计时/避让/错误状态；订阅方以 `BeginInvoke` 调度回 UI 线程，避免阻塞循环                              |
+
+行为要点：
+
+- 循环每轮动态读取 `MacroSequence` / `MacroRepeatCount`（0=无限，默认）/ `MacroIntervalSeconds`（1~300 秒）/ `MacroIdleWaitMs`（操作避让 0~5000ms，默认 800ms），修改即时生效
+- 每轮注入前经 `GetLastInputInfo` 检测系统键鼠空闲，玩家正在操作时推迟发送，避免打断游戏操作
+- `SendInput` 带 `KEYEVENTF_SCANCODE` 兼容 DirectX 游戏，扩展键（方向键等）加 `KEYEVENTF_EXTENDEDKEY`
+- 生命周期日志（`start` / `round N/∞ sent` / `waiting Xs` / `idle-wait` / `stop` / `run error`）写入 `logs/hotkey.log`
 
 ### 5.6 Views 层
 
@@ -1058,6 +1081,6 @@ dotnet publish AoE4OverlayCS.csproj -c Release -r win-x64 --self-contained false
 
 ***
 
-> 本 Wiki 基于源码逐文件核对生成：2026-09-05，对应版本 1.7.6。
+> 本 Wiki 基于源码逐文件核对生成：2026-09-05，对应版本 1.7.6；2.0.0 增补热键自动化模块（MacroRunnerService、设置页 Macro 面板、操作避让）。
 > 如代码更新，请同步修订以下章节：§5（类与函数）、§12（已知特性）。
 

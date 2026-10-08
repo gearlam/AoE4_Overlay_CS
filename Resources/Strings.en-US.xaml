@@ -31,6 +31,22 @@
     <sys:String x:Key="Settings_BackgroundColorLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Overlay background:</sys:String>
     <sys:String x:Key="Settings_BackgroundOpacityLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Background opacity:</sys:String>
 
+    <sys:String x:Key="Settings_MacroHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Macro Automation</sys:String>
+    <sys:String x:Key="Settings_MacroEnableLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enable macro automation:</sys:String>
+    <sys:String x:Key="Settings_MacroEnableHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Press the trigger hotkey to start/stop; keeps running when minimized to tray, stops automatically on app exit</sys:String>
+    <sys:String x:Key="Settings_MacroTriggerLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Trigger hotkey:</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Key sequence:</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Manual format: H+Q+Q+Q, combos like Ctrl+A, digits for control groups; after clicking Record, keys append in order, Esc finishes, Backspace removes the last. To minimize disruption use a control group for the TC and re-select your army, e.g. 4+Q+1</sys:String>
+    <sys:String x:Key="Settings_MacroRecordButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Record</sys:String>
+    <sys:String x:Key="Settings_MacroClearButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Clear</sys:String>
+    <sys:String x:Key="Settings_MacroIntervalLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Interval (s):</sys:String>
+    <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Input idle wait (ms):</sys:String>
+    <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Delays sending while keyboard/mouse is in use; 0 = no idle wait</sys:String>
+    <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Repeat count:</sys:String>
+    <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Infinite loop</sys:String>
+    <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Test</sys:String>
+    <sys:String x:Key="Settings_MacroStatusLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Status:</sys:String>
+
     <sys:String x:Key="Games_Header_Team1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 1</sys:String>
     <sys:String x:Key="Games_Header_Team2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Team 2</sys:String>
     <sys:String x:Key="Games_Header_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Map</sys:String>

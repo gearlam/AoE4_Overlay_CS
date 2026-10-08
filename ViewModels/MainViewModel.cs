@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
@@ -53,6 +54,9 @@ namespace AoE4OverlayCS.ViewModels
         private readonly WebSocketServerService _wsServer;
         private readonly GlobalHotkeyService _globalHotkey;
         private readonly GlobalHotkeyService _globalHotkeyPosition;
+        private readonly GlobalHotkeyService _globalHotkeyMacro;
+        private readonly MacroRunnerService _macroRunner;
+        private readonly InputGateService _inputGate;
         private OverlayWindow? _overlayWindow;
 
         public AppSettings Settings => _settingsService.Current;
@@ -100,6 +104,24 @@ namespace AoE4OverlayCS.ViewModels
             set { _searchStatusBrush = value; OnPropertyChanged(); }
         }
 
+        // 热键自动化状态展示
+        private string _macroStatusText = "";
+        public string MacroStatusText
+        {
+            get => _macroStatusText;
+            set { _macroStatusText = value; OnPropertyChanged(); }
+        }
+
+        private System.Windows.Media.Brush _macroStatusBrush = System.Windows.Media.Brushes.Gray;
+        public System.Windows.Media.Brush MacroStatusBrush
+        {
+            get => _macroStatusBrush;
+            set { _macroStatusBrush = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>已配置热键序列的可视化按键芯片（如 H、Q、Ctrl+A）。</summary>
+        public ObservableCollection<string> MacroKeyChips { get; } = new();
+
         // Games Tab
         public ObservableCollection<MatchHistoryItem> Games { get; } = new ObservableCollection<MatchHistoryItem>();
         public ObservableCollection<string> SearchHistory { get; }
@@ -110,6 +132,7 @@ namespace AoE4OverlayCS.ViewModels
         public ICommand ToggleOverlayCommand { get; }
         public ICommand ChangeOverlayPositionCommand { get; }
         public ICommand OpenLinkCommand { get; }
+        public ICommand MacroTestCommand { get; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -120,7 +143,16 @@ namespace AoE4OverlayCS.ViewModels
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
             _globalHotkeyPosition = new GlobalHotkeyService();
+            _inputGate = new InputGateService();
+            _inputGate.Start(); // UI 线程安装键盘钩子：宏注入期间屏蔽物理按键
+            _globalHotkeyMacro = new GlobalHotkeyService();
+            _macroRunner = new MacroRunnerService(msg => {
+                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} macro {msg}{Environment.NewLine}"); } catch { }
+            }, _inputGate);
+            _macroRunner.StatusChanged += OnMacroStatus;
             SearchHistory = new ObservableCollection<string>(_settingsService.Current.SearchHistory ?? new List<string>());
+            Settings.PropertyChanged += OnSettingsPropertyChanged;
+            RefreshMacroKeyChips();
 
             _apiChecker.OnNewGame += OnNewGame;
             _apiChecker.OnError += OnApiError;
@@ -133,6 +165,7 @@ namespace AoE4OverlayCS.ViewModels
                 if (url is string s && !string.IsNullOrEmpty(s))
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(s) { UseShellExecute = true });
             });
+            MacroTestCommand = new RelayCommand(_ => TestMacro());
 
             UpdateProfileDisplay();
         }
@@ -253,16 +286,170 @@ namespace AoE4OverlayCS.ViewModels
                         }
                     }
                 }
+                // Macro trigger hotkey（热键自动化触发热键）
+                HotkeyManager.Current.Remove("ToggleMacro");
+                _globalHotkeyMacro.Stop();
+                if (!Settings.MacroEnabled)
+                {
+                    // 总开关关闭：停止正在执行的宏，不注册触发热键
+                    _macroRunner.Stop(Settings);
+                }
+                else if (!string.IsNullOrEmpty(Settings.MacroTriggerHotkey))
+                {
+                    if (MacroTriggerHasConflict())
+                    {
+                        bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+                        MacroStatusText = zh ? "触发热键与覆盖层热键冲突，未注册" : "Trigger hotkey conflicts with overlay hotkeys, not registered";
+                        MacroStatusBrush = System.Windows.Media.Brushes.OrangeRed;
+                    }
+                    else if (TryParseHotkey(Settings.MacroTriggerHotkey, out var macroKey, out var macroModifiers) && macroKey != Key.None)
+                    {
+                        try
+                        {
+                            HotkeyManager.Current.AddOrReplace("ToggleMacro", macroKey, macroModifiers, (s, e) =>
+                            {
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
+                                ToggleMacro();
+                            });
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
+                        }
+                        catch (Exception ex)
+                        {
+                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed macro {Settings.MacroTriggerHotkey} {ex}{Environment.NewLine}"); } catch { }
+                            _globalHotkeyMacro.Configure(Settings.MacroTriggerHotkey, () =>
+                            {
+                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
+                                ToggleMacro();
+                            });
+                            _globalHotkeyMacro.Start();
+                        }
+                    }
+                }
             }
             catch { /* Ignore invalid hotkeys */ }
         }
-        
+
+        /// <summary>触发热键切换宏的启动/停止。</summary>
+        public void ToggleMacro()
+        {
+            if (_macroRunner.IsRunning)
+            {
+                _macroRunner.Stop(Settings);
+            }
+            else
+            {
+                _macroRunner.Start(Settings);
+            }
+        }
+
+        /// <summary>测试按钮：立即执行一轮热键序列（发送到当前焦点窗口）。</summary>
+        private void TestMacro()
+        {
+            if (_macroRunner.IsRunning) return;
+            _macroRunner.RunOnce(Settings);
+        }
+
+        /// <summary>宏引擎状态回报，统一调度回 UI 线程刷新。</summary>
+        private void OnMacroStatus(MacroRunStatus status)
+        {
+            try
+            {
+                // BeginInvoke：宏循环线程永不因 UI 繁忙而阻塞
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    MacroStatusText = status.Message;
+                    MacroStatusBrush = status.IsError ? System.Windows.Media.Brushes.OrangeRed
+                                   : status.IsRunning ? System.Windows.Media.Brushes.LimeGreen
+                                   : System.Windows.Media.Brushes.Gray;
+                });
+            }
+            catch { /* Dispatcher 可能正在关闭 */ }
+        }
+
+        private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(AppSettings.MacroSequence))
+            {
+                RefreshMacroKeyChips();
+            }
+        }
+
+        private void RefreshMacroKeyChips()
+        {
+            MacroKeyChips.Clear();
+            foreach (var step in MacroRunnerService.ParseSequence(Settings.MacroSequence))
+            {
+                MacroKeyChips.Add(MacroRunnerService.StepToDisplay(step));
+            }
+        }
+
+        /// <summary>解析热键字符串为（主键, 修饰键）；无法解析出主键时返回 false。</summary>
+        private static bool TryParseHotkey(string hotkey, out Key key, out ModifierKeys modifiers)
+        {
+            key = Key.None;
+            modifiers = ModifierKeys.None;
+            if (string.IsNullOrWhiteSpace(hotkey)) return false;
+
+            foreach (var part in hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase) || part.Equals("Control", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= ModifierKeys.Control;
+                    continue;
+                }
+                if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= ModifierKeys.Shift;
+                    continue;
+                }
+                if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase))
+                {
+                    modifiers |= ModifierKeys.Alt;
+                    continue;
+                }
+                if (Enum.TryParse(part, true, out Key k))
+                {
+                    if (k == Key.LeftCtrl || k == Key.RightCtrl) { modifiers |= ModifierKeys.Control; continue; }
+                    if (k == Key.LeftShift || k == Key.RightShift) { modifiers |= ModifierKeys.Shift; continue; }
+                    if (k == Key.LeftAlt || k == Key.RightAlt) { modifiers |= ModifierKeys.Alt; continue; }
+                    key = k;
+                }
+            }
+            return key != Key.None;
+        }
+
+        /// <summary>热键字符串归一化为 "Ctrl+Shift+Alt+主键" 形式，用于冲突比较。</summary>
+        public static string NormalizeHotkeyString(string? hotkey)
+        {
+            if (string.IsNullOrWhiteSpace(hotkey)) return "";
+            if (!TryParseHotkey(hotkey, out var key, out var modifiers) || key == Key.None) return "";
+
+            var sb = new StringBuilder();
+            if ((modifiers & ModifierKeys.Control) != 0) sb.Append("Ctrl+");
+            if ((modifiers & ModifierKeys.Shift) != 0) sb.Append("Shift+");
+            if ((modifiers & ModifierKeys.Alt) != 0) sb.Append("Alt+");
+            sb.Append(key.ToString());
+            return sb.ToString();
+        }
+
+        /// <summary>宏触发热键是否与覆盖层显示/位置热键冲突。</summary>
+        public bool MacroTriggerHasConflict()
+        {
+            var trigger = NormalizeHotkeyString(Settings.MacroTriggerHotkey);
+            if (trigger.Length == 0) return false;
+            return trigger == NormalizeHotkeyString(Settings.OverlayHotkey)
+                || trigger == NormalizeHotkeyString(Settings.OverlayPositionHotkey);
+        }
+
         public void Stop()
         {
             _apiChecker.Stop();
             _wsServer.Stop();
             _globalHotkey.Stop();
             _globalHotkeyPosition.Stop();
+            _globalHotkeyMacro.Stop();
+            _macroRunner.Stop(Settings); // 应用退出策略：程序退出时自动停止热键自动化
+            _inputGate.Stop(); // 卸载输入闸门钩子
             _overlayWindow?.SaveState();
             _overlayWindow?.Close();
             _settingsService.Save();

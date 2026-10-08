@@ -20,7 +20,7 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `1.7.6`
+- Current version: `2.0.0`
 - Target frameworks: `net10.0-windows`
 
 ## Project Purpose
@@ -214,6 +214,15 @@ It is used to:
 - Unlock mode supports drag and resize
 - Lock mode supports click-through behavior
 - Gold thick border when locked, red thick border when unlocked
+
+### Macro Automation (2.0 New)
+
+- Key-macro automation: press the trigger hotkey to start/stop looping a key sequence
+- Combos (Ctrl+A) and digit keys (control groups), recordable or manual input with visual key chips
+- Interval 1-300 s, repeat 1-99 times or infinite; runtime changes apply immediately
+- Input idle wait: sending is deferred while keyboard/mouse is in use, so gameplay is not disrupted
+- Background SendInput scan-code injection without window focus switch; trigger hotkey conflict detection
+- Live status display and a Test button
 
 ### Match History
 

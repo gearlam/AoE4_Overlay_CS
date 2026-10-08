@@ -43,6 +43,26 @@ namespace AoE4OverlayCS.Models
         private string _overlayPositionHotkey = "";
         public string OverlayPositionHotkey { get => _overlayPositionHotkey; set { _overlayPositionHotkey = value; OnPropertyChanged(); } }
 
+        // 热键自动化（按键精灵式宏）配置：MacroRepeatCount = 0 表示无限循环
+        private bool _macroEnabled = false;
+        public bool MacroEnabled { get => _macroEnabled; set { _macroEnabled = value; OnPropertyChanged(); } }
+
+        private string _macroTriggerHotkey = "";
+        public string MacroTriggerHotkey { get => _macroTriggerHotkey; set { _macroTriggerHotkey = value; OnPropertyChanged(); } }
+
+        private string _macroSequence = "";
+        public string MacroSequence { get => _macroSequence; set { _macroSequence = value; OnPropertyChanged(); } }
+
+        private int _macroIntervalSeconds = 5;
+        public int MacroIntervalSeconds { get => _macroIntervalSeconds; set { _macroIntervalSeconds = value; OnPropertyChanged(); } }
+
+        private int _macroRepeatCount = 0; // 默认无限循环，符合“热键启动后循环直到手动停止”的使用预期
+        public int MacroRepeatCount { get => _macroRepeatCount; set { _macroRepeatCount = value; OnPropertyChanged(); } }
+
+        // 操作避让：注入前等待系统键鼠空闲该毫秒数，避免打断玩家正在进行的游戏操作；0 = 不避让
+        private int _macroIdleWaitMs = 800;
+        public int MacroIdleWaitMs { get => _macroIdleWaitMs; set { _macroIdleWaitMs = value; OnPropertyChanged(); } }
+
         private double[]? _overlayGeometry;
         public double[]? OverlayGeometry { get => _overlayGeometry; set { _overlayGeometry = value; OnPropertyChanged(); } } // x, y, w, h
 

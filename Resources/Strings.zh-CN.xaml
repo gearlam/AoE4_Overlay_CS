@@ -31,6 +31,22 @@
     <sys:String x:Key="Settings_BackgroundColorLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">覆盖层背景色：</sys:String>
     <sys:String x:Key="Settings_BackgroundOpacityLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">背景不透明度：</sys:String>
 
+    <sys:String x:Key="Settings_MacroHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">热键自动化</sys:String>
+    <sys:String x:Key="Settings_MacroEnableLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">启用热键自动化：</sys:String>
+    <sys:String x:Key="Settings_MacroEnableHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">按触发热键开始/停止执行；最小化到托盘时持续运行，退出程序时自动停止</sys:String>
+    <sys:String x:Key="Settings_MacroTriggerLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">触发热键：</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">热键序列：</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">手动输入格式：H+Q+Q+Q，支持 Ctrl+A 与数字键（控制组编队）；点“录制”后依次按键追加，Esc 结束，Backspace 删除末位。减少干扰建议用编队选基地并回切部队，如 4+Q+1</sys:String>
+    <sys:String x:Key="Settings_MacroRecordButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">录制</sys:String>
+    <sys:String x:Key="Settings_MacroClearButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">清空</sys:String>
+    <sys:String x:Key="Settings_MacroIntervalLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">触发间隔（秒）：</sys:String>
+    <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">操作避让（毫秒）：</sys:String>
+    <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">检测到键鼠操作时推迟发送，空闲后才注入；0 = 不避让</sys:String>
+    <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">重复次数：</sys:String>
+    <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">无限循环</sys:String>
+    <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">测试</sys:String>
+    <sys:String x:Key="Settings_MacroStatusLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">运行状态：</sys:String>
+
     <sys:String x:Key="Games_Header_Team1" xmlns:sys="clr-namespace:System;assembly=System.Runtime">队伍 1</sys:String>
     <sys:String x:Key="Games_Header_Team2" xmlns:sys="clr-namespace:System;assembly=System.Runtime">队伍 2</sys:String>
     <sys:String x:Key="Games_Header_Map" xmlns:sys="clr-namespace:System;assembly=System.Runtime">地图</sys:String>
