@@ -23,7 +23,7 @@
 
 ## 版本信息
 
-- 当前版本：`2.0.0`
+- 当前版本：`2.0.1`
 - 目标框架：`net10.0-windows`
 
 ## 项目定位
@@ -105,8 +105,6 @@ aoe4world API
 - WebSocket 服务：`Fleck`
 - 全局热键：`NHotkey.Wpf`
 - 键盘兜底方案：`Win32 Low-Level Keyboard Hook`
-- 日志依赖：`Serilog`、`Serilog.Sinks.File`
-- 图片处理：`SixLabors.ImageSharp`
 - HTML Overlay：`HTML + CSS + JavaScript + jQuery`
 
 ## 核心模块说明
@@ -394,9 +392,6 @@ config/config.json
 - `Fleck`
 - `Newtonsoft.Json`
 - `NHotkey.Wpf`
-- `Serilog`
-- `Serilog.Sinks.File`
-- `SixLabors.ImageSharp`
 
 ## 项目链接
 

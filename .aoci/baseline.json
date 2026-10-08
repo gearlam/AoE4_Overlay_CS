@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-10-04T05:51:54Z",
-  "updated_at": "2026-10-08T08:09:23Z",
+  "updated_at": "2026-10-08T20:12:06Z",
   "files": {
     ".codegraph/.gitignore": {
       "role": "index",
@@ -29,9 +29,9 @@
     },
     "AoE4OverlayCS.csproj": {
       "role": "index",
-      "sha256": "850f7d7f6a52e06bfd4bb05649e2666d9e5d5efad7a746a3a9c4c9f5dc7cd580",
-      "size": 1538,
-      "normalized_sha256": "7a0319fc2d3178a3d2631fe110e9c481b9f521a10ff85b1a495eb8e0f011efd2"
+      "sha256": "962bbe0b9257f491e6fce912194e2bca8a7299740aba349206108dff968431dd",
+      "size": 1291,
+      "normalized_sha256": "962bbe0b9257f491e6fce912194e2bca8a7299740aba349206108dff968431dd"
     },
     "App.xaml": {
       "role": "index",
@@ -53,9 +53,9 @@
     },
     "CodeWiki.md": {
       "role": "index",
-      "sha256": "b1c271adce138c7589352f9a3f7834eaa04251ad897c99fb4b4a73e34292c3f0",
-      "size": 77231,
-      "normalized_sha256": "b1c271adce138c7589352f9a3f7834eaa04251ad897c99fb4b4a73e34292c3f0"
+      "sha256": "a1dc552aead5bf2157e84f81e54da6372d061b186ac0d31ed67838280561e95d",
+      "size": 76802,
+      "normalized_sha256": "a1dc552aead5bf2157e84f81e54da6372d061b186ac0d31ed67838280561e95d"
     },
     "MainWindow.xaml": {
       "role": "index",
@@ -77,15 +77,15 @@
     },
     "README.md": {
       "role": "index",
-      "sha256": "295845c3cca80cc136a92e0df537ec0d36ee11313f584f1592f73c755e418672",
-      "size": 11126,
-      "normalized_sha256": "295845c3cca80cc136a92e0df537ec0d36ee11313f584f1592f73c755e418672"
+      "sha256": "97a9306cdedab7aac9bc3bbb04902ded358dfbba3bfc10c574dba779257dd811",
+      "size": 10976,
+      "normalized_sha256": "97a9306cdedab7aac9bc3bbb04902ded358dfbba3bfc10c574dba779257dd811"
     },
     "README_en.md": {
       "role": "index",
-      "sha256": "0ecef1c26059fe2b8ac5913cf04850fdc12addd1367f05674ea141fd5d1da252",
-      "size": 11241,
-      "normalized_sha256": "0ecef1c26059fe2b8ac5913cf04850fdc12addd1367f05674ea141fd5d1da252"
+      "sha256": "7331156389d1e76e0c9e5991c2278f1f4da3ee4c15aa1351d99ada2c33abd77d",
+      "size": 11084,
+      "normalized_sha256": "7331156389d1e76e0c9e5991c2278f1f4da3ee4c15aa1351d99ada2c33abd77d"
     },
     "Resources/Strings.en-US.xaml": {
       "role": "index",
@@ -107,9 +107,9 @@
     },
     "Services/CivIconResolver.cs": {
       "role": "index",
-      "sha256": "8acabc1cbf321f74a1378f9f4758c70f722f125b584c2ada3aec574cd8fe9550",
-      "size": 4856,
-      "normalized_sha256": "5a821eafc56d96ebd1661c96dcd87dde6640b971a0a4525c94e65dd8a22bf6f6"
+      "sha256": "59efd842b75d1c0b729c09020ea1d1b63e10de9a6920440cb5338946005161d7",
+      "size": 4658,
+      "normalized_sha256": "d0431127120bfc2c9b10f7f102730f2e8c4a01a081ddfef16cc5f3141b37e1c0"
     },
     "Services/CivNameTranslator.cs": {
       "role": "index",
@@ -215,9 +215,9 @@
     },
     "Views/OverlayWindow.xaml.cs": {
       "role": "index",
-      "sha256": "617b055a83e56d51d2d9424f22578692cb1a3b0ac968e62ad79785ed7d74e433",
-      "size": 43819,
-      "normalized_sha256": "617b055a83e56d51d2d9424f22578692cb1a3b0ac968e62ad79785ed7d74e433"
+      "sha256": "e6ecee732bfd6adf5e9a67081f60c8cf8c38688926bcee204cd4a1fdda483765",
+      "size": 43127,
+      "normalized_sha256": "e6ecee732bfd6adf5e9a67081f60c8cf8c38688926bcee204cd4a1fdda483765"
     },
     "Views/SettingsView.xaml": {
       "role": "index",
@@ -233,9 +233,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "7d03874067db1f92cc9670e3b00b68e0ac42bef997d93a191994bb08d95c5f44",
-      "size": 13250,
-      "normalized_sha256": "7d03874067db1f92cc9670e3b00b68e0ac42bef997d93a191994bb08d95c5f44"
+      "sha256": "1ac5fdb2e8c0b9a277cda3753a828e0101cb97a078817aff30d6fafd9a7fdd14",
+      "size": 13479,
+      "normalized_sha256": "1ac5fdb2e8c0b9a277cda3753a828e0101cb97a078817aff30d6fafd9a7fdd14"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -261,13 +261,7 @@
       "size": 86929,
       "normalized_sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef"
     },
-    "bin/Release/AoE4_Overlay_CS_1.7.8/html/jquery.min.js": {
-      "role": "observe",
-      "sha256": "4fe68fa216176e6d1f4580e924bafecc9f519984ecc06b1a840a08b0d88c95de",
-      "size": 86929,
-      "normalized_sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef"
-    },
-    "bin/Release/AoE4_Overlay_CS_2.0/html/jquery.min.js": {
+    "bin/Release/AoE4_Overlay_CS_2.0.1/html/jquery.min.js": {
       "role": "observe",
       "sha256": "4fe68fa216176e6d1f4580e924bafecc9f519984ecc06b1a840a08b0d88c95de",
       "size": 86929,

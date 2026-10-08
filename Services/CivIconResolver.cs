@@ -96,9 +96,7 @@ namespace AoE4OverlayCS
                 searchPaths.Add(Path.Combine(baseDir, "img", "build_order", "civilization_flag", $"CivIcon-{mappedName}AoE4_spacing.png"));
             }
 
-            searchPaths.Add(Path.Combine(baseDir, "img", "build_order", "civilization_flag", $"{civKey}.webp"));
             searchPaths.Add(Path.Combine(baseDir, "img", "build_order", "civilization_flag", $"{civKey}.png"));
-            searchPaths.Add(Path.Combine(baseDir, "img", "flags", $"{civ}.webp"));
             searchPaths.Add(Path.Combine(baseDir, "img", "flags", $"{civ}.png"));
 
             foreach (var path in searchPaths)

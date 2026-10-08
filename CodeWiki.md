@@ -685,7 +685,7 @@ Grid
 
 - `AddTextCell` / `AddCountryFlagCell`：带右分隔线的统计单元格；空内容自动折叠
 
-- `TryLoadImageSource(path)`：`Dictionary` 缓存；**webp → ImageSharp 解码 → PNG 内存流 → BitmapImage**；其他格式直接读文件流；统一 `CacheOption.OnLoad + Freeze()`；失败写 `image_load_error.log`
+- `TryLoadImageSource(path, decodePixelWidth = 0)`：`Dictionary` 缓存；`CacheOption.OnLoad + Freeze()`；`decodePixelWidth > 0` 时降采样解码（国旗用 50px）；失败写 `image_load_error.log`（webp 资产已转为 PNG，ImageSharp 已移除）
 
 > 死代码提示：`AddTextCellWithCountry` 已无调用方（见 §12）。
 
@@ -756,8 +756,7 @@ App (App.xaml.cs)
      │        ├─► CivIconResolver
      │        ├─► WindowServices（Win32 穿透）
      │        ├─► OverlayScaleCalculator
-     │        ├─► LogPaths
-     │        └─► SixLabors.ImageSharp（webp→png）
+     │        └─► LogPaths
      └─► GameProcessor (static)
               ├─► MapNameTranslator
               └─► CivNameTranslator
@@ -774,8 +773,6 @@ GamesView ───► MainViewModel（Games 集合绑定）
 | `Fleck`                          | 1.2.0         | `WebSocketServerService`                                                             | 本地 WebSocket 服务端                        |
 | `Newtonsoft.Json`                | 13.0.4        | `ApiCheckerService` / `GameProcessor` / `SettingsService` / `WebSocketServerService` | JSON 解析与序列化（JObject/JArray Linq 风格）     |
 | `NHotkey.Wpf`                    | 4.0.0         | `MainViewModel.UpdateHotkeyRegistration`                                             | 全局热键首选方案                                |
-| `Serilog` + `Serilog.Sinks.File` | 4.3.0 / 7.0.0 | **当前代码未使用**                                                                          | 仅在 csproj 引用；实际日志全部为 `File.*` 直写（见 §12） |
-| `SixLabors.ImageSharp`           | 3.1.12        | `OverlayWindow.TryLoadImageSource`                                                   | WPF 原生不支持 webp，用于文明旗解码转 PNG             |
 
 框架级：`UseWPF=true` + `UseWindowsForms=true`（后者仅为托盘 `NotifyIcon`）。`Resources/**`、`html/**`、`img/**` 均 `PreserveNewest` 复制到输出目录。
 
@@ -1022,7 +1019,7 @@ dotnet publish AoE4OverlayCS.csproj -c Release -r win-x64 --self-contained false
 | `tray_error.log`       | `MainWindow`    | 托盘初始化异常（覆盖式）                               |
 | `image_load_error.log` | `OverlayWindow` | 文明图标缺失 / 图片解码失败（追加式）                       |
 
-> 菜单 File → 配置/日志 会打开该目录并选中最新日志。全部日志为裸写文件，未使用已引用的 Serilog。
+> 菜单 File → 配置/日志 会打开该目录并选中最新日志。全部日志为裸写文件（`Serilog` 依赖已移除）。
 
 ***
 
@@ -1066,7 +1063,7 @@ dotnet publish AoE4OverlayCS.csproj -c Release -r win-x64 --self-contained false
 1. **首轮轮询必触发** **`OnNewGame`**：`_lastMatchTime` 初始为 `DateTime.MinValue`，绑定玩家后第一次 `CheckLastGame` 一定命中 → Overlay 自动显示一次并广播一次数据。这同时是启动自愈机制（断线重连的 HTML 客户端也会收到补发）。
 2. **WS 端口不支持热更新**：`WebSocketServerService` 端口在 `MainViewModel` 构造时固定；`SaveSettings()` 的 Stop+Start 不会重建该实例。修改 `config.json` 的端口需重启程序。
 3. **轮询间隔支持热更新**：`Loop` 每轮实时读取 `Settings.Interval`，改配置后下一轮延迟即生效。
-4. **Serilog 引而未用**：csproj 引用了 `Serilog` + `Serilog.Sinks.File`，但全部代码为 `File.AppendAllText/WriteAllText` 直写。统一日志入口是现成的重构方向。
+4. **依赖瘦身**：`Serilog`/`Serilog.Sinks.File`（从未使用）与 `SixLabors.ImageSharp`（webp 资产已一次性转换为 128px 上限 PNG，原件备份于 `assets_webp_backup/`）已移除，运行时内存显著下降。
 5. **死配置字段**：`AppSettings.AppWidth/AppHeight` 无任何绑定/读取（主窗口尺寸 XAML 固定 860×640）。
 6. **死代码**：`OverlayWindow.AddTextCellWithCountry` 已无调用方；`GameProcessor` 输出的 `civ_win_length_median` 恒为空串。
 7. **部分文案未本地化**：搜索状态（`请输入用户ID` / `ID Found` / `ID not found`）、搜索历史删除按钮（`删除`）、热键录制提示（`Press any key...` / `Click to set`）为硬编码字符串。

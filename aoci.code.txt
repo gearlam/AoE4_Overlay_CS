@@ -4,15 +4,15 @@
 .gitattributes[FV2T]: F:Git跨平台行尾策略声明，二进制自动识别 | R:- | A:- | S:文本强制检出为LF，保证AOCI基线在所有平台字节一致
 .gitignore[FC3S]: F:仓库git忽略清单：构建产物、IDE缓存、日志与临时文件 | R:- | A:- | S:认知资产aoci*.txt与AGENTS.md不可加入忽略，否则scan静默跳过
 AGENTS.md[SG6T]: F:AOCI接入规则区块，规定认知使用、刷新门禁与收尾维护的Agent行为合同 | R:- | A:- | S:aoci:begin与aoci:end之间的内容由AOCI管理勿手改；AOCI状态判断优先于历史Memory
-AoE4OverlayCS.csproj[FV6T]: F:.NET项目声明：net10.0-windows单项目、WPF+WinForms双桌面栈、Fleck/Newtonsoft.Json/NHotkey/Serilog/ImageSharp依赖与html/img/Resources输出复制 | R:- | A:- | S:版本号分散在Version/AssemblyVersion/FileVersion/InformationalVersion四处，升级需同步修改；当前2.0.0
+AoE4OverlayCS.csproj[FV6T]: F:.NET项目声明：net10.0-windows单项目、WPF+WinForms双桌面栈、Fleck/Newtonsoft.Json/NHotkey依赖与html/img/Resources输出复制 | R:- | A:- | S:版本号分散在Version/AssemblyVersion/FileVersion/InformationalVersion四处，升级需同步修改；当前2.0.1，2.0.1移除Serilog与ImageSharp
 App.xaml[EL4T]: F:WPF应用声明：合并默认英文字符串资源字典 | R:code:Resources/Strings.en-US.xaml | A:- | S:ShutdownMode=OnMainWindowClose，但主窗口OnClosing默认取消关闭转入托盘，真退出走托盘菜单
 App.xaml.cs[ER7T]: F:应用启动入口：互斥锁保证单实例，注册Dispatcher与AppDomain全局异常日志 | R:code:MainWindow.xaml.cs | A:OnStartup先SetLanguage再创建MainWindow | S:非首个实例直接退出；未捕获异常仅写logs/dispatcher_error.log与domain_error.log，不弹窗
 AssemblyInfo.cs[FC1T]: F:程序集ThemeInfo声明主题与通用资源字典位置 | R:- | A:- | S:-
-CodeWiki.md[SG5L]: F:中文架构Wiki：模块划分、数据流、UI行为与构建说明的全景文档，含MacroRunnerService热键自动化专节 | R:- | A:- | S:主体基于1.7.6快照逐文件分析，2.0.0增补热键自动化章节；其余章节落后于后续改动，与代码冲突时以代码为准
+CodeWiki.md[SG5L]: F:中文架构Wiki：模块划分、数据流、UI行为与构建说明的全景文档，含MacroRunnerService热键自动化专节 | R:- | A:- | S:主体基于1.7.6快照；2.0.x增补宏与依赖瘦身；细节落后以代码为准
 MainWindow.xaml[EU5S]: F:主窗口XAML：文件/设置/链接/语言四菜单与设置、历史两Tab，内嵌TabControl与TabItem自定义模板 | R:code:MainWindow.xaml.cs | A:- | S:-
 MainWindow.xaml.cs[EU7M]: F:主窗口代码后置：托盘化关闭、中英语言切换、菜单动作与语言归一化 | R:code:App.xaml,code:Resources/Strings.zh-CN.xaml,code:Resources/Strings.en-US.xaml | A:OnClosing默认取消关闭并隐藏到托盘 | S:仅_isExitRequested为真才真正退出；语言代码非zh-CN一律归一化为en-US，切换靠替换MergedDictionaries
-README.md[SG3L]: F:中文主文档：功能清单、架构、数据流、配置与构建说明，含热键自动化功能清单 | R:- | A:- | S:版本信息与功能清单随2.0.0更新；细节以代码为准
-README_en.md[SG3M]: F:英文主文档，与README.md对应的English说明，含Macro Automation功能清单 | R:- | A:- | S:-
+README.md[SG3L]: F:中文主文档：功能清单、架构、数据流、配置与构建说明，含热键自动化功能清单 | R:- | A:- | S:版本信息随2.0.0更新；2.0.1移除Serilog与ImageSharp依赖；细节以代码为准
+README_en.md[SG3M]: F:英文主文档，与README.md对应的English说明，含Macro Automation功能清单 | R:- | A:- | S:2.0.1开源依赖清单移除Serilog与ImageSharp；细节以代码为准
 dotnet-install.ps1[XV1L]: F:.NET官方SDK安装脚本 | R:- | A:- | S:上游官方脚本vendored副本，升级SDK应整体替换而非修改
 global.json[FV5T]: F:SDK版本固定声明 | R:code:AoE4OverlayCS.csproj | A:- | S:固定SDK 10.0.301且rollForward=latestFeature，保证net10.0-windows构建可复现
 
@@ -28,7 +28,7 @@ Strings.zh-CN.xaml[FL4T]: F:中文字符串资源字典，与en-US键集对齐�
 
 ===D:/bak/tttttt/AoE4_Overlay_CS/Services/===
 ApiCheckerService.cs[IN8M]: F:aoe4world API访问层：按名称或ProfileId搜索玩家、拉取最近对局与历史战绩、轮询新对局 | R:code:Services/GameProcessor.cs,code:Models/AppSettings.cs | A:纯数字输入先按profile_id直查 | S:新对局判定为started_at>内存_lastMatchTime，进程重启会重推最近一场；IPv4同族并发竞速(单地址10s)失败才回退IPv6，总预算30s
-CivIconResolver.cs[CU5S]: F:文明代号到图标资源路径解析 | R:- | A:teu等历史代号经别名表映射到实际资源名 | S:-
+CivIconResolver.cs[CU5S]: F:文明代号到图标资源路径解析 | R:- | A:teu等历史代号经别名表映射到实际资源名；按civilization_flag与flags目录顺序探测PNG | S:2.0.1起webp路径已移除，资产全部为PNG（webp原件备份于assets_webp_backup）
 CivNameTranslator.cs[CL4T]: F:文明代号中英文名称翻译，覆盖25个文明 | R:- | A:- | S:-
 CountryNameTranslator.cs[CL4M]: F:ISO 3166国家代码到中文名称翻译，含gb-eng等子区域码 | R:- | A:仅zh-CN语言生效，未命中原样返回国家码 | S:-
 GameProcessor.cs[DB8S]: F:对局JSON到Overlay展示数据的加工：地图/模式/服务器、队伍排序、段位胜率、文明与国家 | R:code:Services/ApiCheckerService.cs,code:Services/MapNameTranslator.cs,code:Services/CivNameTranslator.cs,code:Services/CountryNameTranslator.cs | A:主队排最前 | S:模式键缺失时rm_与qm_互换重查一次；country_display翻译结果等于原码时置空；civ_win_length_median恒为空串
@@ -50,7 +50,7 @@ RelayCommand.cs[CU3T]: F:ICommand通用包装，CommandManager.RequerySuggested�
 GamesView.xaml[EU4S]: F:历史对战列表视图：双方阵容/地图/时间/模式/结果/分差/对局链接八列 | R:code:MainWindow.xaml | A:玩家名与对局ID为Hyperlink跳转aoe4world | S:-
 GamesView.xaml.cs[EU4T]: F:历史对战视图代码后置：处理玩家名与对局ID超链接导航 | R:code:Views/GamesView.xaml | A:Process.Start(UseShellExecute=true)用系统浏览器打开链接 | S:-
 OverlayWindow.xaml[EU7T]: F:对战数据覆盖层窗口：无边框透明置顶显示双方队伍、文明、地图与比分，支持拖拽等比缩放与位置记忆 | R:code:Views/OverlayWindow.xaml.cs | A:窗口尺寸=内容自然尺寸×用户倍率，缩放钳制50%~300% | S:必须ShowActivated=False且Focusable=False，配合WS_EX_NOACTIVATE保证覆盖层永不夺取前台焦点，否则SendInput宏按键会误入覆盖层
-OverlayWindow.xaml.cs[EU8L]: F:覆盖层显示引擎：动态构建双方玩家行（文明旗/段位/评分/胜率/胜负/国旗/国家名）、等比缩放、锁定穿透与几何持久化 | R:code:Services/OverlayScaleCalculator.cs,code:Services/CivIconResolver.cs,code:Services/CountryNameTranslator.cs,code:Services/WindowServices.cs,code:Services/LogPaths.cs,code:Models/AppSettings.cs | A:UpdateData按队伍分组构建左右镜像两栏；ToggleLock切换WS_EX_TRANSPARENT与金/红边框 | S:拖拽经WM_SIZING钩子ApplyContentAspect约束为内容比例，倍率钳制0.5~3.0；Margin恒1px不随LayoutTransform缩放（先减出再加回）；RefreshBaseSize必须先摘除LayoutTransform并递归InvalidateMeasure再Measure，否则测量缓存返回旧尺寸导致裁切；webp图标经ImageSharp转PNG并Freeze缓存；WS_EX_NOACTIVATE防止覆盖层抢焦点
+OverlayWindow.xaml.cs[EU8L]: F:覆盖层显示引擎：动态构建双方玩家行（文明旗/段位/评分/胜率/胜负/国旗/国家名）、等比缩放、锁定穿透与几何持久化 | R:code:Services/OverlayScaleCalculator.cs,code:Services/CivIconResolver.cs,code:Services/CountryNameTranslator.cs,code:Services/WindowServices.cs,code:Services/LogPaths.cs,code:Models/AppSettings.cs | A:UpdateData按队伍分组构建左右镜像两栏；ToggleLock切换WS_EX_TRANSPARENT与金/红边框 | S:拖拽经WM_SIZING钩子ApplyContentAspect约束为内容比例，倍率钳制0.5~3.0；Margin恒1px不随LayoutTransform缩放（先减出再加回）；RefreshBaseSize必须先摘除LayoutTransform并递归InvalidateMeasure再Measure否则测量缓存返回旧尺寸导致裁切；图片统一经TryLoadImageSource缓存Freeze，国旗DecodePixelWidth=50降采样；WS_EX_NOACTIVATE防止覆盖层抢焦点
 SettingsView.xaml[EU5M]: F:设置页XAML：玩家搜索与历史下拉、显示/位置热键录制、字体档位、队伍间距、背景色与不透明度，含热键自动化Macro面板（触发键/序列芯片/间隔/避让/重复/测试与状态） | R:code:ViewModels/MainViewModel.cs | A:- | S:TeamGap滑条上限80但OverlayWindow端钳制0~40；字体下拉仅10~24固定档位；宏间隔/避让/重复TextBox为Explicit提交、LostFocus钳制写回
 SettingsView.xaml.cs[EU6L]: F:设置页代码后置：热键录制、回车搜索、历史下拉展开与删除、背景色选择，含宏触发热键录制、全页按键序列录制与间隔/避让/重复参数钳制 | R:code:ViewModels/MainViewModel.cs,code:Services/MacroRunnerService.cs | A:热键经PreviewKeyDown录制组合键；序列录制经UserControl级PreviewKeyDown隧道捕获整页按键，按键经KeyToDisplay人性化显示 | S:热键录入为Ctrl+Shift+Alt+前缀加主键，Esc取消、Back/Delete清空；序列录制Esc结束、Backspace删末位；无限循环存为MacroRepeatCount=0；参数改动直写Settings并立即生效无需显式保存
 

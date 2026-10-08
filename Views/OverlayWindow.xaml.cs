@@ -9,7 +9,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.IO;
-using SixLabors.ImageSharp.Formats.Png;
 
 using Image = System.Windows.Controls.Image;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
@@ -641,7 +640,7 @@ namespace AoE4OverlayCS.Views
                 }
                 if (File.Exists(countryPath))
                 {
-                    try { countryImg.Source = new BitmapImage(new Uri(countryPath)); } catch { }
+                    try { countryImg.Source = TryLoadImageSource(countryPath, 50); } catch { }
                 }
             }
 
@@ -690,7 +689,7 @@ namespace AoE4OverlayCS.Views
                 }
                 if (File.Exists(countryPath))
                 {
-                    try { countryImg.Source = new BitmapImage(new Uri(countryPath)); } catch { }
+                    try { countryImg.Source = TryLoadImageSource(countryPath, 50); } catch { }
                 }
             }
 
@@ -818,12 +817,8 @@ namespace AoE4OverlayCS.Views
                 }
                 if (File.Exists(countryPath))
                 {
-                    try
-                    {
-                        var bitmap = new BitmapImage(new Uri(countryPath));
-                        countryImg.Source = bitmap;
-                    }
-                    catch { }
+                    // TryLoadImageSource 内部吞异常并缓存/降采样，无需再包 try
+                    countryImg.Source = TryLoadImageSource(countryPath, 50);
                 }
             }
             return countryImg;
@@ -903,35 +898,17 @@ namespace AoE4OverlayCS.Views
             grid.Children.Add(cell);
         }
 
-        private ImageSource? TryLoadImageSource(string path)
+        private ImageSource? TryLoadImageSource(string path, int decodePixelWidth = 0)
         {
             if (_imageCache.TryGetValue(path, out var cached)) return cached;
 
             try
             {
-                var ext = Path.GetExtension(path).ToLowerInvariant();
-
-                if (ext == ".webp")
-                {
-                    using var image = SixLabors.ImageSharp.Image.Load(path);
-                    using var ms = new MemoryStream();
-                    image.Save(ms, new PngEncoder());
-                    ms.Position = 0;
-
-                    var bmp = new BitmapImage();
-                    bmp.BeginInit();
-                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                    bmp.StreamSource = ms;
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    _imageCache[path] = bmp;
-                    return bmp;
-                }
-
                 using var fs = File.OpenRead(path);
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                if (decodePixelWidth > 0) bitmap.DecodePixelWidth = decodePixelWidth;
                 bitmap.StreamSource = fs;
                 bitmap.EndInit();
                 bitmap.Freeze();

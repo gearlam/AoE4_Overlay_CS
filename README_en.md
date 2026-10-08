@@ -20,7 +20,7 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `2.0.0`
+- Current version: `2.0.1`
 - Target frameworks: `net10.0-windows`
 
 ## Project Purpose
@@ -102,8 +102,6 @@ aoe4world API
 - WebSocket server: `Fleck`
 - Global hotkeys: `NHotkey.Wpf`
 - Fallback keyboard handling: `Win32 Low-Level Keyboard Hook`
-- Logging dependencies: `Serilog`, `Serilog.Sinks.File`
-- Image handling: `SixLabors.ImageSharp`
 - HTML overlay: `HTML + CSS + JavaScript + jQuery`
 
 ## Core Modules
@@ -390,9 +388,6 @@ The current project already supports:
 - `Fleck`
 - `Newtonsoft.Json`
 - `NHotkey.Wpf`
-- `Serilog`
-- `Serilog.Sinks.File`
-- `SixLabors.ImageSharp`
 
 ## Project Link
 
