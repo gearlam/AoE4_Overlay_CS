@@ -12,6 +12,7 @@ namespace AoE4OverlayCS.Views
         public SettingsView()
         {
             InitializeComponent();
+            System.Windows.DataObject.AddPastingHandler(MacroIntervalTextBox, MacroIntervalTextBox_Pasting);
             Loaded += (_, _) => { RefreshBackgroundColorUi(); RefreshMacroUi(); };
         }
 
@@ -19,6 +20,8 @@ namespace AoE4OverlayCS.Views
         private bool _isRecordingPosition = false;
         private bool _isRecordingMacroTrigger = false;
         private bool _isRecordingMacroSequence = false;
+        private bool _intervalSliderHooked;
+        private bool _syncingIntervalSlider;
         private int _lastFiniteRepeat = 1; // 取消无限循环时恢复的重复次数
 
         private void HotkeyButton_Click(object sender, RoutedEventArgs e)
@@ -207,11 +210,15 @@ namespace AoE4OverlayCS.Views
         private void RefreshMacroUi()
         {
             if (DataContext is not MainViewModel vm) return;
+            HookIntervalSlider(vm);
 
             MacroTriggerHotkeyButton.Content = string.IsNullOrEmpty(vm.Settings.MacroTriggerHotkey)
                 ? "Click to set" : vm.Settings.MacroTriggerHotkey;
-            MacroIntervalTextBox.Text = Math.Clamp(vm.Settings.MacroIntervalSeconds,
-                MacroRunnerService.MinIntervalSeconds, MacroRunnerService.MaxIntervalSeconds).ToString();
+            var interval = Math.Max(vm.Settings.MacroIntervalSeconds, MacroRunnerService.MinIntervalSeconds);
+            if (vm.Settings.MacroIntervalSeconds != interval)
+                vm.Settings.MacroIntervalSeconds = interval;
+            MacroIntervalTextBox.Text = interval.ToString();
+            SyncIntervalSlider(interval);
             MacroIdleTextBox.Text = Math.Clamp(vm.Settings.MacroIdleWaitMs,
                 0, MacroRunnerService.MaxIdleWaitMs).ToString();
 
@@ -379,15 +386,83 @@ namespace AoE4OverlayCS.Views
             }
         }
 
-        private void MacroIntervalTextBox_LostFocus(object sender, RoutedEventArgs e)
+        private void MacroIntervalTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = e.Text.Any(ch => ch < '0' || ch > '9');
+        }
+
+        private void MacroIntervalTextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Space) e.Handled = true;
+        }
+
+        private void MacroIntervalTextBox_Pasting(object sender, System.Windows.DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string))
+                && e.DataObject.GetData(typeof(string)) is string text
+                && text.Length > 0
+                && text.All(ch => ch >= '0' && ch <= '9'))
+            {
+                return;
+            }
+            e.CancelCommand();
+        }
+
+        /// <summary>滑条改间隔时，输入框不在编辑中才跟着刷新。</summary>
+        private void HookIntervalSlider(MainViewModel vm)
+        {
+            if (_intervalSliderHooked) return;
+            vm.Settings.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != nameof(vm.Settings.MacroIntervalSeconds)) return;
+                SyncIntervalSlider(vm.Settings.MacroIntervalSeconds);
+                if (MacroIntervalTextBox.IsKeyboardFocused) return;
+                var text = vm.Settings.MacroIntervalSeconds.ToString();
+                if (MacroIntervalTextBox.Text != text)
+                    MacroIntervalTextBox.Text = text;
+            };
+            _intervalSliderHooked = true;
+        }
+
+        /// <summary>手输立即写入配置，不必等失焦；这样接着按触发热键会用新间隔。</summary>
+        private void MacroIntervalTextBox_TextChanged(object sender, TextChangedEventArgs e) =>
+            CommitMacroInterval(rewriteText: false);
+
+        private void MacroIntervalTextBox_LostFocus(object sender, RoutedEventArgs e) =>
+            CommitMacroInterval(rewriteText: true);
+
+        private void CommitMacroInterval(bool rewriteText)
         {
             if (DataContext is not MainViewModel vm) return;
             if (int.TryParse(MacroIntervalTextBox.Text, out var v))
             {
-                vm.Settings.MacroIntervalSeconds = Math.Clamp(v,
-                    MacroRunnerService.MinIntervalSeconds, MacroRunnerService.MaxIntervalSeconds);
+                // 手输不设上限；0 仍提到最少 1 秒。超过滑条上限时滑条停在最右端。
+                var seconds = Math.Max(v, MacroRunnerService.MinIntervalSeconds);
+                if (vm.Settings.MacroIntervalSeconds != seconds)
+                    vm.Settings.MacroIntervalSeconds = seconds;
+                else
+                    SyncIntervalSlider(seconds);
             }
-            MacroIntervalTextBox.Text = vm.Settings.MacroIntervalSeconds.ToString();
+            if (rewriteText)
+                MacroIntervalTextBox.Text = vm.Settings.MacroIntervalSeconds.ToString();
+        }
+
+        /// <summary>超过 30 秒时滑条保持在最高位置，不把实际间隔改回 30。</summary>
+        private void SyncIntervalSlider(int seconds)
+        {
+            var shown = Math.Clamp(seconds, (int)MacroIntervalSlider.Minimum, (int)MacroIntervalSlider.Maximum);
+            if (Math.Abs(MacroIntervalSlider.Value - shown) < 0.1) return;
+            _syncingIntervalSlider = true;
+            try { MacroIntervalSlider.Value = shown; }
+            finally { _syncingIntervalSlider = false; }
+        }
+
+        private void MacroIntervalSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_syncingIntervalSlider || DataContext is not MainViewModel vm) return;
+            var seconds = (int)Math.Round(MacroIntervalSlider.Value);
+            if (vm.Settings.MacroIntervalSeconds != seconds)
+                vm.Settings.MacroIntervalSeconds = seconds;
         }
 
         private void MacroIdleTextBox_LostFocus(object sender, RoutedEventArgs e)

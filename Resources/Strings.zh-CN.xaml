@@ -43,7 +43,7 @@
     <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">操作避让（毫秒）：</sys:String>
     <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">检测到键鼠操作时推迟发送，空闲后才注入；0 = 不避让</sys:String>
     <sys:String x:Key="Settings_MacroShiftLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">监控 Shift：</sys:String>
-    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">勾选后，无限循环的间隔一到先检测 Shift；仍按住则避让，松开后立即发送组合键</sys:String>
+    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">勾选后，无限循环只在间隔结束前 1 秒检测 Shift；仍按住则等待，松开后立即发送组合键</sys:String>
     <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">重复次数：</sys:String>
     <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">无限循环</sys:String>
     <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">测试</sys:String>

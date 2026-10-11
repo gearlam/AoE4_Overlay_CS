@@ -276,11 +276,15 @@
                             <TextBlock Text="{DynamicResource Settings_MacroIntervalLabel}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBox x:Name="MacroIntervalTextBox" Width="60" TextAlignment="Center"
-                                         Text="{Binding Settings.MacroIntervalSeconds, UpdateSourceTrigger=Explicit}"
+                                         PreviewTextInput="MacroIntervalTextBox_PreviewTextInput"
+                                         PreviewKeyDown="MacroIntervalTextBox_PreviewKeyDown"
+                                         TextChanged="MacroIntervalTextBox_TextChanged"
                                          LostFocus="MacroIntervalTextBox_LostFocus"/>
-                                <Slider Value="{Binding Settings.MacroIntervalSeconds}" Minimum="1" Maximum="300"
+                                <Slider x:Name="MacroIntervalSlider" Minimum="1" Maximum="30" Value="1"
                                         Width="180" Height="34" Margin="12,0,0,0" VerticalAlignment="Center"
-                                        SmallChange="1" LargeChange="10"/>
+                                        SmallChange="1" LargeChange="5"
+                                        IsSnapToTickEnabled="True" TickFrequency="1"
+                                        ValueChanged="MacroIntervalSlider_ValueChanged"/>
                             </StackPanel>
                         </Grid>
 

@@ -294,10 +294,10 @@ AoE4_Overlay_CS/
 | `MacroEnabled`           | `bool`               | `false`     | 热键自动化总开关                                        |
 | `MacroTriggerHotkey`     | `string`             | `""`        | 宏触发热键，与显隐/位置热键冲突时不注册                            |
 | `MacroSequence`          | `string`             | `""`        | 按键序列，`+` 分隔，最多 40 步                              |
-| `MacroIntervalSeconds`   | `int`                | `5`         | 轮间间隔（秒），1~300                                    |
+| `MacroIntervalSeconds`   | `int`                | `5`         | 轮间间隔（秒），最少 1，手输不设上限；滑条最高 30，超出时停在最右端     |
 | `MacroRepeatCount`       | `int`                | `0`         | 重复次数，`0` = 无限循环                                  |
 | `MacroIdleWaitMs`        | `int`                | `800`       | 操作避让（毫秒），0~5000；`0` = 不避让                         |
-| `MacroMonitorShift`      | `bool`               | `false`     | 2.1.1：无限循环间隔到达后先检测 Shift，按住则避让，松开后立即发送          |
+| `MacroMonitorShift`      | `bool`               | `false`     | 2.1.1：无限循环只在间隔结束前 1 秒检测 Shift，按住则等到松开再发送       |
 | `OverlayGeometry`        | `double[]?`          | `null`      | `[x, y, w, h]`，Overlay 关闭时写回                    |
 | `FontSize`               | `int`                | `12`        | Overlay 字号（界面可选 10\~24）                         |
 | `TeamGap`                | `double`             | `12`        | 队伍间距（Slider 0~~80，OverlayWindow 内再 clamp 0~~40） |
@@ -587,9 +587,9 @@ MinScale = 0.5;  MaxScale = 3.0;
 
 行为要点：
 
-- 循环每轮动态读取 `MacroSequence` / `MacroRepeatCount`（0=无限，默认）/ `MacroIntervalSeconds`（1~300 秒）/ `MacroIdleWaitMs`（操作避让 0~5000ms，默认 800ms）/ `MacroMonitorShift`，修改即时生效
+- 循环每轮动态读取 `MacroSequence` / `MacroRepeatCount`（0=无限，默认）/ `MacroIntervalSeconds`（最少 1 秒，手输不设上限）/ `MacroIdleWaitMs`（操作避让 0~5000ms，默认 800ms）/ `MacroMonitorShift`，修改即时生效
 - 未开启 Shift 监控时，每轮注入前经 `GetLastInputInfo` 检测系统键鼠空闲，玩家正在操作时推迟发送
-- 2.1.1：`MacroMonitorShift` 且无限循环时，间隔走完后先检测物理左/右 Shift。未按住则立即发送；仍按住则每 10ms 复查，松开后立即发送，中间不再做操作避让。有限次数循环仍先走操作避让
+- 2.1.1：`MacroMonitorShift` 且无限循环时，间隔的前段只做倒计时。结束前 1 秒（`ShiftWatchLeadMs`）才以 100ms 查询物理左/右 Shift。窗口内未按住则睡到间隔终点再发送；按住则等到松开立即发送，可早于或晚于终点。中间不再做操作避让。有限次数循环仍先走操作避让
 - `SendInput` 带 `KEYEVENTF_SCANCODE` 兼容 DirectX 游戏，扩展键（方向键等）加 `KEYEVENTF_EXTENDEDKEY`
 - 生命周期日志（`start` / `round N/∞ sent` / `waiting Xs` / `idle-wait` / `stop` / `run error`）写入 `logs/hotkey.log`
 

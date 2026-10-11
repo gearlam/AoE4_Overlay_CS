@@ -67,3 +67,7 @@ PublishScripts/
 Thumbs.db
 
 docs/
+
+.aoci/
+.codegraph/
+AGENTS.md

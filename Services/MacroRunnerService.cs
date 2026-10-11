@@ -29,13 +29,17 @@ namespace AoE4OverlayCS.Services
 
         public const int MaxKeys = 40;             // 序列最大键数（防止滥用）
         public const int MinIntervalSeconds = 1;   // 最小触发间隔（秒），防止资源占用过高
-        public const int MaxIntervalSeconds = 300; // 最大触发间隔（秒）
+        public const int SliderMaxIntervalSeconds = 30; // 仅滑条上限；手输可以更大
         public const int MaxRepeatCount = 99;      // 最大重复次数（0 = 无限）
         public const int MaxIdleWaitMs = 5000;     // 操作避让上限（毫秒），0 = 不避让
         public const int GateWindowMs = 500;       // 输入屏蔽窗口时长（毫秒）：从首键起算，注入后补足，期间键鼠输入被吞
 
         private CancellationTokenSource? _cts;
         private volatile bool _isRunning;
+        private int _runGeneration;
+
+        [ThreadStatic]
+        private static int _threadRunGeneration;
         private readonly Action<string>? _log;
         private readonly InputGateService? _gate;
 
@@ -63,11 +67,12 @@ namespace AoE4OverlayCS.Services
             // 输入闸门钩子仅宏运行期间挂载（Start 由 UI 线程调用），平时对全系统零开销
             _gate?.Start();
 
+            var generation = Interlocked.Increment(ref _runGeneration);
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
             _isRunning = true;
             Report(L(settings, "热键自动化已启动", "Macro automation started"), true, false);
-            var thread = new Thread(() => RunLoopSync(settings, ct))
+            var thread = new Thread(() => RunLoopSync(settings, ct, generation))
             {
                 IsBackground = true,
                 Name = "MacroRunner"
@@ -100,12 +105,14 @@ namespace AoE4OverlayCS.Services
                 return;
             }
 
+            var generation = Interlocked.Increment(ref _runGeneration);
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
             _isRunning = true;
             _log?.Invoke("test");
             var thread = new Thread(() =>
             {
+                _threadRunGeneration = generation;
                 try
                 {
                     WaitShiftReleased(settings, ct);
@@ -113,13 +120,21 @@ namespace AoE4OverlayCS.Services
                     ExecuteSequence(steps);
                     Report(L(settings, "测试完成", "Test finished"), false, false);
                 }
-                catch (OperationCanceledException) { /* Stop() 已回报 */ }
+                catch (OperationCanceledException)
+                {
+                    if (generation == Volatile.Read(ref _runGeneration))
+                        Report(L(settings, "已停止", "Stopped"), false, false);
+                }
                 catch (Exception ex)
                 {
                     _log?.Invoke($"test error: {ex}");
                     Report(L(settings, "测试异常，已停止：" + ex.Message, "Test error, stopped: " + ex.Message), false, true);
                 }
-                finally { _isRunning = false; }
+                finally
+                {
+                    if (generation == Volatile.Read(ref _runGeneration))
+                        _isRunning = false;
+                }
             })
             {
                 IsBackground = true,
@@ -212,8 +227,9 @@ namespace AoE4OverlayCS.Services
         /// 主循环（专用后台线程，全同步）。每轮动态读取重复次数与序列；
         /// 轮间倒计时以 250ms 粒度轮询，动态响应间隔修改。
         /// </summary>
-        private void RunLoopSync(AppSettings settings, CancellationToken ct)
+        private void RunLoopSync(AppSettings settings, CancellationToken ct, int generation)
         {
+            _threadRunGeneration = generation;
             var executed = 0;
             try
             {
@@ -233,10 +249,13 @@ namespace AoE4OverlayCS.Services
                         return;
                     }
 
-                    // 无限循环且开启 Shift 监控：间隔一到（首轮则是启动后）先看 Shift。
-                    // 仍按住就避让，松开后立刻发送，中间不再插入操作避让。
+                    // 无限循环且开启 Shift 监控：大部分间隔只倒计时，不查 Shift。
+                    // 首轮没有间隔，仅当启动时 Shift 正按着才等待；后续轮次的检测在间隔结束前 1 秒才开始。
                     if (repeats == 0 && settings.MacroMonitorShift)
-                        WaitShiftReleased(settings, ct);
+                    {
+                        if (executed == 0 || IsShiftDown())
+                            WaitShiftReleased(settings, ct);
+                    }
                     else
                     {
                         WaitIdle(settings, ct);
@@ -252,39 +271,76 @@ namespace AoE4OverlayCS.Services
 
                     if (repeats > 0 && executed >= repeats) break;
 
-                    var waitSeconds = Math.Clamp(settings.MacroIntervalSeconds, MinIntervalSeconds, MaxIntervalSeconds);
-                    WaitInterval(settings, executed, ct);
+                    if (repeats == 0 && settings.MacroMonitorShift)
+                        WaitIntervalWithLateShiftWatch(settings, executed, ct);
+                    else
+                        WaitInterval(settings, executed, ct);
                 }
                 Report(L(settings, "热键序列执行完成", "Macro sequence finished"), false, false);
             }
-            catch (OperationCanceledException) { /* Stop() 已回报 */ }
+            catch (OperationCanceledException)
+            {
+                // 只回应本轮。快按 F10 又启动了新一轮时，旧线程不能把新一轮的状态改成“已停止”。
+                if (generation == Volatile.Read(ref _runGeneration))
+                    Report(L(settings, "已停止", "Stopped"), false, false);
+            }
             catch (Exception ex)
             {
                 _log?.Invoke($"run error: {ex}");
                 Report(L(settings, "执行异常，已停止：" + ex.Message, "Error, stopped: " + ex.Message), false, true);
             }
-            finally { _isRunning = false; }
+            finally
+            {
+                if (generation == Volatile.Read(ref _runGeneration))
+                    _isRunning = false;
+            }
         }
 
-        /// <summary>轮间倒计时：250ms 粒度轮询，动态响应间隔修改，状态每秒刷新。</summary>
-        private void WaitInterval(AppSettings settings, int executed, CancellationToken ct)
+        /// <summary>
+        /// 无限循环 + Shift 监控的轮间等待。例如间隔 15 秒时，前 14 秒只倒计时；
+        /// 最后 1 秒才查询 Shift。这段时间内若 Shift 按住，就等到松开后立刻返回；
+        /// 没按住则睡到间隔终点再返回。间隔短于 1 秒时，整段都处于检测窗口。
+        /// </summary>
+        private void WaitIntervalWithLateShiftWatch(AppSettings settings, int executed, CancellationToken ct)
         {
-            var elapsedMs = 0;
-            var lastShown = -1;
+            var elapsedMs = 0L;
+            var lastShown = -1L;
+            var shiftReported = false;
             while (true)
             {
                 ct.ThrowIfCancellationRequested();
 
-                // 每次循环重读目标间隔：调小时立即结束等待；最后一段只睡剩余时间，到点就返回
-                var targetMs = Math.Clamp(settings.MacroIntervalSeconds, MinIntervalSeconds, MaxIntervalSeconds) * 1000;
-                var remainMs = targetMs - elapsedMs;
-                if (remainMs <= 0) return;
+                var targetMs = IntervalTargetMs(settings);
+                var leadMs = Math.Min((long)ShiftWatchLeadMs, targetMs);
+                var watchAtMs = targetMs - leadMs;
+                var inWatch = settings.MacroMonitorShift && elapsedMs >= watchAtMs;
 
-                var sleepMs = Math.Min(PollMs, remainMs);
+                if (inWatch && IsShiftDown())
+                {
+                    if (!shiftReported)
+                    {
+                        shiftReported = true;
+                        Report(L(settings, "检测到 Shift 正在使用，松开后立即发送组合键…",
+                                       "Shift is in use, sending combo as soon as it is released..."), true, false);
+                    }
+                    Thread.Sleep(ShiftWatchPollMs);
+                    ct.ThrowIfCancellationRequested();
+                    if (!settings.MacroMonitorShift || !IsShiftDown()) return;
+                    continue;
+                }
+
+                if (elapsedMs >= targetMs) return;
+
+                // 未到检测窗口，或中途关掉监控：只睡到下一个节点，不查询 Shift
+                var nextMarkMs = settings.MacroMonitorShift && !inWatch ? watchAtMs : targetMs;
+                var sleepMs = (int)Math.Min(inWatch ? ShiftWatchPollMs : (long)PollMs, nextMarkMs - elapsedMs);
+                if (sleepMs <= 0) sleepMs = (int)Math.Min((long)PollMs, targetMs - elapsedMs);
                 Thread.Sleep(sleepMs);
+                ct.ThrowIfCancellationRequested();
                 elapsedMs += sleepMs;
 
-                var remainSec = Math.Max(0, (targetMs - elapsedMs + 999) / 1000);
+                if (shiftReported) continue;
+                var remainSec = Math.Max(0L, (targetMs - elapsedMs + 999) / 1000);
                 if (remainSec != lastShown)
                 {
                     lastShown = remainSec;
@@ -292,6 +348,42 @@ namespace AoE4OverlayCS.Services
                                    $"Round {executed} done, next in {remainSec}s"), true, false);
                 }
             }
+        }
+
+        /// <summary>轮间倒计时：250ms 粒度轮询，动态响应间隔修改，状态每秒刷新。</summary>
+        private void WaitInterval(AppSettings settings, int executed, CancellationToken ct)
+        {
+            var elapsedMs = 0L;
+            var lastShown = -1L;
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                // 每次循环重读目标间隔：调小时立即结束等待；最后一段只睡剩余时间，到点就返回
+                var targetMs = IntervalTargetMs(settings);
+                var remainMs = targetMs - elapsedMs;
+                if (remainMs <= 0) return;
+
+                var sleepMs = (int)Math.Min((long)PollMs, remainMs);
+                Thread.Sleep(sleepMs);
+                ct.ThrowIfCancellationRequested();
+                elapsedMs += sleepMs;
+
+                var remainSec = Math.Max(0L, (targetMs - elapsedMs + 999) / 1000);
+                if (remainSec != lastShown)
+                {
+                    lastShown = remainSec;
+                    Report(L(settings, $"第 {executed} 轮完成，{remainSec} 秒后执行下一轮",
+                                   $"Round {executed} done, next in {remainSec}s"), true, false);
+                }
+            }
+        }
+
+        /// <summary>手输间隔不设上限，只保证至少 1 秒；毫秒用 long，避免大秒数溢出。</summary>
+        private static long IntervalTargetMs(AppSettings settings)
+        {
+            var seconds = Math.Max(settings.MacroIntervalSeconds, MinIntervalSeconds);
+            return (long)seconds * 1000L;
         }
 
         /// <summary>操作避让：系统键鼠空闲不足阈值时推迟注入（每轮动态读取阈值，0 = 不避让）。</summary>
@@ -311,6 +403,7 @@ namespace AoE4OverlayCS.Services
                     Report(L(settings, "检测到操作，等待空闲后发送…", "Input detected, waiting for idle..."), true, false);
                 }
                 Thread.Sleep(PollMs);
+                ct.ThrowIfCancellationRequested();
             }
         }
 
@@ -334,11 +427,13 @@ namespace AoE4OverlayCS.Services
                     Report(L(settings, "检测到 Shift 正在使用，松开后立即发送组合键…",
                                    "Shift is in use, sending combo as soon as it is released..."), true, false);
                 }
-                Thread.Sleep(ShiftPollMs);
+                Thread.Sleep(ShiftWatchPollMs);
+                ct.ThrowIfCancellationRequested();
             }
         }
 
-        private const int ShiftPollMs = 10;
+        private const int ShiftWatchLeadMs = 1000;
+        private const int ShiftWatchPollMs = 100;
         private const int VK_LSHIFT = 0xA0;
         private const int VK_RSHIFT = 0xA1;
 
@@ -432,8 +527,14 @@ namespace AoE4OverlayCS.Services
 
         private static string L(AppSettings s, string zh, string en) => IsZh(s) ? zh : en;
 
-        private void Report(string message, bool running, bool error) =>
+        private void Report(string message, bool running, bool error)
+        {
+            // 停止后，仍在睡眠里的旧线程不能再把状态刷回“运行中 / 下一轮倒计时”。
+            var threadGeneration = _threadRunGeneration;
+            if (threadGeneration != 0 && threadGeneration != Volatile.Read(ref _runGeneration)) return;
+            if (running && !_isRunning) return;
             StatusChanged?.Invoke(new MacroRunStatus(message, running, error));
+        }
 
         // ---- SendInput 后台按键模拟（扫描码方式，兼容 DirectX 游戏） ----
 

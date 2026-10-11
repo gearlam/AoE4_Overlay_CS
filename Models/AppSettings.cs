@@ -63,7 +63,7 @@ namespace AoE4OverlayCS.Models
         private int _macroIdleWaitMs = 800;
         public int MacroIdleWaitMs { get => _macroIdleWaitMs; set { _macroIdleWaitMs = value; OnPropertyChanged(); } }
 
-        // Shift 监控：勾选后，循环发送组合键前若物理 Shift 仍按住则等待松开，避免与游戏中常用的 Shift 冲突
+        // Shift 监控：勾选后，无限循环只在间隔结束前 1 秒检测物理 Shift；按住则等到松开再发送
         private bool _macroMonitorShift = false;
         public bool MacroMonitorShift { get => _macroMonitorShift; set { _macroMonitorShift = value; OnPropertyChanged(); } }
 

@@ -43,7 +43,7 @@
     <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Input idle wait (ms):</sys:String>
     <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Delays sending while keyboard/mouse is in use; 0 = no idle wait</sys:String>
     <sys:String x:Key="Settings_MacroShiftLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Monitor Shift:</sys:String>
-    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">When checked, an infinite loop checks Shift as soon as the interval elapses; if held, it waits, then sends the combo immediately on release</sys:String>
+    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">When checked, an infinite loop checks Shift only during the last second of the interval; if held, it waits and sends the combo as soon as Shift is released</sys:String>
     <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Repeat count:</sys:String>
     <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Infinite loop</sys:String>
     <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Test</sys:String>
