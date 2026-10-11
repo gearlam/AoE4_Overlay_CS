@@ -63,6 +63,10 @@ namespace AoE4OverlayCS.Models
         private int _macroIdleWaitMs = 800;
         public int MacroIdleWaitMs { get => _macroIdleWaitMs; set { _macroIdleWaitMs = value; OnPropertyChanged(); } }
 
+        // Shift 监控：勾选后，循环发送组合键前若物理 Shift 仍按住则等待松开，避免与游戏中常用的 Shift 冲突
+        private bool _macroMonitorShift = false;
+        public bool MacroMonitorShift { get => _macroMonitorShift; set { _macroMonitorShift = value; OnPropertyChanged(); } }
+
         private double[]? _overlayGeometry;
         public double[]? OverlayGeometry { get => _overlayGeometry; set { _overlayGeometry = value; OnPropertyChanged(); } } // x, y, w, h
 

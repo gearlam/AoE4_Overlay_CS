@@ -1,6 +1,6 @@
 # AoE4 Overlay CS — Code Wiki
 
-> 本文档基于仓库全部源码（版本 `2.0.0`，commit `8305cec` 之后）逐文件分析生成。
+> 本文档基于仓库全部源码（版本 `2.1.1`）逐文件分析生成，并随热键自动化变更修订。
 > 生成时间：2026-09-05。
 
 ## 目录
@@ -57,7 +57,7 @@
 
 ### 版本信息
 
-- 程序集版本：`2.0.0`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
+- 程序集版本：`2.1.1`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
 
 - 目标框架：`net10.0-windows`
 
@@ -291,6 +291,13 @@ AoE4_Overlay_CS/
 | `PlayerName`             | `string?`            | `null`      | 绑定玩家名                                           |
 | `OverlayHotkey`          | `string`             | `""`        | 显隐热键，格式 `Ctrl+Alt+O`（WPF `Key` 枚举名）             |
 | `OverlayPositionHotkey`  | `string`             | `""`        | 锁定/解锁位置热键，同上格式                                  |
+| `MacroEnabled`           | `bool`               | `false`     | 热键自动化总开关                                        |
+| `MacroTriggerHotkey`     | `string`             | `""`        | 宏触发热键，与显隐/位置热键冲突时不注册                            |
+| `MacroSequence`          | `string`             | `""`        | 按键序列，`+` 分隔，最多 40 步                              |
+| `MacroIntervalSeconds`   | `int`                | `5`         | 轮间间隔（秒），1~300                                    |
+| `MacroRepeatCount`       | `int`                | `0`         | 重复次数，`0` = 无限循环                                  |
+| `MacroIdleWaitMs`        | `int`                | `800`       | 操作避让（毫秒），0~5000；`0` = 不避让                         |
+| `MacroMonitorShift`      | `bool`               | `false`     | 2.1.1：无限循环间隔到达后先检测 Shift，按住则避让，松开后立即发送          |
 | `OverlayGeometry`        | `double[]?`          | `null`      | `[x, y, w, h]`，Overlay 关闭时写回                    |
 | `FontSize`               | `int`                | `12`        | Overlay 字号（界面可选 10\~24）                         |
 | `TeamGap`                | `double`             | `12`        | 队伍间距（Slider 0~~80，OverlayWindow 内再 clamp 0~~40） |
@@ -580,8 +587,9 @@ MinScale = 0.5;  MaxScale = 3.0;
 
 行为要点：
 
-- 循环每轮动态读取 `MacroSequence` / `MacroRepeatCount`（0=无限，默认）/ `MacroIntervalSeconds`（1~300 秒）/ `MacroIdleWaitMs`（操作避让 0~5000ms，默认 800ms），修改即时生效
-- 每轮注入前经 `GetLastInputInfo` 检测系统键鼠空闲，玩家正在操作时推迟发送，避免打断游戏操作
+- 循环每轮动态读取 `MacroSequence` / `MacroRepeatCount`（0=无限，默认）/ `MacroIntervalSeconds`（1~300 秒）/ `MacroIdleWaitMs`（操作避让 0~5000ms，默认 800ms）/ `MacroMonitorShift`，修改即时生效
+- 未开启 Shift 监控时，每轮注入前经 `GetLastInputInfo` 检测系统键鼠空闲，玩家正在操作时推迟发送
+- 2.1.1：`MacroMonitorShift` 且无限循环时，间隔走完后先检测物理左/右 Shift。未按住则立即发送；仍按住则每 10ms 复查，松开后立即发送，中间不再做操作避让。有限次数循环仍先走操作避让
 - `SendInput` 带 `KEYEVENTF_SCANCODE` 兼容 DirectX 游戏，扩展键（方向键等）加 `KEYEVENTF_EXTENDEDKEY`
 - 生命周期日志（`start` / `round N/∞ sent` / `waiting Xs` / `idle-wait` / `stop` / `run error`）写入 `logs/hotkey.log`
 
@@ -1078,6 +1086,6 @@ dotnet publish AoE4OverlayCS.csproj -c Release -r win-x64 --self-contained false
 
 ***
 
-> 本 Wiki 基于源码逐文件核对生成：2026-09-05，对应版本 1.7.6；2.0.0 增补热键自动化模块（MacroRunnerService、设置页 Macro 面板、操作避让）。
+> 本 Wiki 基于源码逐文件核对生成：2026-09-05，对应版本 1.7.6；2.0.0 增补热键自动化模块（MacroRunnerService、设置页 Macro 面板、操作避让）；2.1.1 增补无限循环 Shift 监控。
 > 如代码更新，请同步修订以下章节：§5（类与函数）、§12（已知特性）。
 

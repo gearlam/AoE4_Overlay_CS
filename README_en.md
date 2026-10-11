@@ -9,6 +9,7 @@ Its main goals are:
 - Display match information through an in-game overlay
 - Expose a local WebSocket data channel for HTML overlay or external viewers
 - Support Chinese/English UI switching, localized map names, hotkey toggle, drag/resize overlay positioning, and searchable ID history
+- 2.1.1: optional Shift monitoring for the infinite macro loop. When the interval elapses, Shift is checked first; if held, the combo waits and fires immediately on release
 
 Chinese documentation: [`README.md`](./README.md)
 
@@ -20,7 +21,7 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `2.0.1`
+- Current version: `2.1.1`
 - Target frameworks: `net10.0-windows`
 
 ## Project Purpose
@@ -219,6 +220,7 @@ It is used to:
 - Combos (Ctrl+A) and digit keys (control groups), recordable or manual input with visual key chips
 - Interval 1-300 s, repeat 1-99 times or infinite; runtime changes apply immediately
 - Input idle wait: sending is deferred while keyboard/mouse is in use, so gameplay is not disrupted
+- Shift monitor (2.1.1): when checked, an infinite loop checks Shift as soon as the interval elapses; if held, it waits, then sends the combo immediately on release without an extra idle wait
 - Background SendInput scan-code injection without window focus switch; trigger hotkey conflict detection
 - Live status display and a Test button
 

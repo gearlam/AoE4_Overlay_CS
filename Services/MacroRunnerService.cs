@@ -108,6 +108,7 @@ namespace AoE4OverlayCS.Services
             {
                 try
                 {
+                    WaitShiftReleased(settings, ct);
                     Report(L(settings, "测试：正在向当前焦点窗口发送按键…", "Test: sending keys to the focused window..."), true, false);
                     ExecuteSequence(steps);
                     Report(L(settings, "测试完成", "Test finished"), false, false);
@@ -232,8 +233,16 @@ namespace AoE4OverlayCS.Services
                         return;
                     }
 
-                    // 操作避让：检测到键鼠操作时推迟注入，等玩家空闲再发送
-                    WaitIdle(settings, ct);
+                    // 无限循环且开启 Shift 监控：间隔一到（首轮则是启动后）先看 Shift。
+                    // 仍按住就避让，松开后立刻发送，中间不再插入操作避让。
+                    if (repeats == 0 && settings.MacroMonitorShift)
+                        WaitShiftReleased(settings, ct);
+                    else
+                    {
+                        WaitIdle(settings, ct);
+                        if (settings.MacroMonitorShift)
+                            WaitShiftReleased(settings, ct);
+                    }
 
                     var roundSuffix = repeats > 0 ? $"/{repeats}" : "";
                     Report(L(settings, $"正在发送按键（第 {executed + 1}{roundSuffix} 轮）",
@@ -266,12 +275,14 @@ namespace AoE4OverlayCS.Services
             {
                 ct.ThrowIfCancellationRequested();
 
-                // 每次循环重读目标间隔：调小时立即结束等待
+                // 每次循环重读目标间隔：调小时立即结束等待；最后一段只睡剩余时间，到点就返回
                 var targetMs = Math.Clamp(settings.MacroIntervalSeconds, MinIntervalSeconds, MaxIntervalSeconds) * 1000;
-                if (elapsedMs >= targetMs) return;
+                var remainMs = targetMs - elapsedMs;
+                if (remainMs <= 0) return;
 
-                Thread.Sleep(PollMs);
-                elapsedMs += PollMs;
+                var sleepMs = Math.Min(PollMs, remainMs);
+                Thread.Sleep(sleepMs);
+                elapsedMs += sleepMs;
 
                 var remainSec = Math.Max(0, (targetMs - elapsedMs + 999) / 1000);
                 if (remainSec != lastShown)
@@ -302,6 +313,40 @@ namespace AoE4OverlayCS.Services
                 Thread.Sleep(PollMs);
             }
         }
+
+        /// <summary>
+        /// Shift 监控（勾选时生效，每轮动态读取）。
+        /// 没按住就马上返回；仍按住则避让，松开后立刻返回以便马上发送组合键。
+        /// 等待中取消勾选也立刻返回。
+        /// </summary>
+        private void WaitShiftReleased(AppSettings settings, CancellationToken ct)
+        {
+            var reported = false;
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (!settings.MacroMonitorShift) return;
+                if (!IsShiftDown()) return;
+
+                if (!reported)
+                {
+                    reported = true;
+                    Report(L(settings, "检测到 Shift 正在使用，松开后立即发送组合键…",
+                                   "Shift is in use, sending combo as soon as it is released..."), true, false);
+                }
+                Thread.Sleep(ShiftPollMs);
+            }
+        }
+
+        private const int ShiftPollMs = 10;
+        private const int VK_LSHIFT = 0xA0;
+        private const int VK_RSHIFT = 0xA1;
+
+        /// <summary>物理左 Shift、右 Shift 或通用 Shift 是否仍处于按下。</summary>
+        private static bool IsShiftDown() =>
+            (GetAsyncKeyState((int)VK_SHIFT) & 0x8000) != 0
+            || (GetAsyncKeyState(VK_LSHIFT) & 0x8000) != 0
+            || (GetAsyncKeyState(VK_RSHIFT) & 0x8000) != 0;
 
         /// <summary>同步执行一轮按键序列；屏蔽窗口从首键起算共 GateWindowMs（注入后补足），期间键鼠输入被吞，保证原子完成。</summary>
         private void ExecuteSequence(List<MacroKeyStep> steps)
@@ -480,6 +525,9 @@ namespace AoE4OverlayCS.Services
 
         [DllImport("user32.dll")]
         private static extern bool GetLastInputInfo(out LASTINPUTINFO plii);
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
 
         private static int GetIdleMs()
         {
