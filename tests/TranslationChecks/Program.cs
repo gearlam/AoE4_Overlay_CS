@@ -178,6 +178,86 @@ var uiThread = new Thread(() =>
             Check(window.Title != "" && window.IsVisible && window.Topmost, language + " translator XAML loads and is topmost");
             window.UpdateLayout();
             Check(VisualChildren(window).OfType<System.Windows.Controls.Button>().Any(b => b.Command == model.CopyHistoryCommand && b.CommandParameter == reusable), language + " history row exposes a bound copy button");
+            var inputBox = (System.Windows.Controls.TextBox)window.FindName("InputBox");
+            model.Input = "待清除的原文\n第二行";
+            model.Output = "Keep this translation";
+            var historyBeforeClear = model.History.ToArray();
+            System.Windows.Clipboard.SetText("keep clear clipboard");
+            window.UpdateLayout();
+            var clearInputButton = VisualChildren(window).OfType<System.Windows.Controls.Button>()
+                .SingleOrDefault(b => b.Content?.ToString() == (language == "zh-CN" ? "清空输入" : "Clear input"));
+            Check(clearInputButton != null && clearInputButton.Command != null && clearInputButton.Command.CanExecute(null),
+                language + " input clear button is localized and enabled for nonempty input");
+            clearInputButton!.Focus();
+            clearInputButton.Command!.Execute(null);
+            clearInputButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            PumpUntil(() => inputBox.Text == "" && inputBox.IsKeyboardFocused);
+            Check(model.Input == "" && inputBox.Text == "" && inputBox.IsKeyboardFocused,
+                language + " clear input empties the input box and restores typing focus");
+            Check(model.Output == "Keep this translation" && model.History.SequenceEqual(historyBeforeClear)
+                && System.Windows.Clipboard.GetText() == "keep clear clipboard",
+                language + " clear input preserves output, history and clipboard");
+            Check(!clearInputButton.Command.CanExecute(null), language + " clear input is disabled when input is empty");
+            model.History.Clear();
+            model.History.Add(new TranslationRecord { Original = "进攻", Translated = "Attack" });
+            model.History.Add(new TranslationRecord { Original = string.Join(" ", Enumerable.Repeat("长内容需要自动换行", 18)),
+                Translated = string.Join(" ", Enumerable.Repeat("Long translated content wraps naturally.", 18)) });
+            for (var i = 0; i < 15; i++)
+                model.History.Add(new TranslationRecord { Original = "历史 " + i, Translated = "History " + i });
+            window.UpdateLayout();
+            var historyList = VisualChildren(window).OfType<System.Windows.Controls.ListBox>().Single();
+            var historyScroll = VisualChildren(historyList).OfType<System.Windows.Controls.ScrollViewer>().First();
+            var shortRow = (System.Windows.Controls.ListBoxItem)historyList.ItemContainerGenerator.ContainerFromIndex(0);
+            var longRow = (System.Windows.Controls.ListBoxItem)historyList.ItemContainerGenerator.ContainerFromIndex(1);
+            Check(shortRow.ActualHeight < 90 && longRow.ActualHeight > shortRow.ActualHeight * 2,
+                language + " history rows are compact for short text and grow for long text");
+            var wideHeight = longRow.ActualHeight;
+            window.Width = 440;
+            window.UpdateLayout();
+            Check(longRow.ActualHeight > wideHeight, language + " history row height adapts when text wraps in a narrower window");
+            window.Width = 620;
+            window.UpdateLayout();
+            void Wheel(int delta)
+            {
+                var target = VisualChildren(historyList).OfType<System.Windows.Controls.TextBox>().First();
+                target.RaiseEvent(new System.Windows.Input.MouseWheelEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, delta)
+                    { RoutedEvent = System.Windows.Input.Mouse.PreviewMouseWheelEvent });
+                window.UpdateLayout();
+            }
+            Wheel(-120);
+            Check(Math.Abs(historyScroll.VerticalOffset - 1) < 0.01, language + " one wheel notch over history text moves one record");
+            Wheel(120);
+            Check(historyScroll.VerticalOffset == 0, language + " wheel up moves back one record");
+            Wheel(-240);
+            Check(Math.Abs(historyScroll.VerticalOffset - 2) < 0.01, language + " two wheel notches move two records");
+            System.Windows.Controls.Primitives.ScrollBar.PageDownCommand.Execute(null, historyScroll);
+            window.UpdateLayout();
+            Check(Math.Abs(historyScroll.VerticalOffset - 3) < 0.01, language + " scrollbar track down moves one record instead of a page");
+            System.Windows.Controls.Primitives.ScrollBar.PageUpCommand.Execute(null, historyScroll);
+            window.UpdateLayout();
+            Check(Math.Abs(historyScroll.VerticalOffset - 2) < 0.01, language + " scrollbar track up moves one record instead of a page");
+            System.Windows.Controls.Primitives.ScrollBar.LineDownCommand.Execute(null, historyScroll);
+            window.UpdateLayout();
+            Check(Math.Abs(historyScroll.VerticalOffset - 3) < 0.01, language + " scrollbar down arrow moves one record");
+            System.Windows.Controls.Primitives.ScrollBar.LineUpCommand.Execute(null, historyScroll);
+            window.UpdateLayout();
+            Check(Math.Abs(historyScroll.VerticalOffset - 2) < 0.01, language + " scrollbar up arrow moves one record");
+            historyScroll.ScrollToVerticalOffset(8);
+            window.UpdateLayout();
+            Check(Math.Abs(historyScroll.VerticalOffset - 8) < 0.01, language + " scrollbar offset still supports jumping to a distant record");
+            historyScroll.ScrollToEnd();
+            window.UpdateLayout();
+            var bottomOffset = historyScroll.VerticalOffset;
+            Wheel(-120);
+            Check(historyScroll.VerticalOffset == bottomOffset, language + " history scrolling stays at the bottom boundary");
+            historyScroll.ScrollToHome();
+            window.UpdateLayout();
+            Wheel(120);
+            Check(historyScroll.VerticalOffset == 0, language + " history scrolling stays at the top boundary");
+            Wheel(-60);
+            Check(historyScroll.VerticalOffset == 0, language + " partial wheel notch does not skip a record");
+            Wheel(-60);
+            Check(Math.Abs(historyScroll.VerticalOffset - 1) < 0.01, language + " partial wheel deltas accumulate to one record");
             window.Close();
         }
         using (var copyModel = new AoE4OverlayCS.ViewModels.TranslationViewModel(() => "aoe4", _ => null,
@@ -194,6 +274,9 @@ var uiThread = new Thread(() =>
             copyWindow.Show();
             System.Windows.Clipboard.SetText("unchanged");
             copyModel.TranslateCommand.Execute(null);
+            var busyClearButton = VisualChildren(copyWindow).OfType<System.Windows.Controls.Button>()
+                .Single(b => b.Content?.ToString() == "清空输入");
+            Check(!busyClearButton.Command!.CanExecute(null), "clear input is disabled while translation is running");
             copyWindow.Hide();
             PumpUntil(() => !copyModel.Busy);
             Check(!copyModel.Busy && copyModel.Output == "Attack now", "translation completes while window is hidden");

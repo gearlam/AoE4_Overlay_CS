@@ -16,7 +16,8 @@
                  TextWrapping="Wrap" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto" Margin="0,10" PreviewKeyDown="Input_KeyDown"/>
         <WrapPanel Grid.Row="2">
             <Button Content="{DynamicResource Tr_Translate}" Command="{Binding TranslateCommand}" Padding="12,5" Margin="0,0,8,0"/>
-            <Button Content="{DynamicResource Tr_Copy}" Command="{Binding CopyCommand}" Padding="12,5"/>
+            <Button Content="{DynamicResource Tr_Copy}" Command="{Binding CopyCommand}" Padding="12,5" Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource Tr_ClearInput}" Command="{Binding ClearInputCommand}" Click="ClearInput_Click" Padding="12,5"/>
         </WrapPanel>
         <TextBox Grid.Row="3" Text="{Binding Output, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="85" VerticalScrollBarVisibility="Auto" Margin="0,10"/>
         <TextBlock Grid.Row="4" Text="{Binding Status}" TextWrapping="Wrap" Margin="0,0,0,8"/>
@@ -25,15 +26,18 @@
             <Button DockPanel.Dock="Right" Content="{DynamicResource Tr_HistoryFolder}" Command="{Binding OpenHistoryFolderCommand}" Padding="8,3" Margin="0,0,8,0"/>
             <TextBlock Text="{DynamicResource Tr_History}" VerticalAlignment="Center"/>
         </DockPanel>
-        <ListBox Grid.Row="6" ItemsSource="{Binding History}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox Grid.Row="6" x:Name="HistoryList" ItemsSource="{Binding History}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.ScrollUnit="Item" PreviewMouseWheel="History_MouseWheel"
+                 CommandManager.PreviewExecuted="History_PreviewExecuted">
             <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4,8">
+                    <Border BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="4,3">
                         <StackPanel>
                             <TextBlock Text="{Binding Caption}" Foreground="Gray" FontSize="11" TextWrapping="Wrap"/>
-                            <TextBox Text="{Binding Original, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent"/>
-                            <TextBox Text="{Binding Translated, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding Original, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Padding="0" MinHeight="0" VerticalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent"/>
+                            <TextBox Text="{Binding Translated, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Padding="0" MinHeight="0" VerticalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent" FontWeight="SemiBold"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Content="{DynamicResource Tr_Copy}" Margin="0,0,8,0"
                                         Command="{Binding DataContext.CopyHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Padding="8,2"/>

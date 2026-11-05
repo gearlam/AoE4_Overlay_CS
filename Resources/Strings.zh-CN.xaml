@@ -80,6 +80,7 @@
     <sys:String x:Key="Tr_WindowHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enter 翻译；Shift+Enter 换行；Esc 或快捷键关闭。译文手动复制到游戏，不自动发送。建议使用无边框/窗口化游戏；独占全屏可能遮挡桌面窗口。语言与接口编辑即时用于下一次请求，保存后重启保留。</sys:String>
     <sys:String x:Key="Tr_Translate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">翻译（Enter）</sys:String>
     <sys:String x:Key="Tr_Copy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">复制译文</sys:String>
+    <sys:String x:Key="Tr_ClearInput" xmlns:sys="clr-namespace:System;assembly=System.Runtime">清空输入</sys:String>
     <sys:String x:Key="Tr_Clear" xmlns:sys="clr-namespace:System;assembly=System.Runtime">清空全部</sys:String>
     <sys:String x:Key="Tr_Delete" xmlns:sys="clr-namespace:System;assembly=System.Runtime">删除本条</sys:String>
     <sys:String x:Key="Tr_History" xmlns:sys="clr-namespace:System;assembly=System.Runtime">本地翻译历史（可选中文字复制）</sys:String>

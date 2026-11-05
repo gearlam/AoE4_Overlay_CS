@@ -31,6 +31,7 @@ namespace AoE4OverlayCS.ViewModels
         public ICommand TestCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand CopyCommand { get; }
+        public ICommand ClearInputCommand { get; }
         public ICommand CopyHistoryCommand { get; }
         public ICommand OpenHistoryFolderCommand { get; }
         public event Action? SettingsSaved;
@@ -55,6 +56,7 @@ namespace AoE4OverlayCS.ViewModels
             TestCommand = new RelayCommand(async _ => await Run(true), _ => !Busy);
             SaveCommand = new RelayCommand(_ => Save(), _ => !Busy);
             CopyCommand = new RelayCommand(_ => Copy(Output), _ => !string.IsNullOrEmpty(Output));
+            ClearInputCommand = new RelayCommand(_ => Input = "", _ => !Busy && !string.IsNullOrEmpty(Input));
             CopyHistoryCommand = new RelayCommand(record => Copy(((TranslationRecord)record!).Translated),
                 record => record is TranslationRecord r && !string.IsNullOrEmpty(r.Translated));
             OpenHistoryFolderCommand = new RelayCommand(_ => OpenHistoryFolder());

@@ -80,6 +80,7 @@
     <sys:String x:Key="Tr_WindowHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enter: translate; Shift+Enter: newline; Esc/hotkey: close. Copy and paste manually; nothing is auto-sent. Use borderless/windowed mode; exclusive fullscreen may hide desktop windows. Edits affect the next request; save to persist across restarts.</sys:String>
     <sys:String x:Key="Tr_Translate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Translate (Enter)</sys:String>
     <sys:String x:Key="Tr_Copy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Copy translation</sys:String>
+    <sys:String x:Key="Tr_ClearInput" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Clear input</sys:String>
     <sys:String x:Key="Tr_Clear" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Clear all</sys:String>
     <sys:String x:Key="Tr_Delete" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Delete</sys:String>
     <sys:String x:Key="Tr_History" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Local history (select text to copy)</sys:String>
