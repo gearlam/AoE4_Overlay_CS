@@ -1,6 +1,6 @@
-# AoE4 Overlay CS
+# AoE Overlay
 
-`AoE4 Overlay CS` 是一个面向《Age of Empires IV》的桌面 Overlay 工具，使用 `C# + WPF` 开发。
+`AoE Overlay` 是面向《帝国时代 4》和《帝国时代 2：决定版》的桌面 Overlay 工具，使用 `C# + WPF` 开发。程序文件名为 `AoEOverlay.exe`。
 
 它的核心目标是：
 
@@ -11,8 +11,49 @@
 - 支持中英文界面切换、地图名称本地化、热键显示/隐藏、拖拽定位和搜索历史记录
 - 2.0 新增：热键自动化（按键精灵式循环按键，带操作避让，不干扰游戏操作）
 - 2.1.1 新增：无限循环可监控 Shift。只在间隔结束前 1 秒检测，仍按住则等待，松开后立即发送组合键
+- 2.2.1 新增：设置页可在 AOE4 / AOE2 之间切换轮询。AOE2 走官方社区接口，对战页列出排位记录，地图名使用游戏官方中文
 
 英文说明请查看：[`README_en.md`](./README_en.md)
+
+## 覆盖层 DLC 文明更新
+
+- 已补齐《北方劫掠者》的 **Vikings（维京人）**、**Scots（苏格兰人）**，AOE4 本地文明旗帜现共 25 个。
+- WPF / HTML 覆盖层均支持新旗帜；文明名称随中英文界面切换，旗帜悬停标签也使用当前语言。
+- 修正 API 下划线名称的本地图标匹配，英文名称使用标准拼写；历史战绩复用同一翻译表。
+- 图标与译名来源见 [`img/flags/SOURCES.md`](./img/flags/SOURCES.md)。
+
+## 3.0.0：游戏聊天即时翻译
+
+从主窗口 **设置 → 游戏聊天翻译设置** 进入：
+
+1. 填写 OpenAI 兼容 API 地址（例如 `https://api.openai.com/v1`，也支持完整 `/chat/completions` 地址）、API Key 和模型名称。
+2. 选择网络模式：**Direct（默认直连）/ System（系统代理）/ Custom（自定义代理）**。如果 Cherry Studio 能用而本程序不能用，请先对齐代理设置；Custom 可填写 `http://127.0.0.1:7890` 或 `socks5://127.0.0.1:7890`。点击 **测试模型** 会实际请求模型验证连接、鉴权和文本响应，可能产生费用，不写入历史。连接/TLS 错误会显示网络模式及错误类别；不关闭证书校验。
+3. 选择源语言与目标语言，例如 Chinese → English、Spanish → Chinese。
+4. 勾选全局快捷键，默认 `F9`；可在快捷键框按键录制。设置窗口打开期间暂停旧快捷键，避免录制时弹窗。点击 **保存并应用** 后关闭设置窗口才启用新快捷键；未保存则恢复原绑定，并检查与 Overlay / 宏的冲突。
+5. 游戏中按快捷键打开置顶翻译窗口，输入文本后按 **Enter** 或点击翻译；**Shift+Enter** 换行。点击窗口外或切回游戏时自动隐藏，单纯移开鼠标不会隐藏；再次按快捷键恢复窗口并保留原文、译文。快捷键也可手动隐藏窗口；**Esc** 隐藏并取消当前请求。
+6. 翻译成功后 **自动复制译文**，切回游戏即可自行粘贴；隐藏期间仍会完成翻译并自动复制，不主动弹回窗口。失败、取消及“测试模型”不会改写剪贴板。不自动粘贴、不自动发送聊天消息；仍可点击 **复制译文** 或历史旁的复制按钮复用译文。
+
+提示词根据设置页当前的 AOE2 / AOE4 选择使用对应游戏语境，强化文明、兵种、资源、时代、战术与联机聊天表达。无需绑定玩家或等待战绩轮询即可翻译。模型效果和速度取决于供应商及模型；独占全屏可能遮挡窗口，建议无边框或窗口化模式。
+
+### 翻译隐私与本地历史
+
+- 文本会发送到用户配置的第三方供应商；仅请求所需文本，不上传战绩、玩家档案或完整历史。
+- 远程接口要求 HTTPS；本机 `localhost` / 回环地址允许 HTTP，可对接无鉴权本地模型。
+- 翻译设置保存在 `%LOCALAPPDATA%\AoEOverlay\translation\settings.json`，API Key 使用 Windows DPAPI 当前用户加密，不可直接迁移到其他用户或电脑。
+- 历史统一保存到 **`AoEOverlay.exe` 同级的 `translation_history\history.json`**，可通过界面 **打开历史文件夹** 查看。原用户数据目录中的历史会自动迁移，成功写入新文件后才删除旧文件；新目录已有历史时不会覆盖。
+- 历史明文保存原文、译文、语言方向、时间与游戏类型，不进入 WebSocket。支持逐条复制、**删除单条** 和需确认的 **清空全部**，重启后保留。程序目录必须允许写入；Program Files 等受保护目录可能导致保存/迁移失败，建议使用可写的便携目录。
+- 请求总超时默认 **90 秒**，可设置 **10–300 秒**；连接超时 15 秒。超时与手动取消分别提示；请求期间禁止重复提交，隐藏窗口不取消请求；Esc 或关闭窗口取消本地请求，但供应商仍可能计费。
+
+### 翻译模块验证
+
+```powershell
+dotnet run --project tests/TranslationChecks/TranslationChecks.csproj -c Release
+dotnet build AoE4OverlayCS.csproj -c Release
+dotnet run --project tests/OverlayChecks/OverlayChecks.csproj -c Release
+node tests/OverlayChecks/html-checks.cjs
+```
+
+自动检查使用模拟 HTTP，不需要真实密钥，不消耗模型额度。
 
 ## 项目截图
 
@@ -24,8 +65,10 @@
 
 ## 版本信息
 
-- 当前版本：`2.1.1`
+- 当前版本：`3.0.0`
+- 程序名：`AoE Overlay`（`AoEOverlay.exe`）
 - 目标框架：`net10.0-windows`
+- 全量地图与文明索引：[`docs/全量图谱索引.md`](./docs/全量图谱索引.md)
 
 ## 项目定位
 
@@ -45,7 +88,7 @@
 ### 整体架构
 
 ```text
-AoE4OverlayCS (WPF Desktop App)
+AoE Overlay (AoEOverlay.exe)
 ├─ UI Layer
 │  ├─ MainWindow
 │  ├─ SettingsView
@@ -56,6 +99,8 @@ AoE4OverlayCS (WPF Desktop App)
 ├─ Service Layer
 │  ├─ ApiCheckerService
 │  ├─ GameProcessor
+│  ├─ Aoe2MatchProcessor
+│  ├─ Aoe2Catalog
 │  ├─ WebSocketServerService
 │  ├─ SettingsService
 │  ├─ GlobalHotkeyService
@@ -322,7 +367,7 @@ dotnet run --project "AoE4OverlayCS.csproj"
 编译完成后可直接运行：
 
 ```text
-AoE4OverlayCS.exe
+AoEOverlay.exe
 ```
 
 ### 说明

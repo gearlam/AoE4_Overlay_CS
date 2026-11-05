@@ -37,6 +37,129 @@ namespace AoE4OverlayCS.Models
         private string? _playerName;
         public string? PlayerName { get => _playerName; set { _playerName = value; OnPropertyChanged(); } }
 
+        private string _game = "aoe4";
+        public string Game
+        {
+            get => _game;
+            set
+            {
+                var next = string.Equals(value, "aoe2", StringComparison.OrdinalIgnoreCase) ? "aoe2" : "aoe4";
+                if (_game == next) return;
+                _game = next;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsAoe2Game() => string.Equals(Game, "aoe2", StringComparison.OrdinalIgnoreCase);
+
+        private string? _aoe4ProfileId;
+        public string? Aoe4ProfileId { get => _aoe4ProfileId; set { _aoe4ProfileId = value; OnPropertyChanged(); } }
+
+        private string? _aoe4SteamId;
+        public string? Aoe4SteamId { get => _aoe4SteamId; set { _aoe4SteamId = value; OnPropertyChanged(); } }
+
+        private string? _aoe4PlayerName;
+        public string? Aoe4PlayerName { get => _aoe4PlayerName; set { _aoe4PlayerName = value; OnPropertyChanged(); } }
+
+        private string? _aoe2ProfileId;
+        public string? Aoe2ProfileId { get => _aoe2ProfileId; set { _aoe2ProfileId = value; OnPropertyChanged(); } }
+
+        private string? _aoe2SteamId;
+        public string? Aoe2SteamId { get => _aoe2SteamId; set { _aoe2SteamId = value; OnPropertyChanged(); } }
+
+        private string? _aoe2PlayerName;
+        public string? Aoe2PlayerName { get => _aoe2PlayerName; set { _aoe2PlayerName = value; OnPropertyChanged(); } }
+
+        public void RememberActiveProfile()
+        {
+            RememberSearchIndex();
+            if (IsAoe2Game())
+            {
+                Aoe2ProfileId = ProfileId;
+                Aoe2SteamId = SteamId;
+                Aoe2PlayerName = PlayerName;
+            }
+            else
+            {
+                Aoe4ProfileId = ProfileId;
+                Aoe4SteamId = SteamId;
+                Aoe4PlayerName = PlayerName;
+            }
+        }
+
+        public void LoadActiveProfile()
+        {
+            if (IsAoe2Game())
+            {
+                ProfileId = Aoe2ProfileId;
+                SteamId = Aoe2SteamId;
+                PlayerName = Aoe2PlayerName;
+                SearchHistory = CopyList(Aoe2SearchHistory);
+                ActiveSearchQuery = Aoe2SearchQuery ?? "";
+            }
+            else
+            {
+                ProfileId = Aoe4ProfileId;
+                SteamId = Aoe4SteamId;
+                PlayerName = Aoe4PlayerName;
+                SearchHistory = CopyList(Aoe4SearchHistory);
+                ActiveSearchQuery = Aoe4SearchQuery ?? "";
+            }
+        }
+
+        /// <summary>把当前搜索框和历史写进正在轮询的那一代，不碰到另一代。</summary>
+        public void RememberSearchIndex()
+        {
+            var copy = CopyList(SearchHistory);
+            SearchHistory = copy;
+            if (IsAoe2Game())
+            {
+                Aoe2SearchHistory = CopyList(copy);
+                Aoe2SearchQuery = ActiveSearchQuery ?? "";
+            }
+            else
+            {
+                Aoe4SearchHistory = CopyList(copy);
+                Aoe4SearchQuery = ActiveSearchQuery ?? "";
+            }
+        }
+
+        public void EnsureProfileSlots()
+        {
+            Aoe4SearchHistory ??= new List<string>();
+            Aoe2SearchHistory ??= new List<string>();
+            SearchHistory ??= new List<string>();
+
+            bool indexesEmpty = Aoe4SearchHistory.Count == 0 && Aoe2SearchHistory.Count == 0;
+            if (indexesEmpty && SearchHistory.Count > 0)
+            {
+                if (IsAoe2Game())
+                    Aoe2SearchHistory = CopyList(SearchHistory);
+                else
+                    Aoe4SearchHistory = CopyList(SearchHistory);
+            }
+
+            if (!IsAoe2Game() && string.IsNullOrEmpty(Aoe4ProfileId) && !string.IsNullOrEmpty(ProfileId))
+                RememberActiveProfile();
+            else
+                LoadActiveProfile();
+        }
+
+        private static List<string> CopyList(List<string>? source)
+        {
+            var copy = new List<string>();
+            if (source == null) return copy;
+            foreach (var item in source)
+            {
+                var text = item?.Trim();
+                if (string.IsNullOrEmpty(text)) continue;
+                if (copy.Exists(x => string.Equals(x, text, StringComparison.OrdinalIgnoreCase))) continue;
+                copy.Add(text);
+                if (copy.Count >= 20) break;
+            }
+            return copy;
+        }
+
         private string _overlayHotkey = "";
         public string OverlayHotkey { get => _overlayHotkey; set { _overlayHotkey = value; OnPropertyChanged(); } }
 
@@ -95,6 +218,16 @@ namespace AoE4OverlayCS.Models
         public string Language { get => _language; set { _language = value; OnPropertyChanged(); } }
 
         public List<string> SearchHistory { get; set; } = new();
+
+        public List<string> Aoe4SearchHistory { get; set; } = new();
+
+        public List<string> Aoe2SearchHistory { get; set; } = new();
+
+        public string ActiveSearchQuery { get; set; } = "";
+
+        public string Aoe4SearchQuery { get; set; } = "";
+
+        public string Aoe2SearchQuery { get; set; } = "";
         
         public List<List<object>> TeamColors { get; set; } = new() {
             new List<object> { 74, 255, 2, 0.35 },

@@ -29,7 +29,11 @@ namespace AoE4OverlayCS.Services
                 {
                     var json = File.ReadAllText(_configPath);
                     var settings = JsonConvert.DeserializeObject<AppSettings>(json);
-                    if (settings != null) Current = settings;
+                    if (settings != null)
+                    {
+                        settings.EnsureProfileSlots();
+                        Current = settings;
+                    }
                 }
                 catch { /* Ignore load errors */ }
             }

@@ -104,6 +104,61 @@ function normalize_country_codes(country) {
     return [c];
 }
 
+const AOE4_FLAGS = {
+    "abbasid dynasty": "Abbasid Dynasty.png",
+    "abbasid": "Abbasid Dynasty.png",
+    "ayyubids": "Ayyubids.png",
+    "byzantines": "Byzantines.png",
+    "chinese": "Chinese.png",
+    "delhi sultanate": "Delhi Sultanate.png",
+    "delhi": "Delhi Sultanate.png",
+    "english": "English.png",
+    "french": "French.png",
+    "golden horde": "Golden Horde.png",
+    "holy roman empire": "Holy Roman Empire.png",
+    "house of lancaster": "House of Lancaster.png",
+    "japanese": "Japanese.png",
+    "jeanne darc": "Jeanne Darc.png",
+    "jin dynasty": "Jin Dynasty.png",
+    "knights templar": "Knights Templar.png",
+    "macedonian dynasty": "Macedonian Dynasty.png",
+    "macedonian": "Macedonian Dynasty.png",
+    "malians": "Malians.png",
+    "mongols": "Mongols.png",
+    "order of the dragon": "Order Of The Dragon.png",
+    "ottomans": "Ottomans.png",
+    "rus": "Rus.png",
+    "scots": "Scots.png",
+    "vikings": "Vikings.png",
+    "sengoku daimyo": "Sengoku Daimyo.png",
+    "tughlaq dynasty": "Tughlaq Dynasty.png",
+    "tughlaq": "Tughlaq Dynasty.png",
+    "zhu xis legacy": "Zhu Xis Legacy.png"
+};
+
+function civ_key(civ) {
+    return `${civ || ""}`.trim().toLowerCase().replaceAll("_", " ").replaceAll("'", "").replaceAll("’", "");
+}
+
+function escape_html_attribute(value) {
+    return `${value || ""}`.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&#39;");
+}
+
+function civ_flag_img(civ, source, displayName) {
+    const key = civ_key(civ);
+    let src = "";
+    if (source === "aoe2") {
+        const file = key.replaceAll(" ", "");
+        if (file) src = `../img/aoe2-civs/${file}.png`;
+    } else if (AOE4_FLAGS[key]) {
+        src = `../img/flags/${encodeURI(AOE4_FLAGS[key])}`;
+    }
+    const shape = source === "aoe2" ? " flag-square" : "";
+    if (!src) return `<td class="flag${shape}" rowspan="2"></td>`;
+    const label = escape_html_attribute(displayName || civ);
+    return `<td class="flag${shape}" rowspan="2"><img alt="${label}" title="${label}" src="${src}" onerror="this.style.display='none'"></td>`;
+}
+
 function country_flag_img(country) {
     const codes = normalize_country_codes(country);
     if (!codes || codes.length == 0) return "";
@@ -129,7 +184,7 @@ function update_player_data(data) {
     let second_team = null;
     for (const p of data.players) {
         if (first_team == null) first_team = p.team;
-        let civFlag = `<td class="flag" rowspan="2"><img src="../img/flags/${p.civ}.webp"></td>`;
+        let civFlag = civ_flag_img(p.civ, data.source, p.civ_display);
         let country = country_flag_img(p.country);
         // 国家名独立栏：中文界面下由服务端提供（country_display），英文界面为空自动折叠
         let countryName = `<td class="country-name">${p.country_display || ""}</td>`;
@@ -141,7 +196,7 @@ function update_player_data(data) {
         let s;
         const teamBg = rgba_from_team(p.team);
         if (p.team == first_team) {
-            s = `<tr class="player">${civFlag}<td colspan="7" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td></tr>
+            s = `<tr class="player">${civFlag}<td colspan="7" class="name player-name"><span class="name-badge" style="background:${teamBg}"><span>${p.name}</span></span></td></tr>
             <tr class="stats">
               <td class="rm">${p.rank}</td>
               <td class="rating stat">${p.rating}</td>
@@ -153,7 +208,7 @@ function update_player_data(data) {
             </tr>
             <tr class="spacer"><td colspan="8"></td></tr>`;
         } else {
-            s = `<tr class="player"><td colspan="7" class="name player-name name-badge" style="background:${teamBg}">${p.name}</td>${civFlag}</tr>
+            s = `<tr class="player"><td colspan="7" class="name player-name"><span class="name-badge" style="background:${teamBg}"><span>${p.name}</span></span></td>${civFlag}</tr>
             <tr class="stats">
               ${countryName}
               <td class="country">${country}</td>

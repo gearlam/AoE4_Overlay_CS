@@ -1,6 +1,6 @@
-# AoE4 Overlay CS
+# AoE Overlay
 
-`AoE4 Overlay CS` is a desktop overlay tool for **Age of Empires IV**, built with `C# + WPF`.
+`AoE Overlay` is a desktop overlay for **Age of Empires IV** and **Age of Empires II: Definitive Edition**, built with `C# + WPF`. The program file is `AoEOverlay.exe`.
 
 Its main goals are:
 
@@ -10,8 +10,49 @@ Its main goals are:
 - Expose a local WebSocket data channel for HTML overlay or external viewers
 - Support Chinese/English UI switching, localized map names, hotkey toggle, drag/resize overlay positioning, and searchable ID history
 - 2.1.1: optional Shift monitoring for the infinite macro loop. Shift is checked only during the last second of the interval; if held, the combo waits and fires immediately on release
+- 2.2.1: switch polling between AOE4 and AOE2 on the settings page. AOE2 uses the official community API, lists ranked matches, and translates map names from the game's own Chinese strings
 
 Chinese documentation: [`README.md`](./README.md)
+
+## Overlay DLC civilization update
+
+- Added **Vikings** and **Scots** from *Raiders of the North*, bringing local AOE4 civilization flags to 25.
+- Both WPF and HTML overlays support the new flags, with localized civilization names and flag labels.
+- Fixed local icon resolution for underscore-separated API names; English names use canonical spelling. Match history shares the same translation table.
+- Asset and name sources: [`img/flags/SOURCES.md`](./img/flags/SOURCES.md).
+
+## 3.0.0: In-game chat translation
+
+Open **Settings → Game chat translation settings**:
+
+1. Enter an OpenAI-compatible base URL (including `/v1`, or a full `/chat/completions` URL), API key and model name.
+2. Select **Direct (default) / System / Custom** network mode. If Cherry Studio works but this app does not, match its proxy configuration. Custom accepts addresses such as `http://127.0.0.1:7890` or `socks5://127.0.0.1:7890`. **Test model** makes a real completion request and may incur charges; tests are not saved to history. Network/TLS errors identify the route and error category; certificate validation stays enabled.
+3. Select source and target languages, such as Chinese → English or Spanish → Chinese.
+4. Enable the global hotkey (default **F9**) and optionally record another combination. Hotkeys are suspended while settings are open. **Save and apply**, then close settings to enable the new binding; closing without saving restores the last applied binding. Overlay/macro conflicts are checked.
+5. In game, press the hotkey to open the topmost translator. **Enter** translates and **Shift+Enter** inserts a newline. Clicking outside or switching back to the game hides it; moving the pointer away alone does not. Press the hotkey again to restore the window with its input and output intact. The hotkey also hides it manually; **Esc** hides it and cancels the request.
+6. Successful translations are **automatically copied** so you can switch back to the game and paste manually. Requests continue while hidden and copy the result without reopening the window. Failed/cancelled requests and **Test model** leave the clipboard unchanged. The manual copy buttons remain available, including those on history entries. Messages are never automatically pasted or sent.
+
+Prompts use the currently selected AOE2 / AOE4 context, including civilizations, units, resources, age-up calls and team tactics. Translation does not require a bound player or active match polling. Quality and latency depend on the provider. Borderless/windowed game mode is recommended; exclusive fullscreen may hide desktop windows.
+
+### Privacy and local history
+
+- Text is sent to your configured provider, without match data, player profiles or the full translation history.
+- Remote endpoints require HTTPS; localhost/loopback HTTP endpoints and local models without authentication are supported.
+- Settings remain in `%LOCALAPPDATA%\AoEOverlay\translation\settings.json`. API keys are protected with Windows DPAPI for the current user and cannot be directly migrated to another user/computer.
+- History lives in **`translation_history\history.json` beside `AoEOverlay.exe`**. Use **Open history folder** to locate it. Legacy history is migrated automatically; the old file is deleted only after a successful write. Existing destination history is never overwritten by migration.
+- History is plain text (original, result, language pair, time and game), never broadcast over WebSocket. Copy individual translations, delete individual entries, or clear all with confirmation. The program directory must be writable; protected directories such as Program Files can prevent saving/migration, so a writable portable folder is recommended.
+- Total timeout defaults to **90 seconds**, configurable from **10–300 seconds**, with a 15-second connection timeout. Timeout and manual cancellation have separate messages. Duplicate submissions are blocked; hiding does not cancel requests. Esc or closing cancels locally, but provider charges may still apply.
+
+### Verification
+
+```powershell
+dotnet run --project tests/TranslationChecks/TranslationChecks.csproj -c Release
+dotnet build AoE4OverlayCS.csproj -c Release
+dotnet run --project tests/OverlayChecks/OverlayChecks.csproj -c Release
+node tests/OverlayChecks/html-checks.cjs
+```
+
+Checks use simulated HTTP and do not require a real API key or consume model quota.
 
 ## Screenshots
 
@@ -21,14 +62,16 @@ Chinese documentation: [`README.md`](./README.md)
 
 ## Version
 
-- Current version: `2.1.1`
+- Current version: `3.0.0`
+- Program name: `AoE Overlay` (`AoEOverlay.exe`)
 - Target frameworks: `net10.0-windows`
+- Full map and civilization index: [`docs/全量图谱索引.md`](./docs/全量图谱索引.md)
 
 ## Project Purpose
 
 This project is not a game mod or an injected plugin. It is a standalone Windows desktop tool.
 
-It uses public API data plus a transparent topmost window and a local HTML/WebSocket output pipeline to render match overlays.
+It uses public API data plus a transparent topmost window and a local HTML/WebSocket output pipeline to render match overlays. The settings page switches between AOE4 (`aoe4world.com`) and AOE2 (`aoe-api.worldsedgelink.com`). The two player identities are stored separately.
 
 Typical use cases:
 
@@ -42,7 +85,7 @@ Typical use cases:
 ### High-Level Structure
 
 ```text
-AoE4OverlayCS (WPF Desktop App)
+AoE Overlay (AoEOverlay.exe)
 ├─ UI Layer
 │  ├─ MainWindow
 │  ├─ SettingsView
@@ -318,7 +361,7 @@ dotnet run --project "AoE4OverlayCS.csproj"
 After building:
 
 ```text
-AoE4OverlayCS.exe
+AoEOverlay.exe
 ```
 
 ### Notes

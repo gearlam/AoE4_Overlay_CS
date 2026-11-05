@@ -16,7 +16,17 @@ namespace AoE4OverlayCS.Services
         private readonly SettingsService _settings;
         private readonly HttpClient _http;
         private CancellationTokenSource? _cts;
+        private const string Aoe2Api = "https://aoe-api.worldsedgelink.com/community/leaderboard/";
+
+        private readonly object _audienceLock = new();
+        private bool _audiencePresent = true;
+        private TaskCompletionSource<bool>? _audienceWake;
+
         private DateTime _lastMatchTime = DateTime.MinValue;
+        private long _lastAoe2MatchId;
+        private JObject? _aoe2History;
+        private string? _aoe2HistoryProfileId;
+        private DateTime _aoe2HistoryAt = DateTime.MinValue;
 
         public event Action<JObject>? OnNewGame;
         public event Action<string>? OnError;
@@ -152,33 +162,91 @@ namespace AoE4OverlayCS.Services
             _cts?.Cancel();
         }
 
+        public void ResetMatchCursor()
+        {
+            _lastMatchTime = DateTime.MinValue;
+            _lastAoe2MatchId = 0;
+            _aoe2History = null;
+            _aoe2HistoryProfileId = null;
+        }
+
+        /// <summary>
+        /// 覆盖层、主窗口、WebSocket 都没人看时传 false，轮询先等着。
+        /// 从没人看变回有人看时打断等待，马上再拉一次。
+        /// </summary>
+        public void SetAudiencePresent(bool present)
+        {
+            TaskCompletionSource<bool>? wake = null;
+            lock (_audienceLock)
+            {
+                if (_audiencePresent == present) return;
+                _audiencePresent = present;
+                if (!present) return;
+                wake = _audienceWake;
+                _audienceWake = null;
+            }
+            wake?.TrySetResult(true);
+        }
+
+        private bool AudiencePresent
+        {
+            get { lock (_audienceLock) return _audiencePresent; }
+        }
+
         private async Task Loop(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                try
+                if (AudiencePresent)
                 {
-                    if (!string.IsNullOrEmpty(_settings.Current.ProfileId))
+                    try
                     {
-                        var data = await CheckLastGame();
-                        if (data != null)
+                        if (!string.IsNullOrEmpty(_settings.Current.ProfileId))
                         {
-                            OnNewGame?.Invoke(data);
+                            var data = await CheckLastGame();
+                            if (data != null)
+                            {
+                                OnNewGame?.Invoke(data);
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    OnError?.Invoke(ex.Message);
+                    catch (Exception ex)
+                    {
+                        OnError?.Invoke(ex.Message);
+                    }
                 }
 
-                try { await Task.Delay(_settings.Current.Interval * 1000, token); }
-                catch (TaskCanceledException) { break; }
+                try { await WaitForNextPoll(token); }
+                catch (OperationCanceledException) { break; }
             }
+        }
+
+        private async Task WaitForNextPoll(CancellationToken token)
+        {
+            Task wake;
+            bool present;
+            lock (_audienceLock)
+            {
+                present = _audiencePresent;
+                _audienceWake ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                wake = _audienceWake.Task;
+            }
+
+            using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            var delay = present
+                ? Task.Delay(_settings.Current.Interval * 1000, delayCts.Token)
+                : Task.Delay(Timeout.Infinite, delayCts.Token);
+            await Task.WhenAny(delay, wake);
+            delayCts.Cancel();
+            try { await delay; } catch (OperationCanceledException) { }
+            token.ThrowIfCancellationRequested();
         }
 
         private async Task<JObject?> CheckLastGame()
         {
+            if (IsAoe2())
+                return await GetAoe2Latest(onlyIfNew: true);
+
             var json = await GetLastGame();
             if (json == null) return null;
 
@@ -198,6 +266,9 @@ namespace AoE4OverlayCS.Services
 
         public async Task<JObject?> GetLastGame()
         {
+            if (IsAoe2())
+                return await GetAoe2Latest(onlyIfNew: false);
+
             if (string.IsNullOrEmpty(_settings.Current.ProfileId)) return null;
 
             try
@@ -217,6 +288,7 @@ namespace AoE4OverlayCS.Services
         
         public async Task<JArray?> GetMatchHistory(int limit = 10)
         {
+            if (IsAoe2()) return null;
             if (string.IsNullOrEmpty(_settings.Current.ProfileId)) return null;
             try
             {
@@ -231,6 +303,7 @@ namespace AoE4OverlayCS.Services
         /// <summary>获取当前玩家的完整档案（含 modes 段位数据）。</summary>
         public async Task<JObject?> GetPlayerProfile()
         {
+            if (IsAoe2()) return null;
             if (string.IsNullOrEmpty(_settings.Current.ProfileId)) return null;
             try
             {
@@ -245,6 +318,9 @@ namespace AoE4OverlayCS.Services
 
         public async Task<JObject?> FindPlayer(string query)
         {
+             if (IsAoe2())
+                 return await FindAoe2Player(query);
+
              try 
              {
                 LastError = null;
@@ -274,6 +350,160 @@ namespace AoE4OverlayCS.Services
                  LastError = ex.Message;
              }
              return null;
+        }
+
+        public async Task<JObject?> GetAoe2History()
+        {
+            if (string.IsNullOrEmpty(_settings.Current.ProfileId)) return null;
+            return await FetchAoe2History(_settings.Current.ProfileId, allowCache: true);
+        }
+
+        public async Task<JObject?> GetAoe2PersonalStat(string? profileIds)
+        {
+            if (string.IsNullOrWhiteSpace(profileIds)) return null;
+            try
+            {
+                var url = $"{Aoe2Api}getPersonalStat?title=age2&profile_ids=[{profileIds}]";
+                return await GetJson(url);
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return null;
+            }
+        }
+
+        private bool IsAoe2() => _settings.Current.IsAoe2Game();
+
+        private async Task<JObject?> GetAoe2Latest(bool onlyIfNew)
+        {
+            var profileId = _settings.Current.ProfileId;
+            if (string.IsNullOrEmpty(profileId)) return null;
+
+            var history = await FetchAoe2History(profileId, allowCache: onlyIfNew);
+            var latest = NewestRankedInWindow(history);
+            if (latest == null) return null;
+
+            var matchId = latest.Value<long?>("id") ?? 0;
+            if (onlyIfNew && matchId == _lastAoe2MatchId) return null;
+            _lastAoe2MatchId = matchId;
+
+            var ids = string.Join(",", (latest["matchhistorymember"] as JArray ?? new JArray())
+                .OfType<JObject>()
+                .Select(m => m.Value<long?>("profile_id")?.ToString())
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct());
+            var stats = await GetAoe2PersonalStat(ids);
+
+            return new JObject
+            {
+                ["source"] = "aoe2",
+                ["match"] = latest.DeepClone(),
+                ["profiles"] = history?["profiles"]?.DeepClone() ?? new JArray(),
+                ["stats"] = stats?.DeepClone() ?? new JObject()
+            };
+        }
+
+        private static JObject? NewestRankedInWindow(JObject? history)
+        {
+            var matches = (history?["matchHistoryStats"] as JArray ?? new JArray())
+                .OfType<JObject>()
+                .OrderByDescending(m => m.Value<long?>("startgametime") ?? 0)
+                .Take(Aoe2Catalog.PollWindow);
+            return matches.FirstOrDefault(m => Aoe2Catalog.IsRanked(m.Value<int?>("matchtype_id") ?? 0));
+        }
+
+        private async Task<JObject?> FetchAoe2History(string profileId, bool allowCache)
+        {
+            if (allowCache &&
+                _aoe2History != null &&
+                _aoe2HistoryProfileId == profileId &&
+                DateTime.UtcNow - _aoe2HistoryAt < TimeSpan.FromSeconds(15))
+            {
+                return _aoe2History;
+            }
+
+            try
+            {
+                var url = $"{Aoe2Api}getRecentMatchHistory?title=age2&profile_ids=[{profileId}]";
+                var json = await GetJson(url);
+                if (json?["result"]?["code"]?.Value<int>() is int code && code != 0)
+                    return null;
+                _aoe2History = json;
+                _aoe2HistoryProfileId = profileId;
+                _aoe2HistoryAt = DateTime.UtcNow;
+                return json;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return null;
+            }
+        }
+
+        private async Task<JObject?> FindAoe2Player(string query)
+        {
+            try
+            {
+                LastError = null;
+                query = query.Trim();
+                if (long.TryParse(query, out _) && query.Length < 16)
+                {
+                    var stat = await GetAoe2PersonalStat(query);
+                    var member = (stat?["statGroups"] as JArray)?.OfType<JObject>()
+                        .SelectMany(g => (g["members"] as JArray ?? new JArray()).OfType<JObject>())
+                        .FirstOrDefault(m => m.Value<long?>("profile_id")?.ToString() == query);
+                    return member == null ? null : PlayerFromProfile(member);
+                }
+
+                string url;
+                if (long.TryParse(query, out _) && query.Length >= 16)
+                {
+                    var names = Uri.EscapeDataString($"[\"/steam/{query}\"]");
+                    url = $"{Aoe2Api}getRecentMatchHistory?title=age2&profile_names={names}";
+                }
+                else
+                {
+                    var escaped = query.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    var aliases = Uri.EscapeDataString($"[\"{escaped}\"]");
+                    url = $"{Aoe2Api}getRecentMatchHistory?title=age2&aliases={aliases}";
+                }
+
+                var history = await GetJson(url);
+                var profiles = (history?["profiles"] as JArray ?? new JArray()).OfType<JObject>().ToList();
+                if (profiles.Count == 0) return null;
+
+                JObject? chosen = null;
+                if (query.Length >= 16 && long.TryParse(query, out _))
+                    chosen = profiles.FirstOrDefault(p => string.Equals(p.Value<string>("name"), $"/steam/{query}", StringComparison.OrdinalIgnoreCase));
+                chosen ??= profiles.FirstOrDefault(p => string.Equals(p.Value<string>("alias"), query, StringComparison.OrdinalIgnoreCase));
+                return chosen == null ? null : PlayerFromProfile(chosen);
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return null;
+            }
+        }
+
+        private static JObject PlayerFromProfile(JObject profile)
+        {
+            var platform = profile.Value<string>("name") ?? "";
+            var steam = platform.StartsWith("/steam/", StringComparison.OrdinalIgnoreCase)
+                ? platform["/steam/".Length..]
+                : platform;
+            return new JObject
+            {
+                ["profile_id"] = profile.Value<long?>("profile_id")?.ToString(),
+                ["name"] = profile.Value<string>("alias"),
+                ["steam_id"] = steam
+            };
+        }
+
+        private async Task<JObject?> GetJson(string url)
+        {
+            var resp = await _http.GetStringAsync(url);
+            return JObject.Parse(resp);
         }
     }
 }

@@ -18,6 +18,7 @@
     <sys:String x:Key="Tab_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">设置</sys:String>
     <sys:String x:Key="Tab_Games" xmlns:sys="clr-namespace:System;assembly=System.Runtime">对战</sys:String>
 
+    <sys:String x:Key="Settings_GameLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">轮询游戏：</sys:String>
     <sys:String x:Key="Settings_ProfileHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">档案</sys:String>
     <sys:String x:Key="Settings_ProfileLinkText" xmlns:sys="clr-namespace:System;assembly=System.Runtime">AoE4World 档案页</sys:String>
     <sys:String x:Key="Settings_SearchPlaceholder" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Steam ID / Profile ID / 名字</sys:String>
@@ -58,4 +59,40 @@
     <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">分差</sys:String>
     <sys:String x:Key="Games_Header_Match" xmlns:sys="clr-namespace:System;assembly=System.Runtime">对战</sys:String>
 
+    <sys:String x:Key="Tr_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">游戏聊天翻译设置</sys:String>
+    <sys:String x:Key="Tr_Title" xmlns:sys="clr-namespace:System;assembly=System.Runtime">帝国即时翻译</sys:String>
+    <sys:String x:Key="Tr_Privacy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">文本会发送到你配置的第三方服务。API Key 使用 Windows 当前用户加密；原文与译文以明文保存在本机。测试会实际调用模型，可能产生费用。远程接口必须使用 HTTPS。</sys:String>
+    <sys:String x:Key="Tr_Endpoint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">API 地址（包含 /v1，或完整 /chat/completions 地址）</sys:String>
+    <sys:String x:Key="Tr_Key" xmlns:sys="clr-namespace:System;assembly=System.Runtime">API Key（本地免鉴权模型可留空）</sys:String>
+    <sys:String x:Key="Tr_Model" xmlns:sys="clr-namespace:System;assembly=System.Runtime">模型名称</sys:String>
+    <sys:String x:Key="Tr_Enable" xmlns:sys="clr-namespace:System;assembly=System.Runtime">启用全局翻译快捷键</sys:String>
+    <sys:String x:Key="Tr_Hotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">快捷键（设置期间暂停触发，保存并关闭设置后生效，如 F9）</sys:String>
+    <sys:String x:Key="Tr_Source" xmlns:sys="clr-namespace:System;assembly=System.Runtime">源语言（Chinese=中文 / English=英文 / Spanish=西班牙语）</sys:String>
+    <sys:String x:Key="Tr_Target" xmlns:sys="clr-namespace:System;assembly=System.Runtime">目标语言</sys:String>
+    <sys:String x:Key="Tr_Network" xmlns:sys="clr-namespace:System;assembly=System.Runtime">网络模式：Direct=直连（默认）；System=系统代理；Custom=自定义代理。请与 Cherry Studio 的代理设置保持一致。</sys:String>
+    <sys:String x:Key="Tr_ProxyUrl" xmlns:sys="clr-namespace:System;assembly=System.Runtime">自定义代理地址（仅 Custom 使用，如 http://127.0.0.1:7890）</sys:String>
+    <sys:String x:Key="Tr_TimeoutLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">请求总超时（10–300 秒，默认 90；连接超时 15 秒）</sys:String>
+    <sys:String x:Key="Tr_Timeout" xmlns:sys="clr-namespace:System;assembly=System.Runtime">请求超时，请检查网络/代理，慢模型可增大超时：</sys:String>
+    <sys:String x:Key="Tr_HistoryFolder" xmlns:sys="clr-namespace:System;assembly=System.Runtime">打开历史文件夹</sys:String>
+    <sys:String x:Key="Tr_Test" xmlns:sys="clr-namespace:System;assembly=System.Runtime">测试模型</sys:String>
+    <sys:String x:Key="Tr_Save" xmlns:sys="clr-namespace:System;assembly=System.Runtime">保存并应用</sys:String>
+    <sys:String x:Key="Tr_Open" xmlns:sys="clr-namespace:System;assembly=System.Runtime">打开翻译窗口</sys:String>
+    <sys:String x:Key="Tr_WindowHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enter 翻译；Shift+Enter 换行；Esc 或快捷键关闭。译文手动复制到游戏，不自动发送。建议使用无边框/窗口化游戏；独占全屏可能遮挡桌面窗口。语言与接口编辑即时用于下一次请求，保存后重启保留。</sys:String>
+    <sys:String x:Key="Tr_Translate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">翻译（Enter）</sys:String>
+    <sys:String x:Key="Tr_Copy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">复制译文</sys:String>
+    <sys:String x:Key="Tr_Clear" xmlns:sys="clr-namespace:System;assembly=System.Runtime">清空全部</sys:String>
+    <sys:String x:Key="Tr_Delete" xmlns:sys="clr-namespace:System;assembly=System.Runtime">删除本条</sys:String>
+    <sys:String x:Key="Tr_History" xmlns:sys="clr-namespace:System;assembly=System.Runtime">本地翻译历史（可选中文字复制）</sys:String>
+    <sys:String x:Key="Tr_ClearConfirm" xmlns:sys="clr-namespace:System;assembly=System.Runtime">确定永久清空全部本地翻译历史？此操作不可撤销。</sys:String>
+    <sys:String x:Key="Tr_Saved" xmlns:sys="clr-namespace:System;assembly=System.Runtime">已保存。关闭设置窗口后启用快捷键。</sys:String>
+    <sys:String x:Key="Tr_Working" xmlns:sys="clr-namespace:System;assembly=System.Runtime">正在请求模型…</sys:String>
+    <sys:String x:Key="Tr_TestOk" xmlns:sys="clr-namespace:System;assembly=System.Runtime">模型可用，测试译文：</sys:String>
+    <sys:String x:Key="Tr_Done" xmlns:sys="clr-namespace:System;assembly=System.Runtime">翻译完成，已保存到本地历史。</sys:String>
+    <sys:String x:Key="Tr_Cancelled" xmlns:sys="clr-namespace:System;assembly=System.Runtime">请求已取消。</sys:String>
+    <sys:String x:Key="Tr_Copied" xmlns:sys="clr-namespace:System;assembly=System.Runtime">已复制，请切回游戏粘贴。</sys:String>
+    <sys:String x:Key="Tr_Error" xmlns:sys="clr-namespace:System;assembly=System.Runtime">操作失败：</sys:String>
+    <sys:String x:Key="Tr_StorageError" xmlns:sys="clr-namespace:System;assembly=System.Runtime">本地存储失败，请检查翻译数据文件及目录权限：</sys:String>
+    <sys:String x:Key="Tr_InvalidHotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">快捷键无效。请使用 F1–F24 或带 Ctrl/Alt/Shift 的组合键。</sys:String>
+    <sys:String x:Key="Tr_Conflict" xmlns:sys="clr-namespace:System;assembly=System.Runtime">翻译快捷键与覆盖层或宏快捷键冲突，未注册。请修改后保存。</sys:String>
+    <sys:String x:Key="Tr_HotkeyFailed" xmlns:sys="clr-namespace:System;assembly=System.Runtime">无法注册翻译快捷键，请尝试其他组合。</sys:String>
 </ResourceDictionary>

@@ -30,6 +30,8 @@ namespace AoE4OverlayCS.Services
             ["order of the dragon"] = "龙之骑士团",
             ["ottomans"] = "奥斯曼",
             ["rus"] = "罗斯",
+            ["scots"] = "苏格兰人",
+            ["vikings"] = "维京人",
             ["sengoku daimyo"] = "战国大名",
             ["tughlaq dynasty"] = "图格鲁克王朝",
             ["tughlaq"] = "图格鲁克王朝",
@@ -38,15 +40,48 @@ namespace AoE4OverlayCS.Services
             ["poles"] = "波兰",
         };
 
+        private static readonly Dictionary<string, string> EnglishCivNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["abbasid dynasty"] = "Abbasid Dynasty",
+            ["abbasid"] = "Abbasid Dynasty",
+            ["ayyubids"] = "Ayyubids",
+            ["byzantines"] = "Byzantines",
+            ["chinese"] = "Chinese",
+            ["delhi sultanate"] = "Delhi Sultanate",
+            ["delhi"] = "Delhi Sultanate",
+            ["english"] = "English",
+            ["french"] = "French",
+            ["golden horde"] = "Golden Horde",
+            ["house of lancaster"] = "House of Lancaster",
+            ["holy roman empire"] = "Holy Roman Empire",
+            ["japanese"] = "Japanese",
+            ["jeanne darc"] = "Jeanne d'Arc",
+            ["jin dynasty"] = "Jin Dynasty",
+            ["knights templar"] = "Knights Templar",
+            ["macedonian dynasty"] = "Macedonian Dynasty",
+            ["macedonian"] = "Macedonian Dynasty",
+            ["malians"] = "Malians",
+            ["mongols"] = "Mongols",
+            ["order of the dragon"] = "Order of the Dragon",
+            ["ottomans"] = "Ottomans",
+            ["rus"] = "Rus",
+            ["scots"] = "Scots",
+            ["vikings"] = "Vikings",
+            ["sengoku daimyo"] = "Sengoku Daimyo",
+            ["tughlaq dynasty"] = "Tughlaq Dynasty",
+            ["tughlaq"] = "Tughlaq Dynasty",
+            ["zhu xis legacy"] = "Zhu Xi's Legacy",
+            ["venetians"] = "Venetians",
+            ["poles"] = "Poles",
+        };
+
         public static string Translate(string? civName, string? language)
         {
             if (string.IsNullOrWhiteSpace(civName)) return civName ?? "";
-            if (!string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase)) return civName;
-
-            var normalized = civName.Trim().Replace('_', ' ').Replace("'", "");
-            return ZhCnCivNames.TryGetValue(normalized, out var translated)
-                ? translated
-                : civName;
+            var normalized = civName.Trim().Replace('_', ' ').Replace("'", "").Replace("’", "");
+            if (!string.Equals(language, "zh-CN", StringComparison.OrdinalIgnoreCase))
+                return EnglishCivNames.TryGetValue(normalized, out var english) ? english : civName;
+            return ZhCnCivNames.TryGetValue(normalized, out var translated) ? translated : civName;
         }
     }
 }

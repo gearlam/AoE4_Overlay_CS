@@ -1,0 +1,41 @@
+<Window x:Class="AoE4OverlayCS.Views.TranslationSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource Tr_Settings}" Width="590" Height="650" MinWidth="480" MinHeight="480"
+        WindowStartupLocation="CenterOwner">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <StackPanel IsEnabled="{Binding CanEdit}">
+                <TextBlock Text="{DynamicResource Tr_Privacy}" TextWrapping="Wrap" Margin="0,0,0,14" Foreground="#805000"/>
+                <TextBlock Text="{DynamicResource Tr_Endpoint}"/>
+                <TextBox Text="{Binding Settings.BaseUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_Key}"/>
+                <PasswordBox x:Name="ApiKeyBox" PasswordChanged="ApiKey_Changed" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_Model}"/>
+                <TextBox Text="{Binding Settings.Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_Network}" TextWrapping="Wrap"/>
+                <ComboBox ItemsSource="{Binding ProxyModes}" SelectedItem="{Binding Settings.ProxyMode}" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_ProxyUrl}"/>
+                <TextBox Text="{Binding Settings.ProxyUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_TimeoutLabel}"/>
+                <TextBox Text="{Binding Settings.TimeoutSeconds, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,10"/>
+                <CheckBox Content="{DynamicResource Tr_Enable}" IsChecked="{Binding Settings.Enabled}" Margin="0,8"/>
+                <TextBlock Text="{DynamicResource Tr_Hotkey}"/>
+                <TextBox x:Name="HotkeyBox" Text="{Binding Settings.Hotkey, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Hotkey_KeyDown" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_Source}"/>
+                <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Settings.SourceLanguage}" Margin="0,4,0,10"/>
+                <TextBlock Text="{DynamicResource Tr_Target}"/>
+                <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Settings.TargetLanguage}" Margin="0,4,0,10"/>
+            </StackPanel>
+            <WrapPanel Margin="0,8">
+                <Button Content="{DynamicResource Tr_Test}" Command="{Binding TestCommand}" Padding="12,6" Margin="0,0,8,0"/>
+                <Button Content="{DynamicResource Tr_Save}" Command="{Binding SaveCommand}" Padding="12,6" Margin="0,0,8,0"/>
+                <Button Content="{DynamicResource Tr_Open}" Click="Open_Click" Padding="12,6"/>
+            </WrapPanel>
+            <Button Content="{DynamicResource Tr_HistoryFolder}" Command="{Binding OpenHistoryFolderCommand}" HorizontalAlignment="Left" Padding="8,4"/>
+            <TextBlock Text="{Binding HistoryDirectoryPath}" TextWrapping="Wrap" Margin="0,6" Foreground="Gray"/>
+            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,10"/>
+            <TextBlock Text="{DynamicResource Tr_WindowHint}" TextWrapping="Wrap" Foreground="Gray"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

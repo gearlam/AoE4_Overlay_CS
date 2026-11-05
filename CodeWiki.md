@@ -1,7 +1,26 @@
-# AoE4 Overlay CS — Code Wiki
+# AoE Overlay — Code Wiki
 
-> 本文档基于仓库全部源码（版本 `2.1.1`）逐文件分析生成，并随热键自动化变更修订。
-> 生成时间：2026-09-05。
+> 程序名已改为 **AoE Overlay**（`AoEOverlay.exe`，版本 `3.0.0`），同时覆盖帝国时代 4 和帝国时代 2。
+> 源码命名空间仍为 `AoE4OverlayCS`，以免改动已有引用。全量地图与文明索引见 [`docs/全量图谱索引.md`](./docs/全量图谱索引.md)。
+> 下文架构说明仍以帝国时代 4 链路为主，帝国时代 2 为同一循环上的分支。
+
+## 覆盖层 DLC 文明资源
+
+- AOE4《北方劫掠者》新增 `vikings` → Vikings / 维京人、`scots` → Scots / 苏格兰人，本地旗帜共 25 个。
+- `CivNameTranslator` 统一标准英文与中文名称，兼容下划线和撇号；`CivIconResolver` 按标准英文名匹配 `img/flags`，保留旧目录回退。
+- 原生 `CreateCivFlag` 与 HTML `civ_flag_img` 都支持新文明及当前语言标签，不修改覆盖层布局。
+- 来源及资源地址：[`img/flags/SOURCES.md`](./img/flags/SOURCES.md)。验证：`dotnet run --project tests/OverlayChecks/OverlayChecks.csproj -c Release`、`node tests/OverlayChecks/html-checks.cjs`。
+
+## 3.0.0 翻译模块
+
+- `Services/TranslationModule.cs`：翻译窗口与设置窗口生命周期、全局快捷键注册与冲突检查；设置期间暂停快捷键，保存并关闭后应用新绑定，未保存则恢复原绑定。由 `MainViewModel` 启停，不依赖战绩轮询或 WebSocket。
+- `ViewModels/TranslationViewModel.cs`：翻译/测试异步请求、取消、复制、历史删除和清空；请求前快照语言与游戏选择。
+- `Services/TranslationService.cs`：OpenAI 兼容 `/chat/completions`，直连（默认）/系统/自定义代理，默认 90 秒总超时（可设 10–300）、15 秒连接超时，区分 TLS/网络错误、超时和取消。可注入 `HttpMessageHandler` 测试，不跳过证书校验。
+- `Services/TranslationStore.cs`：设置在 `%LOCALAPPDATA%\AoEOverlay\translation`，Windows DPAPI 加密 API Key；历史在 EXE 同级 `translation_history\history.json`，原子替换，自动迁移旧历史，迁移失败保留旧文件。
+- `Models/TranslationSettings.cs`：独立配置与历史记录模型。
+- `Views/TranslationSettingsWindow.xaml(.cs)` / `Views/TranslationWindow.xaml(.cs)`：设置、热键录制、置顶输入与历史展示。
+- 翻译文本只发送给配置供应商，成功结果写本地明文历史；不会通过现有 WebSocket 广播。清空全部需确认。
+- 验证：`dotnet run --project tests/TranslationChecks/TranslationChecks.csproj -c Release`；默认模拟 HTTP/本机代理，无真实 API 调用；覆盖逐条复制、历史迁移及真实按键驱动的快捷键回归。仅显式传入 `--diagnose-saved-api` 才会调用已配置的真实接口，不输出密钥或译文。
 
 ## 目录
 
@@ -38,9 +57,9 @@
 
 ## 1. 项目概述
 
-**AoE4 Overlay CS** 是一款面向《Age of Empires IV（帝国时代 4）》的 Windows 桌面 Overlay 辅助工具，使用 **C# + WPF** 开发（目标框架 `net10.0-windows`）。
+**AoE Overlay** 是一款面向《帝国时代 4》和《帝国时代 2：决定版》的 Windows 桌面 Overlay 辅助工具，使用 **C# + WPF** 开发（目标框架 `net10.0-windows`）。
 
-**项目定位**：不是游戏 Mod、不是注入式插件，而是独立运行的桌面程序。数据来自 `aoe4world.com` 公开 API，展示依靠「透明置顶 WPF 窗口」与「本地 HTML + WebSocket」双通道。
+**项目定位**：不是游戏 Mod、不是注入式插件，而是独立运行的桌面程序。帝国时代 4 数据来自 `aoe4world.com`；帝国时代 2 数据来自 `aoe-api.worldsedgelink.com` 的社区接口。展示仍依靠「透明置顶 WPF 窗口」与「本地 HTML + WebSocket」双通道。设置页用 `Settings.Game` 切换，两套玩家身份分开保存。
 
 ### 核心功能
 
@@ -50,14 +69,14 @@
 | 对局 Overlay   | 游戏对局中以透明置顶窗口展示双方阵容、文明、段位、胜率等信息                      |
 | 历史战绩         | 展示最近 N 场比赛（双方阵容、地图、模式、胜负、分差、对战 ID）                  |
 | WebSocket 输出 | 本地启动 WebSocket 服务，向 HTML / OBS 浏览器源广播 `player_data` |
-| 多语言          | 中英文界面切换；地图名（84 条）、文明名（29 条）中英双语映射                   |
+| 多语言          | 中英文界面切换；地图名（84 条）、文明名（25 个已发布文明及别名）中英双语映射                   |
 | 全局热键         | 自定义热键控制 Overlay 显隐与位置锁定/解锁；系统注册失败自动回退 Win32 Hook    |
 | 搜索历史         | 记录最近 20 条搜索，支持复用与单条删除                               |
 | 系统托盘         | 主窗口关闭后隐藏到托盘常驻，后台持续轮询                                |
 
 ### 版本信息
 
-- 程序集版本：`2.1.1`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
+- 程序集版本：`3.0.0`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
 
 - 目标框架：`net10.0-windows`
 
@@ -91,7 +110,7 @@ AoE4OverlayCS (WPF Desktop App)
 │  ├─ SettingsService         config/config.json 读写
 │  ├─ GlobalHotkeyService     低阶键盘 Hook 热键兜底
 │  ├─ MapNameTranslator       地图名中英翻译（85+ 条）
-│  ├─ CivNameTranslator       文明名中英翻译（29 条）
+│  ├─ CivNameTranslator       文明名中英翻译（含 Vikings / Scots）
 │  ├─ CivIconResolver         文明图标多路径查找（根命名空间）
 │  ├─ WindowServices          Win32 鼠标穿透封装
 │  ├─ OverlayScaleCalculator  Overlay 缩放倍率边界（MinScale/MaxScale）
@@ -509,9 +528,9 @@ _overlayWindow     OverlayWindow?           // 覆盖层窗口（Start 时创建
 
 位置：[Services/CivNameTranslator.cs](Services/CivNameTranslator.cs)
 
-静态字典 `ZhCnCivNames`（29 条：Abbasid、Ayyubids、Byzantines、Chinese、Delhi、English、French、Golden Horde、House of Lancaster、HRE、Japanese、Jeanne Darc、Jin Dynasty、Knights Templar、Macedonian、Malians、Mongols、Order of the Dragon、Ottomans、Rus、Sengoku Daimyo、Tughlaq、Zhu Xi's Legacy、Venetians、Poles 等）。
+静态字典 `ZhCnCivNames` / `EnglishCivNames`：覆盖 25 个已发布 AOE4 文明及别名，包含 Vikings（维京人）、Scots（苏格兰人）。保留原有 Venetians / Poles 条目，但它们不计入正式文明旗帜数量。
 
-`Translate(civName, language)`：归一化（Trim、`_`→空格、去 `'`）后查表；非 zh-CN 原样返回。
+`Translate(civName, language)`：归一化（Trim、`_`→空格、去直/弯撇号）后查表；zh-CN 输出中文，其他语言输出标准英文，未知值原样返回。
 
 调用点：`GameProcessor.ProcessGame`、`MainViewModel.RefreshHistory`。
 
@@ -519,15 +538,15 @@ _overlayWindow     OverlayWindow?           // 覆盖层窗口（Start 时创建
 
 位置：[Services/CivIconResolver.cs](Services/CivIconResolver.cs)（**注意：命名空间为根** **`AoE4OverlayCS`，非** **`AoE4OverlayCS.Services`**）
 
-内部 `CivCodeMapping` 字典（70 条，忽略大小写）：文明缩写（`abb`/`chi`/`eng`/`hre`/`jda`...）、全称、下划线/空格/撇号变体 → 标准图标名（`Abbasid`/`Chinese`/`JeanneDArc`/`KnightsTemplar`...）。
+内部 `CivCodeMapping` 字典（忽略大小写）：文明缩写（`abb`/`chi`/`eng`/`hre`/`jda`...）、全称、下划线/空格/撇号变体 → 标准图标名（`Abbasid`/`Chinese`/`JeanneDArc`/`KnightsTemplar`...）。
 
 `Resolve(baseDir, civ, civKey)` 按序探测（返回第一个存在的文件）：
 
-1. `img/build_order/civilization_flag/CivIcon-{civ映射名}AoE4.png`
-2. `img/build_order/civilization_flag/CivIcon-{civ映射名}AoE4_spacing.png`
-3. 同上两条，但用 `civKey` 映射
-4. `img/build_order/civilization_flag/{civKey}.webp` / `.png`
-5. `img/flags/{civ}.webp` / `.png`
+1. `img/flags/{civ标准英文名去撇号}.png`
+2. `img/flags/{civKey标准英文名去撇号}.png`
+3. `img/build_order/civilization_flag/CivIcon-{映射名}AoE4.png` / `...AoE4_spacing.png`（依次检查 civ / civKey 映射）
+4. `img/build_order/civilization_flag/{civKey}.png`
+5. `img/flags/{civ}.png`
 
 全部未命中返回 null（调用方写 `image_load_error.log`）。
 

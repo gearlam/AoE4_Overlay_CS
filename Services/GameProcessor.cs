@@ -11,6 +11,7 @@ namespace AoE4OverlayCS.Services
         public static object ProcessGame(JObject gameData, AppSettings settings)
         {
             var result = new Dictionary<string, object>();
+            result["source"] = "aoe4";
             result["map"] = MapNameTranslator.Translate(gameData["map"]?.ToString(), settings.Language);
             result["mode"] = gameData["leaderboard_id"]?.ToObject<int>() ?? 0;
             result["started"] = gameData["started_at"]?.ToString() ?? "";

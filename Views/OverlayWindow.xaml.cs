@@ -746,8 +746,21 @@ namespace AoE4OverlayCS.Views
             const double targetHeight = 36;
             var flagImg = new Image { Width = 72, Height = targetHeight, Stretch = Stretch.Uniform, HorizontalAlignment = hAlign };
             string civ = p.civ;
+            if (!_settings.IsAoe2Game())
+            {
+                var displayName = CivNameTranslator.Translate(civ, _settings.Language);
+                flagImg.ToolTip = displayName;
+                System.Windows.Automation.AutomationProperties.SetName(flagImg, displayName);
+            }
             string civKey = civ.ToString().Replace(" ", "_").ToLower();
-            string? resolvedPath = CivIconResolver.Resolve(baseDir, civ, civKey);
+            string? resolvedPath = null;
+            if (_settings.IsAoe2Game())
+            {
+                var aoe2Icon = System.IO.Path.Combine(baseDir, "img", "aoe2-civs", civKey + ".png");
+                if (System.IO.File.Exists(aoe2Icon))
+                    resolvedPath = aoe2Icon;
+            }
+            resolvedPath ??= CivIconResolver.Resolve(baseDir, civ, civKey);
             if (resolvedPath != null)
             {
                 var source = TryLoadImageSource(resolvedPath);

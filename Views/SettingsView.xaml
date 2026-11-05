@@ -52,6 +52,45 @@
             <!-- Profile Box -->
             <GroupBox Header="{DynamicResource Settings_ProfileHeader}" Grid.Row="0">
                 <StackPanel>
+                    <TextBlock Text="{DynamicResource Settings_GameLabel}" FontSize="16" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button Content="AOE4" Width="100" Margin="0,0,8,0"
+                                Command="{Binding SwitchGameCommand}" CommandParameter="aoe4">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Padding" Value="10,5"/>
+                                    <Setter Property="FontSize" Value="15"/>
+                                    <Setter Property="Height" Value="34"/>
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                    <Setter Property="BorderBrush" Value="#CCC"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Settings.Game}" Value="aoe4">
+                                            <Setter Property="Background" Value="#C8E6C9"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="AOE2" Width="100"
+                                Command="{Binding SwitchGameCommand}" CommandParameter="aoe2">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Padding" Value="10,5"/>
+                                    <Setter Property="FontSize" Value="15"/>
+                                    <Setter Property="Height" Value="34"/>
+                                    <Setter Property="Background" Value="#F0F0F0"/>
+                                    <Setter Property="BorderBrush" Value="#CCC"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Settings.Game}" Value="aoe2">
+                                            <Setter Property="Background" Value="#C8E6C9"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
                     <TextBlock Text="{Binding ProfileInfo}" 
                                FontSize="16" FontWeight="Bold" Foreground="#359c20" 
                                TextWrapping="Wrap" Margin="0,0,0,5"/>
@@ -72,7 +111,7 @@
                     
                     <TextBlock Margin="0,0,0,10">
                         <Hyperlink Command="{Binding OpenLinkCommand}" CommandParameter="{Binding ProfileLink}">
-                            <TextBlock Text="{DynamicResource Settings_ProfileLinkText}" FontSize="16"/>
+                            <TextBlock Text="{Binding ProfileLinkText}" FontSize="16"/>
                         </Hyperlink>
                     </TextBlock>
                     

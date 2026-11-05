@@ -18,6 +18,7 @@
     <sys:String x:Key="Tab_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Settings</sys:String>
     <sys:String x:Key="Tab_Games" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Games</sys:String>
 
+    <sys:String x:Key="Settings_GameLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Polled game:</sys:String>
     <sys:String x:Key="Settings_ProfileHeader" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Profile</sys:String>
     <sys:String x:Key="Settings_ProfileLinkText" xmlns:sys="clr-namespace:System;assembly=System.Runtime">AoE4 World profile</sys:String>
     <sys:String x:Key="Settings_SearchPlaceholder" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Steam ID / Profile ID / Name</sys:String>
@@ -58,4 +59,40 @@
     <sys:String x:Key="Games_Header_Diff" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Diff</sys:String>
     <sys:String x:Key="Games_Header_Match" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Match</sys:String>
 
+    <sys:String x:Key="Tr_Settings" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Game chat translation settings</sys:String>
+    <sys:String x:Key="Tr_Title" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Age of Empires Translator</sys:String>
+    <sys:String x:Key="Tr_Privacy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Text is sent to your configured provider. API keys are encrypted for the current Windows user; translation history is stored locally as plain text. Testing calls the model and may incur charges. Remote APIs require HTTPS.</sys:String>
+    <sys:String x:Key="Tr_Endpoint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">API base URL (include /v1), or full /chat/completions URL</sys:String>
+    <sys:String x:Key="Tr_Key" xmlns:sys="clr-namespace:System;assembly=System.Runtime">API Key (optional for local models without authentication)</sys:String>
+    <sys:String x:Key="Tr_Model" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Model name</sys:String>
+    <sys:String x:Key="Tr_Enable" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enable global translation hotkey</sys:String>
+    <sys:String x:Key="Tr_Hotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Hotkey (suspended while settings are open; save and close to apply, e.g. F9)</sys:String>
+    <sys:String x:Key="Tr_Source" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Source language</sys:String>
+    <sys:String x:Key="Tr_Target" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Target language</sys:String>
+    <sys:String x:Key="Tr_Network" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Network: Direct (default), System proxy, or Custom proxy. Match the proxy settings used in Cherry Studio.</sys:String>
+    <sys:String x:Key="Tr_ProxyUrl" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Custom proxy URL (Custom only, e.g. http://127.0.0.1:7890)</sys:String>
+    <sys:String x:Key="Tr_TimeoutLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Total request timeout (10–300 seconds; default 90; connect timeout 15)</sys:String>
+    <sys:String x:Key="Tr_Timeout" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Request timed out. Check network/proxy or increase timeout for slow models:</sys:String>
+    <sys:String x:Key="Tr_HistoryFolder" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Open history folder</sys:String>
+    <sys:String x:Key="Tr_Test" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Test model</sys:String>
+    <sys:String x:Key="Tr_Save" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Save and apply</sys:String>
+    <sys:String x:Key="Tr_Open" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Open translator</sys:String>
+    <sys:String x:Key="Tr_WindowHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Enter: translate; Shift+Enter: newline; Esc/hotkey: close. Copy and paste manually; nothing is auto-sent. Use borderless/windowed mode; exclusive fullscreen may hide desktop windows. Edits affect the next request; save to persist across restarts.</sys:String>
+    <sys:String x:Key="Tr_Translate" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Translate (Enter)</sys:String>
+    <sys:String x:Key="Tr_Copy" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Copy translation</sys:String>
+    <sys:String x:Key="Tr_Clear" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Clear all</sys:String>
+    <sys:String x:Key="Tr_Delete" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Delete</sys:String>
+    <sys:String x:Key="Tr_History" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Local history (select text to copy)</sys:String>
+    <sys:String x:Key="Tr_ClearConfirm" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Permanently clear all local translation history? This cannot be undone.</sys:String>
+    <sys:String x:Key="Tr_Saved" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Saved. Close settings to enable the hotkey.</sys:String>
+    <sys:String x:Key="Tr_Working" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Requesting model…</sys:String>
+    <sys:String x:Key="Tr_TestOk" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Model is available. Test translation:</sys:String>
+    <sys:String x:Key="Tr_Done" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Translated and saved to local history.</sys:String>
+    <sys:String x:Key="Tr_Cancelled" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Request cancelled.</sys:String>
+    <sys:String x:Key="Tr_Copied" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Copied. Switch back to the game to paste.</sys:String>
+    <sys:String x:Key="Tr_Error" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Operation failed:</sys:String>
+    <sys:String x:Key="Tr_StorageError" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Local storage failed. Check translation files and directory permissions:</sys:String>
+    <sys:String x:Key="Tr_InvalidHotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Invalid hotkey. Use F1–F24 or a Ctrl/Alt/Shift combination.</sys:String>
+    <sys:String x:Key="Tr_Conflict" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Translation hotkey conflicts with an overlay or macro hotkey. Change it and save.</sys:String>
+    <sys:String x:Key="Tr_HotkeyFailed" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Unable to register translation hotkey. Try another combination.</sys:String>
 </ResourceDictionary>

@@ -58,6 +58,9 @@ PublishScripts/
 # Logs
 *.log
 
+# Private local translation history
+translation_history/
+
 # Temporary files
 *.tmp
 *.temp

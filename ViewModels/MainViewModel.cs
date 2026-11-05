@@ -24,9 +24,13 @@ namespace AoE4OverlayCS.ViewModels
         public string ProfileIdDisplay { get; set; } = "";
         public string Civ { get; set; } = "";
         public string CivColor { get; set; } = "#BC8AEA";
+        public bool UseAoe2Links { get; set; }
+
         public string ProfileUrl => string.IsNullOrEmpty(ProfileId)
             ? ""
-            : $"https://aoe4world.com/players/{ProfileId}";
+            : UseAoe2Links
+                ? $"https://www.aoe2insights.com/user/{ProfileId}/"
+                : $"https://aoe4world.com/players/{ProfileId}";
     }
 
     public class MatchHistoryItem
@@ -42,14 +46,18 @@ namespace AoE4OverlayCS.ViewModels
         public string RatingDiff { get; set; } = "";
         public string MatchId { get; set; } = "";
         public string ProfileId { get; set; } = "";
+        public bool UseAoe2Links { get; set; }
         public string GameUrl => string.IsNullOrEmpty(ProfileId) || string.IsNullOrEmpty(MatchId)
             ? ""
-            : $"https://aoe4world.com/players/{ProfileId}/games/{MatchId}";
+            : UseAoe2Links
+                ? $"https://www.aoe2insights.com/match/{MatchId}/"
+                : $"https://aoe4world.com/players/{ProfileId}/games/{MatchId}";
     }
 
     public class MainViewModel : INotifyPropertyChanged
     {
         private readonly SettingsService _settingsService;
+        private readonly TranslationModule _translation;
         private readonly ApiCheckerService _apiChecker;
         private readonly WebSocketServerService _wsServer;
         private readonly GlobalHotkeyService _globalHotkey;
@@ -58,6 +66,10 @@ namespace AoE4OverlayCS.ViewModels
         private readonly MacroRunnerService _macroRunner;
         private readonly InputGateService _inputGate;
         private OverlayWindow? _overlayWindow;
+        private readonly object _audienceLock = new();
+        private bool _mainWindowVisible = true;
+        private bool _overlayVisible;
+        private int _socketCount;
 
         public AppSettings Settings => _settingsService.Current;
 
@@ -81,6 +93,13 @@ namespace AoE4OverlayCS.ViewModels
         {
             get => _profileLink;
             set { _profileLink = value; OnPropertyChanged(); }
+        }
+
+        private string _profileLinkText = "AoE4World 档案页";
+        public string ProfileLinkText
+        {
+            get => _profileLinkText;
+            set { _profileLinkText = value; OnPropertyChanged(); }
         }
 
         private string _profileRankInfo = "";
@@ -128,6 +147,7 @@ namespace AoE4OverlayCS.ViewModels
 
         // Commands
         public ICommand SearchPlayerCommand { get; }
+        public ICommand SwitchGameCommand { get; }
         public ICommand SaveSettingsCommand { get; }
         public ICommand ToggleOverlayCommand { get; }
         public ICommand ChangeOverlayPositionCommand { get; }
@@ -139,6 +159,7 @@ namespace AoE4OverlayCS.ViewModels
         public MainViewModel()
         {
             _settingsService = new SettingsService();
+            _translation = new TranslationModule(_settingsService.Current);
             _apiChecker = new ApiCheckerService(_settingsService);
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
@@ -151,13 +172,16 @@ namespace AoE4OverlayCS.ViewModels
             }, _inputGate);
             _macroRunner.StatusChanged += OnMacroStatus;
             SearchHistory = new ObservableCollection<string>(_settingsService.Current.SearchHistory ?? new List<string>());
+            SearchQuery = _settingsService.Current.ActiveSearchQuery ?? "";
             Settings.PropertyChanged += OnSettingsPropertyChanged;
             RefreshMacroKeyChips();
 
             _apiChecker.OnNewGame += OnNewGame;
             _apiChecker.OnError += OnApiError;
+            _wsServer.ClientsChanged += OnSocketCount;
 
             SearchPlayerCommand = new RelayCommand(async _ => await SearchPlayer());
+            SwitchGameCommand = new RelayCommand(async parameter => await SwitchGame(parameter as string));
             SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
             ToggleOverlayCommand = new RelayCommand(_ => ToggleOverlay());
             ChangeOverlayPositionCommand = new RelayCommand(_ => ChangeOverlayPosition());
@@ -327,7 +351,10 @@ namespace AoE4OverlayCS.ViewModels
                 }
             }
             catch { /* Ignore invalid hotkeys */ }
+            _translation.RefreshHotkey();
         }
+
+        public void OpenTranslationSettings() => _translation.OpenSettings();
 
         /// <summary>触发热键切换宏的启动/停止。</summary>
         public void ToggleMacro()
@@ -444,6 +471,7 @@ namespace AoE4OverlayCS.ViewModels
 
         public void Stop()
         {
+            _translation.Stop();
             _apiChecker.Stop();
             _wsServer.Stop();
             _globalHotkey.Stop();
@@ -453,6 +481,7 @@ namespace AoE4OverlayCS.ViewModels
             _inputGate.Stop(); // 卸载输入闸门钩子
             _overlayWindow?.SaveState();
             _overlayWindow?.Close();
+            CommitSearchIndex();
             _settingsService.Save();
         }
 
@@ -473,6 +502,7 @@ namespace AoE4OverlayCS.ViewModels
                 Settings.ProfileId = player["profile_id"]?.ToString();
                 Settings.PlayerName = player["name"]?.ToString();
                 Settings.SteamId = player["steam_id"]?.ToString();
+                Settings.RememberActiveProfile();
                 
                 UpdateProfileDisplay();
                 _settingsService.Save();
@@ -502,6 +532,21 @@ namespace AoE4OverlayCS.ViewModels
             }
         }
 
+        private void CommitSearchIndex()
+        {
+            Settings.SearchHistory = SearchHistory.ToList();
+            Settings.ActiveSearchQuery = SearchQuery ?? "";
+            Settings.RememberSearchIndex();
+        }
+
+        private void ApplySearchIndex()
+        {
+            SearchHistory.Clear();
+            foreach (var item in Settings.SearchHistory ?? new List<string>())
+                SearchHistory.Add(item);
+            SearchQuery = Settings.ActiveSearchQuery ?? "";
+        }
+
         private void AddSearchHistory(string query)
         {
             var normalized = query.Trim();
@@ -520,7 +565,7 @@ namespace AoE4OverlayCS.ViewModels
                 SearchHistory.RemoveAt(SearchHistory.Count - 1);
             }
 
-            Settings.SearchHistory = SearchHistory.ToList();
+            CommitSearchIndex();
         }
 
         public void RemoveSearchHistory(string query)
@@ -529,7 +574,7 @@ namespace AoE4OverlayCS.ViewModels
             if (existing == null) return;
 
             SearchHistory.Remove(existing);
-            Settings.SearchHistory = SearchHistory.ToList();
+            CommitSearchIndex();
             _settingsService.Save();
 
             if (string.Equals(SearchQuery, existing, StringComparison.OrdinalIgnoreCase))
@@ -543,7 +588,7 @@ namespace AoE4OverlayCS.ViewModels
             var lastGame = await _apiChecker.GetLastGame();
             if (lastGame == null) return;
 
-            var processed = GameProcessor.ProcessGame(lastGame, _settingsService.Current);
+            var processed = ProcessPayload(lastGame);
             _wsServer.Send("player_data", processed);
 
             System.Windows.Application.Current.Dispatcher.Invoke(() => {
@@ -552,12 +597,17 @@ namespace AoE4OverlayCS.ViewModels
                 {
                     _overlayWindow?.Show();
                 }
+                NoteOverlayVisibility();
             });
         }
 
         private void UpdateProfileDisplay()
         {
             ProfileRankInfo = "";
+            bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+            ProfileLinkText = Settings.IsAoe2Game()
+                ? (zh ? "AoE2 Insights 档案页" : "AoE2 Insights profile")
+                : (zh ? "AoE4World 档案页" : "AoE4 World profile");
 
             if (string.IsNullOrEmpty(Settings.ProfileId))
             {
@@ -567,12 +617,58 @@ namespace AoE4OverlayCS.ViewModels
             else
             {
                 ProfileInfo = $"{Settings.PlayerName}\nSteam_id: {Settings.SteamId}\nProfile_id: {Settings.ProfileId}";
-                ProfileLink = $"https://aoe4world.com/players/{Settings.ProfileId}";
+                ProfileLink = Settings.IsAoe2Game()
+                    ? $"https://www.aoe2insights.com/user/{Settings.ProfileId}/"
+                    : $"https://aoe4world.com/players/{Settings.ProfileId}";
             }
+        }
+
+        private async Task SwitchGame(string? game)
+        {
+            if (game != "aoe2" && game != "aoe4") return;
+            if (string.Equals(Settings.Game, game, StringComparison.OrdinalIgnoreCase)) return;
+
+            CommitSearchIndex();
+            Settings.RememberActiveProfile();
+            Settings.Game = game;
+            Settings.LoadActiveProfile();
+            ApplySearchIndex();
+            _apiChecker.ResetMatchCursor();
+            _settingsService.Save();
+            UpdateProfileDisplay();
+            System.Windows.Application.Current.Dispatcher.Invoke(() => Games.Clear());
+
+            if (string.IsNullOrEmpty(Settings.ProfileId)) return;
+
+            await RefreshHistory();
+            await RefreshProfileRank();
+            await UpdateOverlayWithLastGame();
+            _overlayWindow?.ResetToBaseSize();
+        }
+
+        private object ProcessPayload(JObject data)
+        {
+            if (data["source"]?.ToString() == "aoe2")
+                return Aoe2MatchProcessor.Process(data, _settingsService.Current);
+            return GameProcessor.ProcessGame(data, _settingsService.Current);
         }
 
         private async Task RefreshHistory()
         {
+            if (Settings.IsAoe2Game())
+            {
+                var raw = await _apiChecker.GetAoe2History();
+                if (raw == null) return;
+                var items = Aoe2MatchProcessor.ToHistory(raw, Settings);
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Games.Clear();
+                    foreach (var item in items)
+                        Games.Add(item);
+                });
+                return;
+            }
+
             var history = await _apiChecker.GetMatchHistory(Settings.MaxGamesHistory);
             if (history != null)
             {
@@ -660,9 +756,51 @@ namespace AoE4OverlayCS.ViewModels
         /// <summary>刷新信息栏中的排位段位分显示。</summary>
         private async Task RefreshProfileRank()
         {
-            var profile = await _apiChecker.GetPlayerProfile();
-            var text = BuildRankText(profile?["modes"] as JObject);
+            string text;
+            if (Settings.IsAoe2Game())
+            {
+                var stat = await _apiChecker.GetAoe2PersonalStat(Settings.ProfileId);
+                text = BuildAoe2RankText(stat);
+            }
+            else
+            {
+                var profile = await _apiChecker.GetPlayerProfile();
+                text = BuildRankText(profile?["modes"] as JObject);
+            }
             System.Windows.Application.Current.Dispatcher.Invoke(() => ProfileRankInfo = text);
+        }
+
+        private string BuildAoe2RankText(JObject? stat)
+        {
+            bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+            string label = zh ? "段位分：" : "Ranked: ";
+            if (stat == null) return label + (zh ? "未定级" : "Unranked");
+
+            var groups = new HashSet<int>();
+            foreach (var group in (stat["statGroups"] as JArray ?? new JArray()).OfType<JObject>())
+            {
+                var mine = (group["members"] as JArray ?? new JArray()).OfType<JObject>()
+                    .Any(m => m.Value<long?>("profile_id")?.ToString() == Settings.ProfileId);
+                if (mine && group.Value<int?>("id") is int id)
+                    groups.Add(id);
+            }
+
+            string? Part(int board, string name)
+            {
+                var row = (stat["leaderboardStats"] as JArray ?? new JArray()).OfType<JObject>()
+                    .FirstOrDefault(s => groups.Contains(s.Value<int?>("statgroup_id") ?? -1)
+                        && s.Value<int?>("leaderboard_id") == board);
+                if (row == null) return null;
+                var rating = row.Value<int?>("rating") ?? 0;
+                var rank = row.Value<int?>("rank") ?? -1;
+                if (rating <= 0 && rank <= 0) return null;
+                return rank > 0 ? $"{name} {rating} (#{rank})" : $"{name} {rating}";
+            }
+
+            var parts = new[] { Part(3, "1v1"), Part(4, zh ? "团队" : "Team") }
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList();
+            return parts.Count == 0 ? label + (zh ? "未定级" : "Unranked") : label + string.Join(" · ", parts);
         }
 
         /// <summary>从玩家档案 modes 中提取当前排位（1v1 / 团队）段位分并拼接显示文本。</summary>
@@ -740,7 +878,7 @@ namespace AoE4OverlayCS.ViewModels
 
         private void OnNewGame(JObject gameData)
         {
-            var processed = GameProcessor.ProcessGame(gameData, _settingsService.Current);
+            var processed = ProcessPayload(gameData);
             
             // Send to WS
             _wsServer.Send("player_data", processed);
@@ -752,7 +890,7 @@ namespace AoE4OverlayCS.ViewModels
                 {
                     _overlayWindow?.Show();
                 }
-                
+                NoteOverlayVisibility();
             });
             
             // Refresh history
@@ -764,12 +902,40 @@ namespace AoE4OverlayCS.ViewModels
             System.Diagnostics.Debug.WriteLine($"API Error: {error}");
         }
 
+        public void SetMainWindowVisible(bool visible)
+        {
+            lock (_audienceLock) _mainWindowVisible = visible;
+            ApplyAudience();
+        }
+
+        private void OnSocketCount(int count)
+        {
+            lock (_audienceLock) _socketCount = count;
+            ApplyAudience();
+        }
+
+        private void NoteOverlayVisibility()
+        {
+            bool shown = _overlayWindow?.IsVisible == true;
+            lock (_audienceLock) _overlayVisible = shown;
+            ApplyAudience();
+        }
+
+        private void ApplyAudience()
+        {
+            bool present;
+            lock (_audienceLock)
+                present = _mainWindowVisible || _overlayVisible || _socketCount > 0;
+            _apiChecker.SetAudiencePresent(present);
+        }
+
         public void ToggleOverlay()
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() => {
                 if (_overlayWindow != null)
                 {
                     _overlayWindow.ToggleVisibility();
+                    NoteOverlayVisibility();
                 }
             });
         }

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="AoE IV: Overlay" Height="400" Width="700"
+        Title="AoE Overlay" Height="400" Width="700"
     WindowStyle="None" AllowsTransparency="True" Background="Transparent"
     Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
     ShowActivated="False" Focusable="False"

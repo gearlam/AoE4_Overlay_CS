@@ -45,7 +45,7 @@ namespace AoE4OverlayCS
                 version = version.Substring(0, plusIndex).Trim();
             }
 
-            Title = $"AoE IV: Overlay ({version})";
+            Title = $"AoE Overlay ({version})";
         }
 
         private void InitializeTrayIcon()
@@ -66,20 +66,11 @@ namespace AoE4OverlayCS
                 }
                 
                 _notifyIcon.Visible = true;
-                _notifyIcon.Text = "AoE4 Overlay";
-                _notifyIcon.DoubleClick += (s, args) => 
-                {
-                    Show();
-                    WindowState = WindowState.Normal;
-                    Activate();
-                };
+                _notifyIcon.Text = "AoE Overlay";
+                _notifyIcon.DoubleClick += (s, args) => ShowFromTray();
 
                 var contextMenu = new ContextMenuStrip();
-                contextMenu.Items.Add("Open", null, (s, e) => {
-                    Show();
-                    WindowState = WindowState.Normal;
-                    Activate();
-                });
+                contextMenu.Items.Add("Open", null, (s, e) => ShowFromTray());
                 contextMenu.Items.Add("Exit", null, (s, e) => {
                     if (_notifyIcon != null) _notifyIcon.Visible = false;
                     _isExitRequested = true;
@@ -106,9 +97,18 @@ namespace AoE4OverlayCS
             {
                 e.Cancel = true;
                 Hide();
+                if (DataContext is MainViewModel vm) vm.SetMainWindowVisible(false);
                 return;
             }
             base.OnClosing(e);
+        }
+
+        private void ShowFromTray()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            if (DataContext is MainViewModel vm) vm.SetMainWindowVisible(true);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
@@ -185,6 +185,11 @@ namespace AoE4OverlayCS
                 Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{filePath}\"") { UseShellExecute = true });
             }
             catch { }
+        }
+
+        private void TranslationSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm) vm.OpenTranslationSettings();
         }
 
         private void SetLanguageEnglish_Click(object sender, RoutedEventArgs e)

@@ -13,6 +13,8 @@ namespace AoE4OverlayCS.Services
         private readonly List<string> _messageHistory = new();
         private int _port;
 
+        public event Action<int>? ClientsChanged;
+
         public WebSocketServerService(int port)
         {
             _port = port;
@@ -29,7 +31,13 @@ namespace AoE4OverlayCS.Services
                 {
                     socket.OnOpen = () =>
                     {
-                        lock (_sockets) _sockets.Add(socket);
+                        int count;
+                        lock (_sockets)
+                        {
+                            _sockets.Add(socket);
+                            count = _sockets.Count;
+                        }
+                        ClientsChanged?.Invoke(count);
                         // Send history
                         lock (_messageHistory)
                         {
@@ -43,7 +51,13 @@ namespace AoE4OverlayCS.Services
                     };
                     socket.OnClose = () =>
                     {
-                        lock (_sockets) _sockets.Remove(socket);
+                        int count;
+                        lock (_sockets)
+                        {
+                            _sockets.Remove(socket);
+                            count = _sockets.Count;
+                        }
+                        ClientsChanged?.Invoke(count);
                     };
                 });
             }

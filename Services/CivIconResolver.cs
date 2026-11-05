@@ -36,6 +36,7 @@ namespace AoE4OverlayCS
             { "holy roman empire", "HRE" },
             { "jap", "Japanese" },
             { "japanese", "Japanese" },
+            { "jin dynasty", "JinDynasty" },
             { "jda", "JeanneDArc" },
             { "jeanne_darc", "JeanneDArc" },
             { "jeanne d'arc", "JeanneDArc" },
@@ -62,6 +63,8 @@ namespace AoE4OverlayCS
             { "pol", "Poles" },
             { "poles", "Poles" },
             { "rus", "Rus" },
+            { "scots", "Scots" },
+            { "vikings", "Vikings" },
             { "sen", "SengokuDaimyo" },
             { "sengoku", "SengokuDaimyo" },
             { "sengoku daimyo", "SengokuDaimyo" },
@@ -83,6 +86,11 @@ namespace AoE4OverlayCS
         public static string? Resolve(string baseDir, string civ, string civKey)
         {
             var searchPaths = new List<string>();
+            // The shipped flags use display-name filenames, while API values use lowercase slugs.
+            var flagName = Services.CivNameTranslator.Translate(civ, "en-US").Replace("'", "").Replace("’", "");
+            var keyFlagName = Services.CivNameTranslator.Translate(civKey, "en-US").Replace("'", "").Replace("’", "");
+            searchPaths.Add(Path.Combine(baseDir, "img", "flags", flagName + ".png"));
+            searchPaths.Add(Path.Combine(baseDir, "img", "flags", keyFlagName + ".png"));
 
             if (CivCodeMapping.TryGetValue(civ, out var mappedName))
             {
