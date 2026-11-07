@@ -34,14 +34,18 @@ namespace AoE4OverlayCS.Services
         public const int MaxIdleWaitMs = 5000;     // 操作避让上限（毫秒），0 = 不避让
         public const int GateWindowMs = 500;       // 输入屏蔽窗口时长（毫秒）：从首键起算，注入后补足，期间键鼠输入被吞
 
+        private readonly object _lifecycle = new();
         private CancellationTokenSource? _cts;
+        private bool _disposed;
+        private Task _completion = Task.CompletedTask;
         private volatile bool _isRunning;
         private int _runGeneration;
 
         [ThreadStatic]
         private static int _threadRunGeneration;
         private readonly Action<string>? _log;
-        private readonly InputGateService? _gate;
+        private readonly InputGateService _gate;
+        private readonly Action<uint, bool> _sendKey;
 
         public bool IsRunning => _isRunning;
 
@@ -49,103 +53,138 @@ namespace AoE4OverlayCS.Services
         public event Action<MacroRunStatus>? StatusChanged;
 
         public MacroRunnerService(Action<string>? log = null, InputGateService? gate = null)
+            : this(log, gate ?? new InputGateService(), SendKey) { }
+
+        internal MacroRunnerService(Action<string>? log, InputGateService gate, Action<uint, bool> sendKey)
         {
             _log = log;
             _gate = gate;
+            _sendKey = sendKey;
         }
 
-        /// <summary>启动自动化循环。序列为空时报告错误并拒绝启动。</summary>
-        public void Start(AppSettings settings)
+        /// <summary>启动循环；必须在有消息循环的 UI 线程调用。</summary>
+        public void Start(AppSettings settings) => StartRun(settings, false);
+
+        /// <summary>测试一轮，使用与循环相同的输入保护。</summary>
+        public void RunOnce(AppSettings settings) => StartRun(settings, true);
+
+        private void StartRun(AppSettings settings, bool once)
         {
-            if (_isRunning) return;
-            if (ParseSequence(settings.MacroSequence).Count == 0)
+            lock (_lifecycle)
             {
-                Report(L(settings, "热键序列为空，请先配置", "Key sequence is empty, configure it first"), false, true);
-                return;
+                if (_isRunning || _disposed) return;
+                var steps = ParseSequence(settings.MacroSequence);
+                if (steps.Count == 0)
+                {
+                    Report(L(settings, "热键序列为空，请先配置", "Key sequence is empty, configure it first"), false, true);
+                    return;
+                }
+
+                // 任一钩子失败则回滚，绝不无保护地发送按键。
+                try { _gate.Start(); }
+                catch (Exception ex)
+                {
+                    Report(L(settings, "输入保护安装失败，未发送按键：", "Input protection failed, no keys sent: ") + ex.Message, false, true);
+                    return;
+                }
+
+                var generation = Interlocked.Increment(ref _runGeneration);
+                var cts = new CancellationTokenSource();
+                _cts = cts;
+                var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                _completion = finished.Task;
+                _isRunning = true;
+                Report(L(settings, "热键自动化已启动", "Macro automation started"), true, false);
+                var thread = new Thread(() => RunWorker(settings, once ? steps : null, cts, generation, finished))
+                {
+                    IsBackground = true,
+                    Name = once ? "MacroRunner-Test" : "MacroRunner"
+                };
+                try { thread.Start(); }
+                catch
+                {
+                    _gate.Stop();
+                    _cts = null;
+                    cts.Dispose();
+                    _isRunning = false;
+                    finished.SetResult();
+                    throw;
+                }
             }
-
-            // 输入闸门钩子仅宏运行期间挂载（Start 由 UI 线程调用），平时对全系统零开销
-            _gate?.Start();
-
-            var generation = Interlocked.Increment(ref _runGeneration);
-            _cts = new CancellationTokenSource();
-            var ct = _cts.Token;
-            _isRunning = true;
-            Report(L(settings, "热键自动化已启动", "Macro automation started"), true, false);
-            var thread = new Thread(() => RunLoopSync(settings, ct, generation))
-            {
-                IsBackground = true,
-                Name = "MacroRunner"
-            };
-            thread.Start();
         }
 
-        /// <summary>停止自动化循环（幂等；未运行时不产生状态回报）。</summary>
+        /// <summary>请求停止；已开始的一轮完整收尾后才允许再次启动。</summary>
         public void Stop(AppSettings settings)
         {
-            if (!_isRunning) return;
-            _cts?.Cancel();
-            _isRunning = false;
-            _gate?.Stop();
-            Report(L(settings, "已停止", "Stopped"), false, false);
+            lock (_lifecycle)
+            {
+                if (!_isRunning || _cts == null || _cts.IsCancellationRequested) return;
+                _cts.Cancel();
+                Report(L(settings, "正在停止，等待当前轮收尾…", "Stopping, waiting for the current round..."), true, false);
+            }
         }
 
-        /// <summary>立即执行一轮序列（测试按钮）。按键发送到当前焦点窗口。</summary>
-        public void RunOnce(AppSettings settings)
+        /// <summary>退出时异步等待收尾，不阻塞 UI 钩子的消息循环。</summary>
+        public Task StopAsync(AppSettings settings)
         {
-            if (_isRunning)
+            lock (_lifecycle)
             {
-                Report(L(settings, "正在执行中，请稍候", "Busy, please wait"), false, true);
-                return;
+                Stop(settings);
+                return _completion;
             }
-            var steps = ParseSequence(settings.MacroSequence);
-            if (steps.Count == 0)
-            {
-                Report(L(settings, "热键序列为空，请先配置", "Key sequence is empty, configure it first"), false, true);
-                return;
-            }
+        }
 
-            var generation = Interlocked.Increment(ref _runGeneration);
-            _cts = new CancellationTokenSource();
-            var ct = _cts.Token;
-            _isRunning = true;
-            _log?.Invoke("test");
-            var thread = new Thread(() =>
+        private void RunWorker(AppSettings settings, List<MacroKeyStep>? testSteps, CancellationTokenSource cts,
+                               int generation, TaskCompletionSource finished)
+        {
+            _threadRunGeneration = generation;
+            var ct = cts.Token;
+            var message = L(settings, testSteps != null ? "测试完成" : "热键序列执行完成",
+                                      testSteps != null ? "Test finished" : "Macro sequence finished");
+            var error = false;
+            try
             {
-                _threadRunGeneration = generation;
-                try
+                if (testSteps != null)
                 {
                     WaitShiftReleased(settings, ct);
                     Report(L(settings, "测试：正在向当前焦点窗口发送按键…", "Test: sending keys to the focused window..."), true, false);
-                    ExecuteSequence(steps);
-                    Report(L(settings, "测试完成", "Test finished"), false, false);
+                    ExecuteSequence(testSteps, ct);
                 }
-                catch (OperationCanceledException)
-                {
-                    if (generation == Volatile.Read(ref _runGeneration))
-                        Report(L(settings, "已停止", "Stopped"), false, false);
-                }
-                catch (Exception ex)
-                {
-                    _log?.Invoke($"test error: {ex}");
-                    Report(L(settings, "测试异常，已停止：" + ex.Message, "Test error, stopped: " + ex.Message), false, true);
-                }
-                finally
-                {
-                    if (generation == Volatile.Read(ref _runGeneration))
-                        _isRunning = false;
-                }
-            })
+                else RunLoopSync(settings, ct);
+                ct.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException)
             {
-                IsBackground = true,
-                Name = "MacroRunner-Test"
-            };
-            thread.Start();
+                message = L(settings, "已停止", "Stopped");
+            }
+            catch (Exception ex)
+            {
+                _log?.Invoke($"run error: {ex}");
+                message = L(settings, "执行异常，已停止：", "Error, stopped: ") + ex.Message;
+                error = true;
+            }
+            finally
+            {
+                lock (_lifecycle)
+                {
+                    // 清理完成前始终保持运行中；旧 UI 回调不再参与卸载。
+                    _gate.Stop();
+                    _cts = null;
+                    cts.Dispose();
+                    _isRunning = false;
+                    Report(message, false, error);
+                    finished.SetResult();
+                }
+            }
         }
 
         public void Dispose()
         {
-            _cts?.Cancel();
+            lock (_lifecycle)
+            {
+                _disposed = true;
+                _cts?.Cancel();
+            }
         }
 
         /// <summary>
@@ -227,72 +266,50 @@ namespace AoE4OverlayCS.Services
         /// 主循环（专用后台线程，全同步）。每轮动态读取重复次数与序列；
         /// 轮间倒计时以 250ms 粒度轮询，动态响应间隔修改。
         /// </summary>
-        private void RunLoopSync(AppSettings settings, CancellationToken ct, int generation)
+        private void RunLoopSync(AppSettings settings, CancellationToken ct)
         {
-            _threadRunGeneration = generation;
             var executed = 0;
-            try
+            while (true)
             {
-                while (true)
+                ct.ThrowIfCancellationRequested();
+
+                // 每轮动态读取重复次数（0 = 无限）
+                var repeats = Math.Clamp(settings.MacroRepeatCount, 0, MaxRepeatCount);
+                if (repeats > 0 && executed >= repeats) break;
+
+                // 每轮动态读取序列，修改在下一轮生效
+                var steps = ParseSequence(settings.MacroSequence);
+                if (steps.Count == 0)
                 {
-                    ct.ThrowIfCancellationRequested();
-
-                    // 每轮动态读取重复次数（0 = 无限）
-                    var repeats = Math.Clamp(settings.MacroRepeatCount, 0, MaxRepeatCount);
-                    if (repeats > 0 && executed >= repeats) break;
-
-                    // 每轮动态读取序列，修改在下一轮生效
-                    var steps = ParseSequence(settings.MacroSequence);
-                    if (steps.Count == 0)
-                    {
-                        Report(L(settings, "热键序列为空，已自动停止", "Key sequence is empty, stopped automatically"), false, true);
-                        return;
-                    }
-
-                    // 无限循环且开启 Shift 监控：大部分间隔只倒计时，不查 Shift。
-                    // 首轮没有间隔，仅当启动时 Shift 正按着才等待；后续轮次的检测在间隔结束前 1 秒才开始。
-                    if (repeats == 0 && settings.MacroMonitorShift)
-                    {
-                        if (executed == 0 || IsShiftDown())
-                            WaitShiftReleased(settings, ct);
-                    }
-                    else
-                    {
-                        WaitIdle(settings, ct);
-                        if (settings.MacroMonitorShift)
-                            WaitShiftReleased(settings, ct);
-                    }
-
-                    var roundSuffix = repeats > 0 ? $"/{repeats}" : "";
-                    Report(L(settings, $"正在发送按键（第 {executed + 1}{roundSuffix} 轮）",
-                                   $"Sending keys (round {executed + 1}{roundSuffix})"), true, false);
-                    ExecuteSequence(steps);
-                    executed++;
-
-                    if (repeats > 0 && executed >= repeats) break;
-
-                    if (repeats == 0 && settings.MacroMonitorShift)
-                        WaitIntervalWithLateShiftWatch(settings, executed, ct);
-                    else
-                        WaitInterval(settings, executed, ct);
+                    throw new InvalidOperationException(L(settings, "热键序列为空", "Key sequence is empty"));
                 }
-                Report(L(settings, "热键序列执行完成", "Macro sequence finished"), false, false);
-            }
-            catch (OperationCanceledException)
-            {
-                // 只回应本轮。快按 F10 又启动了新一轮时，旧线程不能把新一轮的状态改成“已停止”。
-                if (generation == Volatile.Read(ref _runGeneration))
-                    Report(L(settings, "已停止", "Stopped"), false, false);
-            }
-            catch (Exception ex)
-            {
-                _log?.Invoke($"run error: {ex}");
-                Report(L(settings, "执行异常，已停止：" + ex.Message, "Error, stopped: " + ex.Message), false, true);
-            }
-            finally
-            {
-                if (generation == Volatile.Read(ref _runGeneration))
-                    _isRunning = false;
+
+                // 无限循环且开启 Shift 监控：大部分间隔只倒计时，不查 Shift。
+                // 首轮没有间隔，仅当启动时 Shift 正按着才等待；后续轮次的检测在间隔结束前 1 秒才开始。
+                if (repeats == 0 && settings.MacroMonitorShift)
+                {
+                    if (executed == 0 || IsShiftDown())
+                        WaitShiftReleased(settings, ct);
+                }
+                else
+                {
+                    WaitIdle(settings, ct);
+                    if (settings.MacroMonitorShift)
+                        WaitShiftReleased(settings, ct);
+                }
+
+                var roundSuffix = repeats > 0 ? $"/{repeats}" : "";
+                Report(L(settings, $"正在发送按键（第 {executed + 1}{roundSuffix} 轮）",
+                               $"Sending keys (round {executed + 1}{roundSuffix})"), true, false);
+                ExecuteSequence(steps, ct);
+                executed++;
+
+                if (repeats > 0 && executed >= repeats) break;
+
+                if (repeats == 0 && settings.MacroMonitorShift)
+                    WaitIntervalWithLateShiftWatch(settings, executed, ct);
+                else
+                    WaitInterval(settings, executed, ct);
             }
         }
 
@@ -444,14 +461,14 @@ namespace AoE4OverlayCS.Services
             || (GetAsyncKeyState(VK_RSHIFT) & 0x8000) != 0;
 
         /// <summary>同步执行一轮按键序列；屏蔽窗口从首键起算共 GateWindowMs（注入后补足），期间键鼠输入被吞，保证原子完成。</summary>
-        private void ExecuteSequence(List<MacroKeyStep> steps)
+        private void ExecuteSequence(List<MacroKeyStep> steps, CancellationToken ct)
         {
-            if (_gate == null)
+            // 与 Stop 串行决定本轮是否开始；一旦开始，不在轮内取消。
+            lock (_lifecycle)
             {
-                foreach (var step in steps) PressKey(step);
-                return;
+                ct.ThrowIfCancellationRequested();
+                _gate.SetSuppress(true);
             }
-            _gate.SetSuppress(true);
             try
             {
                 var deadline = Environment.TickCount64 + GateWindowMs;
@@ -473,18 +490,31 @@ namespace AoE4OverlayCS.Services
             var shift = (step.Modifiers & ModifierKeys.Shift) != 0;
             var alt = (step.Modifiers & ModifierKeys.Alt) != 0;
 
-            if (ctrl) SendKey(VK_CONTROL, false);
-            if (shift) SendKey(VK_SHIFT, false);
-            if (alt) SendKey(VK_MENU, false);
-
-            SendKey(vk, false);
-            Thread.Sleep(HoldMs);
-            SendKey(vk, true);
-
-            if (alt) SendKey(VK_MENU, true);
-            if (shift) SendKey(VK_SHIFT, true);
-            if (ctrl) SendKey(VK_CONTROL, true);
-
+            // 发送异常时也逐个尝试释放本步按下的键，再交还输入。
+            var pressed = new List<uint>(4);
+            try
+            {
+                void Down(uint key)
+                {
+                    pressed.Add(key);
+                    _sendKey(key, false);
+                }
+                if (ctrl) Down(VK_CONTROL);
+                if (shift) Down(VK_SHIFT);
+                if (alt) Down(VK_MENU);
+                Down(vk);
+                Thread.Sleep(HoldMs);
+            }
+            finally
+            {
+                Exception? releaseError = null;
+                for (var i = pressed.Count - 1; i >= 0; i--)
+                {
+                    try { _sendKey(pressed[i], true); }
+                    catch (Exception ex) { releaseError ??= ex; }
+                }
+                if (releaseError != null) throw releaseError;
+            }
             Thread.Sleep(GapMs);
         }
 
@@ -564,7 +594,8 @@ namespace AoE4OverlayCS.Services
                     ki = new KEYBDINPUT { wVk = (ushort)vk, wScan = (ushort)scan, dwFlags = flags, time = 0, dwExtraInfo = IntPtr.Zero }
                 }
             };
-            SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>());
+            if (SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>()) != 1)
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Keyboard input injection failed (check target window permissions)");
         }
 
         // 方向键、Insert/Delete、Win、数字小键盘除号等为扩展键，需要 EXTENDEDKEY 标志

@@ -65,6 +65,7 @@ namespace AoE4OverlayCS.ViewModels
         private readonly GlobalHotkeyService _globalHotkeyMacro;
         private readonly MacroRunnerService _macroRunner;
         private readonly InputGateService _inputGate;
+        private int _macroStatusRevision;
         private OverlayWindow? _overlayWindow;
         private readonly object _audienceLock = new();
         private bool _mainWindowVisible = true;
@@ -164,7 +165,7 @@ namespace AoE4OverlayCS.ViewModels
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
             _globalHotkey = new GlobalHotkeyService();
             _globalHotkeyPosition = new GlobalHotkeyService();
-            // 输入闸门钩子不常驻：仅宏运行期间挂载（引擎 Start 挂载，结束/停止时经 OnMacroStatus 卸载）
+            // 输入闸门仅宏运行期间挂载；安装与收尾卸载均由引擎负责。
             _inputGate = new InputGateService();
             _globalHotkeyMacro = new GlobalHotkeyService();
             _macroRunner = new MacroRunnerService(msg => {
@@ -381,14 +382,15 @@ namespace AoE4OverlayCS.ViewModels
         {
             try
             {
+                var revision = System.Threading.Interlocked.Increment(ref _macroStatusRevision);
                 // BeginInvoke：宏循环线程永不因 UI 繁忙而阻塞
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
                 {
+                    if (revision != System.Threading.Volatile.Read(ref _macroStatusRevision)) return;
                     MacroStatusText = status.Message;
                     MacroStatusBrush = status.IsError ? System.Windows.Media.Brushes.OrangeRed
                                    : status.IsRunning ? System.Windows.Media.Brushes.LimeGreen
                                    : System.Windows.Media.Brushes.Gray;
-                    if (!status.IsRunning) _inputGate.Stop(); // 宏结束即卸载输入闸门钩子，恢复全系统零开销
                 });
             }
             catch { /* Dispatcher 可能正在关闭 */ }
@@ -469,6 +471,14 @@ namespace AoE4OverlayCS.ViewModels
                 || trigger == NormalizeHotkeyString(Settings.OverlayPositionHotkey);
         }
 
+        public async Task StopAsync()
+        {
+            var completion = _macroRunner.StopAsync(Settings);
+            _macroRunner.Dispose(); // 退出等待期间拒绝任何热键重新启动
+            await completion;
+            Stop();
+        }
+
         public void Stop()
         {
             _translation.Stop();
@@ -478,7 +488,6 @@ namespace AoE4OverlayCS.ViewModels
             _globalHotkeyPosition.Stop();
             _globalHotkeyMacro.Stop();
             _macroRunner.Stop(Settings); // 应用退出策略：程序退出时自动停止热键自动化
-            _inputGate.Stop(); // 卸载输入闸门钩子
             _overlayWindow?.SaveState();
             _overlayWindow?.Close();
             CommitSearchIndex();

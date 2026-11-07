@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace AoE4OverlayCS.Services
@@ -14,13 +15,26 @@ namespace AoE4OverlayCS.Services
     {
         private const int WH_KEYBOARD_LL = 13;
         private const int WH_MOUSE_LL = 14;
-        private const int INJECTED_FLAG = 0x10; // 键盘 LLKHF_INJECTED 与鼠标 MSLLHF_INJECTED 同为 0x10
+        private const int LLKHF_INJECTED = 0x10;
+        private const int LLMHF_INJECTED = 0x01;
 
         private IntPtr _kbHookId = IntPtr.Zero;
         private IntPtr _mouseHookId = IntPtr.Zero;
         private LowLevelProc? _kbProc;
         private LowLevelProc? _mouseProc;
         private volatile bool _suppressing;
+
+        private readonly Func<int, LowLevelProc, IntPtr, uint, IntPtr> _installHook;
+        private readonly Func<IntPtr, bool> _unhook;
+
+        public InputGateService() : this(SetWindowsHookEx, UnhookWindowsHookEx) { }
+
+        internal InputGateService(Func<int, LowLevelProc, IntPtr, uint, IntPtr> installHook,
+                                  Func<IntPtr, bool> unhook)
+        {
+            _installHook = installHook;
+            _unhook = unhook;
+        }
 
         public bool Suppressing => _suppressing;
 
@@ -32,24 +46,47 @@ namespace AoE4OverlayCS.Services
             using var curModule = curProcess.MainModule;
             var hMod = GetModuleHandle(curModule?.ModuleName);
 
-            _kbProc = KeyboardHookCallback;
-            _kbHookId = SetWindowsHookEx(WH_KEYBOARD_LL, _kbProc, hMod, 0);
-            _mouseProc = MouseHookCallback;
-            _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseProc, hMod, 0);
+            try
+            {
+                _kbProc = KeyboardHookCallback;
+                _kbHookId = _installHook(WH_KEYBOARD_LL, _kbProc, hMod, 0);
+                if (_kbHookId == IntPtr.Zero)
+                {
+                    var error = Marshal.GetLastWin32Error();
+                    throw new Win32Exception(error, $"Keyboard input hook installation failed ({error}: {new Win32Exception(error).Message})");
+                }
+                _mouseProc = MouseHookCallback;
+                _mouseHookId = _installHook(WH_MOUSE_LL, _mouseProc, hMod, 0);
+                if (_mouseHookId == IntPtr.Zero)
+                {
+                    var error = Marshal.GetLastWin32Error();
+                    throw new Win32Exception(error, $"Mouse input hook installation failed ({error}: {new Win32Exception(error).Message})");
+                }
+            }
+            catch
+            {
+                Stop();
+                throw;
+            }
         }
 
         /// <summary>卸载钩子并确保屏蔽窗口关闭（幂等）。</summary>
         public void Stop()
         {
             _suppressing = false;
-            if (_kbHookId != IntPtr.Zero) { UnhookWindowsHookEx(_kbHookId); _kbHookId = IntPtr.Zero; }
-            if (_mouseHookId != IntPtr.Zero) { UnhookWindowsHookEx(_mouseHookId); _mouseHookId = IntPtr.Zero; }
+            if (_kbHookId != IntPtr.Zero) { _unhook(_kbHookId); _kbHookId = IntPtr.Zero; }
+            if (_mouseHookId != IntPtr.Zero) { _unhook(_mouseHookId); _mouseHookId = IntPtr.Zero; }
             _kbProc = null;
             _mouseProc = null;
         }
 
         /// <summary>开关屏蔽窗口（宏注入线程调用）。</summary>
-        public void SetSuppress(bool value) => _suppressing = value;
+        public void SetSuppress(bool value)
+        {
+            if (value && (_kbHookId == IntPtr.Zero || _mouseHookId == IntPtr.Zero))
+                throw new InvalidOperationException("Input protection is not installed");
+            _suppressing = value;
+        }
 
         public void Dispose() => Stop();
 
@@ -72,10 +109,10 @@ namespace AoE4OverlayCS.Services
         }
 
         private static bool IsPhysicalKeyboardEvent(IntPtr lParam) =>
-            (Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam).flags & INJECTED_FLAG) == 0;
+            (Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam).flags & LLKHF_INJECTED) == 0;
 
         private static bool IsPhysicalMouseEvent(IntPtr lParam) =>
-            (Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam).flags & INJECTED_FLAG) == 0;
+            (Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam).flags & LLMHF_INJECTED) == 0;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct KBDLLHOOKSTRUCT
@@ -104,7 +141,7 @@ namespace AoE4OverlayCS.Services
             public IntPtr dwExtraInfo;
         }
 
-        private delegate IntPtr LowLevelProc(int nCode, IntPtr wParam, IntPtr lParam);
+        internal delegate IntPtr LowLevelProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelProc lpfn, IntPtr hMod, uint dwThreadId);

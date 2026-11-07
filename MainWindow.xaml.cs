@@ -16,6 +16,7 @@ namespace AoE4OverlayCS
     {
         private NotifyIcon? _notifyIcon;
         private bool _isExitRequested;
+        private bool _isExitPending;
 
         public MainWindow()
         {
@@ -73,9 +74,7 @@ namespace AoE4OverlayCS
                 contextMenu.Items.Add("Open", null, (s, e) => ShowFromTray());
                 contextMenu.Items.Add("Exit", null, (s, e) => {
                     if (_notifyIcon != null) _notifyIcon.Visible = false;
-                    _isExitRequested = true;
-                    if (DataContext is MainViewModel vm) vm.Stop();
-                    Close();
+                    RequestExit();
                 });
                 if (_notifyIcon != null) _notifyIcon.ContextMenuStrip = contextMenu;
             }
@@ -111,10 +110,15 @@ namespace AoE4OverlayCS
             if (DataContext is MainViewModel vm) vm.SetMainWindowVisible(true);
         }
 
-        private void Exit_Click(object sender, RoutedEventArgs e)
+        private void Exit_Click(object sender, RoutedEventArgs e) => RequestExit();
+
+        private async void RequestExit()
         {
+            if (_isExitPending) return;
+            _isExitPending = true;
+            // 保持消息循环运行，等当前轮释放按键并卸载输入钩子后再退出。
+            if (DataContext is MainViewModel vm) await vm.StopAsync();
             _isExitRequested = true;
-            if (DataContext is MainViewModel vm) vm.Stop();
             Close();
         }
 

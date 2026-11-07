@@ -260,7 +260,9 @@ It is used to:
 ### Macro Automation (2.0 New)
 
 - Key-macro automation: press the trigger hotkey to start/stop looping a key sequence
-- Combos (Ctrl+A) and digit keys (control groups), recordable or manual input with visual key chips
+- Combos (Ctrl+A) and digit keys (control groups), recordable or manual input with visual key chips; recording captures keyboard keys only, not mouse actions
+- Both looping and Test block physical keyboard/mouse input (including movement/clicks/wheel) during each round for at least 500 ms, or until a longer sequence finishes. Input is allowed between rounds. Blocked input is discarded, not replayed; hook installation failure prevents sending and reports an error
+- Stop or exit lets an already-started round finish and release simulated keys before restoring input. Restart and Test are refused during cleanup to prevent overlapping sequences
 - Interval slider is 1-30 s. A larger value such as 100 can be typed; the slider then stays at its maximum. Typing applies immediately. Repeat 1-99 times or infinite; runtime changes apply immediately
 - Input idle wait: sending is deferred while keyboard/mouse is in use, so gameplay is not disrupted
 - Shift monitor (2.1.1): when checked, an infinite loop checks Shift only during the last second of the interval; if held, it waits and sends the combo immediately on release, without an extra idle wait
