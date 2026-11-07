@@ -57,10 +57,13 @@ node tests/OverlayChecks/html-checks.cjs
 
 ## 项目截图
 
-<img width="1149" height="236" alt="overlay-preview-1" src="https://github.com/user-attachments/assets/e24325f7-cda0-432e-bdf5-1dbd8ce83d10" />
-<img width="972" height="245" alt="overlay-preview-2" src="https://github.com/user-attachments/assets/9be65e8d-ebb0-4341-8469-6cccc6c20b45" />
-<img width="845" height="635" alt="image" src="https://github.com/user-attachments/assets/956ad7ca-1a67-4f9e-b718-6307bdb29c00" />
-<img width="842" height="636" alt="image" src="https://github.com/user-attachments/assets/9e09304e-6b8c-47c6-b1e8-fdab989fe7a0" />
+<img width="843" height="1192" alt="aoe overlary-1" src="https://github.com/user-attachments/assets/a358cd75-07ca-457b-b728-f9c91d70d535" />
+<img width="603" height="606" alt="aoe overlary-6" src="https://github.com/user-attachments/assets/d3d058e5-c0fb-4344-8974-8f1ff9a4efd7" />
+<img width="570" height="637" alt="aoe overlary-5" src="https://github.com/user-attachments/assets/88f4b385-2d2f-4847-a73f-3d2a618c6fe9" />
+<img width="993" height="213" alt="aoe overlary-4" src="https://github.com/user-attachments/assets/90b051a8-da7c-489d-9383-ea5b12ecaefa" />
+<img width="844" height="951" alt="aoe overlary-3" src="https://github.com/user-attachments/assets/18eebbf1-52ca-455d-af75-146e3d86c12e" />
+<img width="839" height="514" alt="aoe overlary-2" src="https://github.com/user-attachments/assets/f1bff011-5635-4e48-a6b4-b5ecf88d1a9d" />
+
 
 
 ## 版本信息
