@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AoE4OverlayCS.Services
 {
-    public class ApiCheckerService
+    public class ApiCheckerService : IDisposable
     {
         private readonly SettingsService _settings;
         private readonly HttpClient _http;
@@ -160,6 +160,14 @@ namespace AoE4OverlayCS.Services
         public void Stop()
         {
             _cts?.Cancel();
+        }
+
+        public void Dispose()
+        {
+            Stop();
+            _cts?.Dispose();
+            _cts = null;
+            _http.Dispose();
         }
 
         public void ResetMatchCursor()

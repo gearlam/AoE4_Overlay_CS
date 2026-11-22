@@ -9,7 +9,7 @@ Its main goals are:
 - Display match information through an in-game overlay
 - Expose a local WebSocket data channel for HTML overlay or external viewers
 - Support Chinese/English UI switching, localized map names, hotkey toggle, drag/resize overlay positioning, and searchable ID history
-- 2.1.1: optional Shift monitoring for the infinite macro loop. Shift is checked only during the last second of the interval; if held, the combo waits and fires immediately on release
+- Optional Shift monitoring for the infinite macro loop starts during the last second of the interval; if held, sending waits for release and still requires the configured input idle time
 - 2.2.1: switch polling between AOE4 and AOE2 on the settings page. AOE2 uses the official community API, lists ranked matches, and translates map names from the game's own Chinese strings
 
 Chinese documentation: [`README.md`](./README.md)
@@ -46,13 +46,13 @@ Prompts use the currently selected AOE2 / AOE4 context, including civilizations,
 ### Verification
 
 ```powershell
-dotnet run --project tests/TranslationChecks/TranslationChecks.csproj -c Release
 dotnet build AoE4OverlayCS.csproj -c Release
-dotnet run --project tests/OverlayChecks/OverlayChecks.csproj -c Release
-node tests/OverlayChecks/html-checks.cjs
+dotnet run --project tests/HotkeyChecks/HotkeyChecks.csproj -c Release
+dotnet run --project tests/MacroChecks/MacroChecks.csproj -c Release
+dotnet run --project tests/RecorderChecks/RecorderChecks.csproj -c Release
 ```
 
-Checks use simulated HTTP and do not require a real API key or consume model quota.
+Checks register no real hotkeys, inject no input and require no API key.
 
 ## Screenshots
 
@@ -62,10 +62,9 @@ Checks use simulated HTTP and do not require a real API key or consume model quo
 
 ## Version
 
-- Current version: `3.0.0`
+- Current version: `3.0.1`
 - Program name: `AoE Overlay` (`AoEOverlay.exe`)
 - Target frameworks: `net10.0-windows`
-- Full map and civilization index: [`docs/全量图谱索引.md`](./docs/全量图谱索引.md)
 
 ## Project Purpose
 
@@ -260,12 +259,12 @@ It is used to:
 ### Macro Automation (2.0 New)
 
 - Key-macro automation: press the trigger hotkey to start/stop looping a key sequence
-- Combos (Ctrl+A) and digit keys (control groups), recordable or manual input with visual key chips; recording captures keyboard keys only, not mouse actions
+- Combos (Ctrl+A), digit keys (control groups), and left/right mouse clicks support recording or manual input with visual action chips. After Record, press keys or left/right click in the blue recording area; the sequence uses `MouseLeft` / `MouseRight`. Coordinates are not recorded; playback clicks at the current pointer. IME is disabled during recording to prevent composition text from entering the sequence
 - Both looping and Test block physical keyboard/mouse input (including movement/clicks/wheel) during each round for at least 500 ms, or until a longer sequence finishes. Input is allowed between rounds. Blocked input is discarded, not replayed; hook installation failure prevents sending and reports an error
 - Stop or exit lets an already-started round finish and release simulated keys before restoring input. Restart and Test are refused during cleanup to prevent overlapping sequences
 - Interval slider is 1-30 s. A larger value such as 100 can be typed; the slider then stays at its maximum. Typing applies immediately. Repeat 1-99 times or infinite; runtime changes apply immediately
-- Input idle wait: sending is deferred while keyboard/mouse is in use, so gameplay is not disrupted
-- Shift monitor (2.1.1): when checked, an infinite loop checks Shift only during the last second of the interval; if held, it waits and sends the combo immediately on release, without an extra idle wait
+- Input idle wait applies to both loops and Test: sending waits for the configured idle time, including while a key or mouse button is held. 0 disables idle waiting. Failure to read idle time stops sending and reports an error
+- Shift monitor: waits while Shift is held; infinite loops start checking in the last second of the interval. After release, the configured input idle time must still be satisfied; Shift monitoring never bypasses idle detection
 - Background SendInput scan-code injection without window focus switch; trigger hotkey conflict detection
 - Live status display and a Test button
 

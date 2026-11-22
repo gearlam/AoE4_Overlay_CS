@@ -60,9 +60,7 @@ namespace AoE4OverlayCS.ViewModels
         private readonly TranslationModule _translation;
         private readonly ApiCheckerService _apiChecker;
         private readonly WebSocketServerService _wsServer;
-        private readonly GlobalHotkeyService _globalHotkey;
-        private readonly GlobalHotkeyService _globalHotkeyPosition;
-        private readonly GlobalHotkeyService _globalHotkeyMacro;
+        private readonly HotkeyCoordinator _hotkeys;
         private readonly MacroRunnerService _macroRunner;
         private readonly InputGateService _inputGate;
         private int _macroStatusRevision;
@@ -163,11 +161,9 @@ namespace AoE4OverlayCS.ViewModels
             _translation = new TranslationModule(_settingsService.Current);
             _apiChecker = new ApiCheckerService(_settingsService);
             _wsServer = new WebSocketServerService(_settingsService.Current.WebsocketPort);
-            _globalHotkey = new GlobalHotkeyService();
-            _globalHotkeyPosition = new GlobalHotkeyService();
             // 输入闸门仅宏运行期间挂载；安装与收尾卸载均由引擎负责。
             _inputGate = new InputGateService();
-            _globalHotkeyMacro = new GlobalHotkeyService();
+            _hotkeys = new HotkeyCoordinator();
             _macroRunner = new MacroRunnerService(msg => {
                 try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} macro {msg}{Environment.NewLine}"); } catch { }
             }, _inputGate);
@@ -214,144 +210,17 @@ namespace AoE4OverlayCS.ViewModels
         
         public void UpdateHotkeyRegistration()
         {
-            try
+            // 总开关关闭：停止正在执行的宏，不注册触发热键
+            if (!Settings.MacroEnabled) _macroRunner.Stop(Settings);
+
+            _hotkeys.Update(Settings, ToggleOverlay, ChangeOverlayPosition, ToggleMacro);
+
+            if (_hotkeys.HasMacroConflict)
             {
-                HotkeyManager.Current.Remove("ToggleOverlay");
-                _globalHotkey.Stop();
-                if (!string.IsNullOrEmpty(Settings.OverlayHotkey))
-                {
-                    // Parse hotkey string
-                    var parts = Settings.OverlayHotkey.Split('+');
-                    ModifierKeys modifiers = ModifierKeys.None;
-                    Key key = Key.None;
-
-                    foreach (var part in parts)
-                    {
-                        if (Enum.TryParse(part, true, out Key k))
-                        {
-                             if (k == Key.LeftCtrl || k == Key.RightCtrl) modifiers |= ModifierKeys.Control;
-                             else if (k == Key.LeftShift || k == Key.RightShift) modifiers |= ModifierKeys.Shift;
-                             else if (k == Key.LeftAlt || k == Key.RightAlt) modifiers |= ModifierKeys.Alt;
-                             else key = k;
-                        }
-                        else if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase)) modifiers |= ModifierKeys.Control;
-                        else if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase)) modifiers |= ModifierKeys.Shift;
-                        else if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase)) modifiers |= ModifierKeys.Alt;
-                    }
-
-                    if (key != Key.None)
-                    {
-                        try
-                        {
-                            HotkeyManager.Current.Remove("ToggleOverlay");
-                            HotkeyManager.Current.AddOrReplace("ToggleOverlay", key, modifiers, (s, e) =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
-                                ToggleOverlay();
-                            });
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
-                        }
-                        catch (Exception ex)
-                        {
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed {Settings.OverlayHotkey} {ex}{Environment.NewLine}"); } catch { }
-                            _globalHotkey.Configure(Settings.OverlayHotkey, () =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed {Settings.OverlayHotkey}{Environment.NewLine}"); } catch { }
-                                ToggleOverlay();
-                            });
-                            _globalHotkey.Start();
-                        }
-                    }
-                }
-
-                // Position hotkey
-                HotkeyManager.Current.Remove("ToggleOverlayPosition");
-                _globalHotkeyPosition.Stop();
-                if (!string.IsNullOrEmpty(Settings.OverlayPositionHotkey))
-                {
-                    var posParts = Settings.OverlayPositionHotkey.Split('+');
-                    ModifierKeys posModifiers = ModifierKeys.None;
-                    Key posKey = Key.None;
-
-                    foreach (var part in posParts)
-                    {
-                        if (Enum.TryParse(part, true, out Key k))
-                        {
-                             if (k == Key.LeftCtrl || k == Key.RightCtrl) posModifiers |= ModifierKeys.Control;
-                             else if (k == Key.LeftShift || k == Key.RightShift) posModifiers |= ModifierKeys.Shift;
-                             else if (k == Key.LeftAlt || k == Key.RightAlt) posModifiers |= ModifierKeys.Alt;
-                             else posKey = k;
-                        }
-                        else if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Control;
-                        else if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Shift;
-                        else if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase)) posModifiers |= ModifierKeys.Alt;
-                    }
-
-                    if (posKey != Key.None)
-                    {
-                        try
-                        {
-                            HotkeyManager.Current.Remove("ToggleOverlayPosition");
-                            HotkeyManager.Current.AddOrReplace("ToggleOverlayPosition", posKey, posModifiers, (s, e) =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
-                                ChangeOverlayPosition();
-                            });
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
-                        }
-                        catch (Exception ex)
-                        {
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed position {Settings.OverlayPositionHotkey} {ex}{Environment.NewLine}"); } catch { }
-                            _globalHotkeyPosition.Configure(Settings.OverlayPositionHotkey, () =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed position {Settings.OverlayPositionHotkey}{Environment.NewLine}"); } catch { }
-                                ChangeOverlayPosition();
-                            });
-                            _globalHotkeyPosition.Start();
-                        }
-                    }
-                }
-                // Macro trigger hotkey（热键自动化触发热键）
-                HotkeyManager.Current.Remove("ToggleMacro");
-                _globalHotkeyMacro.Stop();
-                if (!Settings.MacroEnabled)
-                {
-                    // 总开关关闭：停止正在执行的宏，不注册触发热键
-                    _macroRunner.Stop(Settings);
-                }
-                else if (!string.IsNullOrEmpty(Settings.MacroTriggerHotkey))
-                {
-                    if (MacroTriggerHasConflict())
-                    {
-                        bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
-                        MacroStatusText = zh ? "触发热键与覆盖层热键冲突，未注册" : "Trigger hotkey conflicts with overlay hotkeys, not registered";
-                        MacroStatusBrush = System.Windows.Media.Brushes.OrangeRed;
-                    }
-                    else if (TryParseHotkey(Settings.MacroTriggerHotkey, out var macroKey, out var macroModifiers) && macroKey != Key.None)
-                    {
-                        try
-                        {
-                            HotkeyManager.Current.AddOrReplace("ToggleMacro", macroKey, macroModifiers, (s, e) =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} pressed macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
-                                ToggleMacro();
-                            });
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} registered macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
-                        }
-                        catch (Exception ex)
-                        {
-                            try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} register-failed macro {Settings.MacroTriggerHotkey} {ex}{Environment.NewLine}"); } catch { }
-                            _globalHotkeyMacro.Configure(Settings.MacroTriggerHotkey, () =>
-                            {
-                                try { File.AppendAllText(LogPaths.Get("hotkey.log"), $"{DateTime.Now:O} hook-pressed macro {Settings.MacroTriggerHotkey}{Environment.NewLine}"); } catch { }
-                                ToggleMacro();
-                            });
-                            _globalHotkeyMacro.Start();
-                        }
-                    }
-                }
+                bool zh = string.Equals(Settings.Language, "zh-CN", StringComparison.OrdinalIgnoreCase);
+                MacroStatusText = zh ? "触发热键与覆盖层热键冲突，未注册" : "Trigger hotkey conflicts with overlay hotkeys, not registered";
+                MacroStatusBrush = System.Windows.Media.Brushes.OrangeRed;
             }
-            catch { /* Ignore invalid hotkeys */ }
             _translation.RefreshHotkey();
         }
 
@@ -413,64 +282,6 @@ namespace AoE4OverlayCS.ViewModels
             }
         }
 
-        /// <summary>解析热键字符串为（主键, 修饰键）；无法解析出主键时返回 false。</summary>
-        private static bool TryParseHotkey(string hotkey, out Key key, out ModifierKeys modifiers)
-        {
-            key = Key.None;
-            modifiers = ModifierKeys.None;
-            if (string.IsNullOrWhiteSpace(hotkey)) return false;
-
-            foreach (var part in hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                if (part.Equals("Ctrl", StringComparison.OrdinalIgnoreCase) || part.Equals("Control", StringComparison.OrdinalIgnoreCase))
-                {
-                    modifiers |= ModifierKeys.Control;
-                    continue;
-                }
-                if (part.Equals("Shift", StringComparison.OrdinalIgnoreCase))
-                {
-                    modifiers |= ModifierKeys.Shift;
-                    continue;
-                }
-                if (part.Equals("Alt", StringComparison.OrdinalIgnoreCase))
-                {
-                    modifiers |= ModifierKeys.Alt;
-                    continue;
-                }
-                if (Enum.TryParse(part, true, out Key k))
-                {
-                    if (k == Key.LeftCtrl || k == Key.RightCtrl) { modifiers |= ModifierKeys.Control; continue; }
-                    if (k == Key.LeftShift || k == Key.RightShift) { modifiers |= ModifierKeys.Shift; continue; }
-                    if (k == Key.LeftAlt || k == Key.RightAlt) { modifiers |= ModifierKeys.Alt; continue; }
-                    key = k;
-                }
-            }
-            return key != Key.None;
-        }
-
-        /// <summary>热键字符串归一化为 "Ctrl+Shift+Alt+主键" 形式，用于冲突比较。</summary>
-        public static string NormalizeHotkeyString(string? hotkey)
-        {
-            if (string.IsNullOrWhiteSpace(hotkey)) return "";
-            if (!TryParseHotkey(hotkey, out var key, out var modifiers) || key == Key.None) return "";
-
-            var sb = new StringBuilder();
-            if ((modifiers & ModifierKeys.Control) != 0) sb.Append("Ctrl+");
-            if ((modifiers & ModifierKeys.Shift) != 0) sb.Append("Shift+");
-            if ((modifiers & ModifierKeys.Alt) != 0) sb.Append("Alt+");
-            sb.Append(key.ToString());
-            return sb.ToString();
-        }
-
-        /// <summary>宏触发热键是否与覆盖层显示/位置热键冲突。</summary>
-        public bool MacroTriggerHasConflict()
-        {
-            var trigger = NormalizeHotkeyString(Settings.MacroTriggerHotkey);
-            if (trigger.Length == 0) return false;
-            return trigger == NormalizeHotkeyString(Settings.OverlayHotkey)
-                || trigger == NormalizeHotkeyString(Settings.OverlayPositionHotkey);
-        }
-
         public async Task StopAsync()
         {
             var completion = _macroRunner.StopAsync(Settings);
@@ -483,10 +294,9 @@ namespace AoE4OverlayCS.ViewModels
         {
             _translation.Stop();
             _apiChecker.Stop();
+            _apiChecker.Dispose();
             _wsServer.Stop();
-            _globalHotkey.Stop();
-            _globalHotkeyPosition.Stop();
-            _globalHotkeyMacro.Stop();
+            _hotkeys.Dispose();
             _macroRunner.Stop(Settings); // 应用退出策略：程序退出时自动停止热键自动化
             _overlayWindow?.SaveState();
             _overlayWindow?.Close();

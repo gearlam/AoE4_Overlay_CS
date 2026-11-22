@@ -1,7 +1,7 @@
 # AoE Overlay — Code Wiki
 
-> 程序名已改为 **AoE Overlay**（`AoEOverlay.exe`，版本 `3.0.0`），同时覆盖帝国时代 4 和帝国时代 2。
-> 源码命名空间仍为 `AoE4OverlayCS`，以免改动已有引用。全量地图与文明索引见 [`docs/全量图谱索引.md`](./docs/全量图谱索引.md)。
+> 程序名已改为 **AoE Overlay**（`AoEOverlay.exe`，版本 `3.0.1`），同时覆盖帝国时代 4 和帝国时代 2。
+> 源码命名空间仍为 `AoE4OverlayCS`，以免改动已有引用。
 > 下文架构说明仍以帝国时代 4 链路为主，帝国时代 2 为同一循环上的分支。
 
 ## 覆盖层 DLC 文明资源
@@ -76,7 +76,7 @@
 
 ### 版本信息
 
-- 程序集版本：`3.0.0`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
+- 程序集版本：`3.0.1`（`Version` / `AssemblyVersion` / `FileVersion` / `InformationalVersion` 四者同步，见 [AoE4OverlayCS.csproj](AoE4OverlayCS.csproj)）
 
 - 目标框架：`net10.0-windows`
 

@@ -37,14 +37,15 @@
     <sys:String x:Key="Settings_MacroEnableHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Press the trigger hotkey to start/stop; keeps running when minimized to tray, stops automatically on app exit</sys:String>
     <sys:String x:Key="Settings_MacroTriggerLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Trigger hotkey:</sys:String>
     <sys:String x:Key="Settings_MacroSequenceLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Key sequence:</sys:String>
-    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Manual format: H+Q+Q+Q, combos like Ctrl+A, digits for control groups; after clicking Record, keys append in order, Esc finishes, Backspace removes the last. To minimize disruption use a control group for the TC and re-select your army, e.g. 4+Q+1</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Format: H+Q+MouseLeft+MouseRight; supports Ctrl+A and digits. After Record, press keys or left/right click in the blue recording area. Esc finishes; Backspace removes the last action. Mouse positions are not recorded; playback clicks at the current pointer</sys:String>
     <sys:String x:Key="Settings_MacroRecordButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Record</sys:String>
     <sys:String x:Key="Settings_MacroClearButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Clear</sys:String>
     <sys:String x:Key="Settings_MacroIntervalLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Interval (s):</sys:String>
     <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Input idle wait (ms):</sys:String>
+    <sys:String x:Key="Settings_MacroRecordingHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Recording: press keys or left/right click here (no positions recorded); Esc finishes, Backspace removes the last action</sys:String>
     <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Delays sending while keyboard/mouse is in use; 0 = no idle wait</sys:String>
     <sys:String x:Key="Settings_MacroShiftLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Monitor Shift:</sys:String>
-    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">When checked, an infinite loop checks Shift only during the last second of the interval; if held, it waits and sends the combo as soon as Shift is released</sys:String>
+    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Waits while Shift is held; infinite loops start checking in the last second of the interval. After release, the idle-wait setting must still be satisfied</sys:String>
     <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Repeat count:</sys:String>
     <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Infinite loop</sys:String>
     <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Test</sys:String>
@@ -91,6 +92,7 @@
     <sys:String x:Key="Tr_Done" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Translated and saved to local history.</sys:String>
     <sys:String x:Key="Tr_Cancelled" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Request cancelled.</sys:String>
     <sys:String x:Key="Tr_Copied" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Copied. Switch back to the game to paste.</sys:String>
+    <sys:String x:Key="Tr_CopiedShort" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Copied ✓</sys:String>
     <sys:String x:Key="Tr_Error" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Operation failed:</sys:String>
     <sys:String x:Key="Tr_StorageError" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Local storage failed. Check translation files and directory permissions:</sys:String>
     <sys:String x:Key="Tr_InvalidHotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">Invalid hotkey. Use F1–F24 or a Ctrl/Alt/Shift combination.</sys:String>

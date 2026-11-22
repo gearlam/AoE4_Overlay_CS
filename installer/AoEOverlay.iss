@@ -1,5 +1,5 @@
 #define MyAppName "AoE Overlay"
-#define MyAppVersion "3.0.0"
+#define MyAppVersion "3.0.1"
 #define MyAppExeName "AoEOverlay.exe"
 #define PublishDir "D:\bak\tttttt\AoE4_Overlay_CS\bin\Release\net10.0-windows\win-x64\publish"
 

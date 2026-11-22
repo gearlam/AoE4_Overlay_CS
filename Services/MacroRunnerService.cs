@@ -11,8 +11,8 @@ namespace AoE4OverlayCS.Services
     /// <summary>宏运行状态通知：消息 + 是否运行中 + 是否为错误。</summary>
     public sealed record MacroRunStatus(string Message, bool IsRunning, bool IsError);
 
-    /// <summary>热键序列中的单步：主键 + 修饰键。</summary>
-    public sealed record MacroKeyStep(Key Key, ModifierKeys Modifiers);
+    /// <summary>热键序列中的单步：键盘主键或鼠标按钮 + 修饰键。</summary>
+    public sealed record MacroKeyStep(Key Key, ModifierKeys Modifiers, MouseButton? MouseButton = null);
 
     /// <summary>
     /// 按键精灵式热键自动化引擎：
@@ -46,6 +46,9 @@ namespace AoE4OverlayCS.Services
         private readonly Action<string>? _log;
         private readonly InputGateService _gate;
         private readonly Action<uint, bool> _sendKey;
+        private readonly Action<MouseButton, bool> _sendMouse;
+        private readonly Func<int> _getIdleMs;
+        private readonly Func<bool> _isShiftDown;
 
         public bool IsRunning => _isRunning;
 
@@ -55,11 +58,16 @@ namespace AoE4OverlayCS.Services
         public MacroRunnerService(Action<string>? log = null, InputGateService? gate = null)
             : this(log, gate ?? new InputGateService(), SendKey) { }
 
-        internal MacroRunnerService(Action<string>? log, InputGateService gate, Action<uint, bool> sendKey)
+        internal MacroRunnerService(Action<string>? log, InputGateService gate, Action<uint, bool> sendKey,
+                                    Action<MouseButton, bool>? sendMouse = null, Func<int>? getIdleMs = null,
+                                    Func<bool>? isShiftDown = null)
         {
             _log = log;
             _gate = gate;
             _sendKey = sendKey;
+            _sendMouse = sendMouse ?? SendMouse;
+            _getIdleMs = getIdleMs ?? GetIdleMs;
+            _isShiftDown = isShiftDown ?? IsShiftDown;
         }
 
         /// <summary>启动循环；必须在有消息循环的 UI 线程调用。</summary>
@@ -146,7 +154,7 @@ namespace AoE4OverlayCS.Services
             {
                 if (testSteps != null)
                 {
-                    WaitShiftReleased(settings, ct);
+                    WaitForInputReady(settings, ct);
                     Report(L(settings, "测试：正在向当前焦点窗口发送按键…", "Test: sending keys to the focused window..."), true, false);
                     ExecuteSequence(testSteps, ct);
                 }
@@ -208,6 +216,15 @@ namespace AoE4OverlayCS.Services
                     continue;
                 }
 
+                if (token.Equals("MouseLeft", StringComparison.OrdinalIgnoreCase) ||
+                    token.Equals("MouseRight", StringComparison.OrdinalIgnoreCase))
+                {
+                    steps.Add(new MacroKeyStep(Key.None, pending,
+                        token.Equals("MouseLeft", StringComparison.OrdinalIgnoreCase) ? MouseButton.Left : MouseButton.Right));
+                    pending = ModifierKeys.None;
+                    continue;
+                }
+
                 if (token.Length == 1 && token[0] >= '0' && token[0] <= '9')
                 {
                     // 数字键：映射到主键盘数字（常用作游戏控制组编队号，如 4+Q+1）
@@ -258,7 +275,7 @@ namespace AoE4OverlayCS.Services
             if ((step.Modifiers & ModifierKeys.Control) != 0) sb.Append("Ctrl+");
             if ((step.Modifiers & ModifierKeys.Shift) != 0) sb.Append("Shift+");
             if ((step.Modifiers & ModifierKeys.Alt) != 0) sb.Append("Alt+");
-            sb.Append(KeyToDisplay(step.Key));
+            sb.Append(step.MouseButton is { } mouse ? (mouse == MouseButton.Left ? "MouseLeft" : "MouseRight") : KeyToDisplay(step.Key));
             return sb.ToString();
         }
 
@@ -284,19 +301,8 @@ namespace AoE4OverlayCS.Services
                     throw new InvalidOperationException(L(settings, "热键序列为空", "Key sequence is empty"));
                 }
 
-                // 无限循环且开启 Shift 监控：大部分间隔只倒计时，不查 Shift。
-                // 首轮没有间隔，仅当启动时 Shift 正按着才等待；后续轮次的检测在间隔结束前 1 秒才开始。
-                if (repeats == 0 && settings.MacroMonitorShift)
-                {
-                    if (executed == 0 || IsShiftDown())
-                        WaitShiftReleased(settings, ct);
-                }
-                else
-                {
-                    WaitIdle(settings, ct);
-                    if (settings.MacroMonitorShift)
-                        WaitShiftReleased(settings, ct);
-                }
+                // Shift 监控只优化轮间检测，不能绕过每轮发送前的操作避让。
+                WaitForInputReady(settings, ct);
 
                 var roundSuffix = repeats > 0 ? $"/{repeats}" : "";
                 Report(L(settings, $"正在发送按键（第 {executed + 1}{roundSuffix} 轮）",
@@ -332,17 +338,17 @@ namespace AoE4OverlayCS.Services
                 var watchAtMs = targetMs - leadMs;
                 var inWatch = settings.MacroMonitorShift && elapsedMs >= watchAtMs;
 
-                if (inWatch && IsShiftDown())
+                if (inWatch && _isShiftDown())
                 {
                     if (!shiftReported)
                     {
                         shiftReported = true;
-                        Report(L(settings, "检测到 Shift 正在使用，松开后立即发送组合键…",
-                                       "Shift is in use, sending combo as soon as it is released..."), true, false);
+                        Report(L(settings, "检测到 Shift 正在使用，等待松开并满足操作避让…",
+                                       "Shift is in use, waiting for release and input idle..."), true, false);
                     }
                     Thread.Sleep(ShiftWatchPollMs);
                     ct.ThrowIfCancellationRequested();
-                    if (!settings.MacroMonitorShift || !IsShiftDown()) return;
+                    if (!settings.MacroMonitorShift || !_isShiftDown()) return;
                     continue;
                 }
 
@@ -403,6 +409,16 @@ namespace AoE4OverlayCS.Services
             return (long)seconds * 1000L;
         }
 
+        private void WaitForInputReady(AppSettings settings, CancellationToken ct)
+        {
+            do
+            {
+                WaitShiftReleased(settings, ct);
+                WaitIdle(settings, ct);
+            }
+            while (settings.MacroMonitorShift && _isShiftDown());
+        }
+
         /// <summary>操作避让：系统键鼠空闲不足阈值时推迟注入（每轮动态读取阈值，0 = 不避让）。</summary>
         private void WaitIdle(AppSettings settings, CancellationToken ct)
         {
@@ -412,7 +428,7 @@ namespace AoE4OverlayCS.Services
                 ct.ThrowIfCancellationRequested();
                 var quietMs = Math.Clamp(settings.MacroIdleWaitMs, 0, MaxIdleWaitMs);
                 if (quietMs <= 0) return;
-                var idleMs = GetIdleMs();
+                var idleMs = _getIdleMs();
                 if (idleMs >= quietMs) return;
                 if (!reported)
                 {
@@ -426,7 +442,7 @@ namespace AoE4OverlayCS.Services
 
         /// <summary>
         /// Shift 监控（勾选时生效，每轮动态读取）。
-        /// 没按住就马上返回；仍按住则避让，松开后立刻返回以便马上发送组合键。
+        /// 没按住就马上返回；仍按住则等待，松开后由调用方继续检查操作避让。
         /// 等待中取消勾选也立刻返回。
         /// </summary>
         private void WaitShiftReleased(AppSettings settings, CancellationToken ct)
@@ -436,13 +452,13 @@ namespace AoE4OverlayCS.Services
             {
                 ct.ThrowIfCancellationRequested();
                 if (!settings.MacroMonitorShift) return;
-                if (!IsShiftDown()) return;
+                if (!_isShiftDown()) return;
 
                 if (!reported)
                 {
                     reported = true;
-                    Report(L(settings, "检测到 Shift 正在使用，松开后立即发送组合键…",
-                                   "Shift is in use, sending combo as soon as it is released..."), true, false);
+                    Report(L(settings, "检测到 Shift 正在使用，等待松开并满足操作避让…",
+                                   "Shift is in use, waiting for release and input idle..."), true, false);
                 }
                 Thread.Sleep(ShiftWatchPollMs);
                 ct.ThrowIfCancellationRequested();
@@ -471,11 +487,12 @@ namespace AoE4OverlayCS.Services
             }
             try
             {
-                var deadline = Environment.TickCount64 + GateWindowMs;
+                var timer = System.Diagnostics.Stopwatch.StartNew();
                 foreach (var step in steps) PressKey(step);
-                // 注入完成后补足屏蔽窗口：序列刚结束的选择状态（已切回部队）不被紧随的玩家输入打断
-                var remain = deadline - Environment.TickCount64;
-                if (remain > 0) Thread.Sleep((int)remain);
+                // 注入完成后补足屏蔽窗口；使用单调高精度计时，避免系统 tick 粒度提前放行。
+                long remain;
+                while ((remain = GateWindowMs - timer.ElapsedMilliseconds) > 0)
+                    Thread.Sleep((int)remain);
             }
             finally { _gate.SetSuppress(false); }
         }
@@ -484,7 +501,7 @@ namespace AoE4OverlayCS.Services
         private void PressKey(MacroKeyStep step)
         {
             var vk = (uint)KeyInterop.VirtualKeyFromKey(step.Key);
-            if (vk == 0) return;
+            if (vk == 0 && step.MouseButton == null) return;
 
             var ctrl = (step.Modifiers & ModifierKeys.Control) != 0;
             var shift = (step.Modifiers & ModifierKeys.Shift) != 0;
@@ -492,6 +509,7 @@ namespace AoE4OverlayCS.Services
 
             // 发送异常时也逐个尝试释放本步按下的键，再交还输入。
             var pressed = new List<uint>(4);
+            var mousePressed = false;
             try
             {
                 void Down(uint key)
@@ -502,12 +520,22 @@ namespace AoE4OverlayCS.Services
                 if (ctrl) Down(VK_CONTROL);
                 if (shift) Down(VK_SHIFT);
                 if (alt) Down(VK_MENU);
-                Down(vk);
+                if (step.MouseButton is { } mouse)
+                {
+                    mousePressed = true;
+                    _sendMouse(mouse, false);
+                }
+                else Down(vk);
                 Thread.Sleep(HoldMs);
             }
             finally
             {
                 Exception? releaseError = null;
+                if (mousePressed)
+                {
+                    try { _sendMouse(step.MouseButton!.Value, true); }
+                    catch (Exception ex) { releaseError = ex; }
+                }
                 for (var i = pressed.Count - 1; i >= 0; i--)
                 {
                     try { _sendKey(pressed[i], true); }
@@ -598,6 +626,20 @@ namespace AoE4OverlayCS.Services
                 throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Keyboard input injection failed (check target window permissions)");
         }
 
+        private static void SendMouse(MouseButton button, bool up)
+        {
+            var input = new INPUT
+            {
+                type = 0, // INPUT_MOUSE；只发送按钮，不移动鼠标。
+                u = new InputUnion
+                {
+                    mi = new MOUSEINPUT { dwFlags = button == MouseButton.Left ? (up ? 0x0004u : 0x0002u) : (up ? 0x0010u : 0x0008u) }
+                }
+            };
+            if (SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>()) != 1)
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Mouse input injection failed (check target window permissions)");
+        }
+
         // 方向键、Insert/Delete、Win、数字小键盘除号等为扩展键，需要 EXTENDEDKEY 标志
         private static bool IsExtendedKey(uint vk) =>
             (vk >= 0x21 && vk <= 0x28) || // Prior/Next/End/Home/Left/Up/Right/Down
@@ -656,15 +698,20 @@ namespace AoE4OverlayCS.Services
         }
 
         [DllImport("user32.dll")]
-        private static extern bool GetLastInputInfo(out LASTINPUTINFO plii);
+        private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
         [DllImport("user32.dll")]
         private static extern short GetAsyncKeyState(int vKey);
 
-        private static int GetIdleMs()
+        internal static int GetIdleMs()
         {
-            if (!GetLastInputInfo(out var info)) return int.MaxValue;
-            return unchecked(Environment.TickCount - (int)info.dwTime);
+            var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+            if (!GetLastInputInfo(ref info))
+                throw new InvalidOperationException("Cannot read keyboard/mouse idle time; no inputs sent");
+            // 持续按住鼠标或不产生重复事件的键也不是空闲。
+            for (var vk = 1; vk < 255; vk++)
+                if ((GetAsyncKeyState(vk) & 0x8000) != 0) return 0;
+            return (int)Math.Min(unchecked((uint)Environment.TickCount - info.dwTime), (uint)int.MaxValue);
         }
     }
 }

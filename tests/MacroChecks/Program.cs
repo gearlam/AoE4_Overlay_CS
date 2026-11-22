@@ -13,6 +13,9 @@ internal static class Program
     private static void Main()
     {
         SequenceValidation();
+        IdleAvoidance();
+        MousePlayback();
+        Check(MacroRunnerService.GetIdleMs() >= 0, "native idle read succeeds with initialized structure size");
         HookFailures();
         HookFiltering();
         ProtectedRun(false);
@@ -77,9 +80,9 @@ internal static class Program
         var steps = MacroRunnerService.ParseSequence("Ctrl+H+MouseLeft+Q+MouseWheelUp+1+R1");
         Check(steps.SequenceEqual(new[]
         {
-            new MacroKeyStep(Key.H, ModifierKeys.Control), new MacroKeyStep(Key.Q, ModifierKeys.None),
+            new MacroKeyStep(Key.H, ModifierKeys.Control), new MacroKeyStep(Key.None, ModifierKeys.None, MouseButton.Left), new MacroKeyStep(Key.Q, ModifierKeys.None),
             new MacroKeyStep(Key.D1, ModifierKeys.None), new MacroKeyStep(Key.NumPad1, ModifierKeys.None)
-        }), "sequence stays keyboard-only with main/numpad and modifier mapping intact");
+        }), "sequence supports mouse clicks and preserves keyboard/modifier mapping");
         foreach (var once in new[] { false, true })
         {
             var hooks = new Hooks();
@@ -90,6 +93,81 @@ internal static class Program
             settings.MacroSequence = "";
             if (once) runner.RunOnce(settings); else runner.Start(settings);
             Check(!runner.IsRunning && hooks.Installs == 0 && sent == 0, "empty sequence installs no hooks and sends nothing");
+        }
+    }
+
+    private static void IdleAvoidance()
+    {
+        foreach (var once in new[] { false, true })
+        foreach (var monitor in new[] { false, true })
+        {
+            var settings = Settings();
+            settings.MacroRepeatCount = 0;
+            settings.MacroMonitorShift = monitor;
+            settings.MacroIdleWaitMs = 800;
+            var hooks = new Hooks();
+            using var gate = hooks.Create();
+            using var waiting = new ManualResetEventSlim();
+            var idle = 0;
+            var shift = 0;
+            var sent = 0;
+            using var runner = new MacroRunnerService(null, gate, (_, _) => Interlocked.Increment(ref sent),
+                getIdleMs: () => Volatile.Read(ref idle), isShiftDown: () => Volatile.Read(ref shift) != 0);
+            runner.StatusChanged += s => { if (s.Message.StartsWith("Input detected")) waiting.Set(); };
+            if (once) runner.RunOnce(settings); else runner.Start(settings);
+            Check(waiting.Wait(3000) && sent == 0 && !gate.Suppressing, $"idle avoidance applies to {(once ? "test" : "loop")} with Shift={monitor}");
+            if (monitor) Volatile.Write(ref shift, 1);
+            Volatile.Write(ref idle, 1000);
+            if (monitor)
+            {
+                Thread.Sleep(350);
+                Check(sent == 0 && !gate.Suppressing, "Shift pressed during idle wait still prevents round");
+                Volatile.Write(ref shift, 0);
+            }
+            Wait(() => Volatile.Read(ref sent) > 0);
+            Check(runner.StopAsync(settings).Wait(5000), "idle and Shift release permit protected round and cleanup");
+        }
+        var failureSettings = Settings();
+        failureSettings.MacroIdleWaitMs = 800;
+        var failureHooks = new Hooks();
+        using var failureGate = failureHooks.Create();
+        var sends = 0;
+        MacroRunStatus? error = null;
+        using var failureRunner = new MacroRunnerService(null, failureGate, (_, _) => sends++,
+            getIdleMs: () => throw new InvalidOperationException("idle read failed"));
+        failureRunner.StatusChanged += s => { if (!s.IsRunning) error = s; };
+        failureRunner.Start(failureSettings);
+        Wait(() => !failureRunner.IsRunning);
+        Check(sends == 0 && error is { IsError: true } && failureHooks.Active.IsEmpty, "idle read failure refuses sending rather than pretending idle");
+    }
+
+    private static void MousePlayback()
+    {
+        foreach (var fail in new[] { false, true })
+        {
+            var settings = Settings();
+            settings.MacroSequence = "H+Ctrl+MouseLeft+MouseRight+1";
+            var hooks = new Hooks();
+            using var gate = hooks.Create();
+            var events = new ConcurrentQueue<string>();
+            var protectedInput = true;
+            using var runner = new MacroRunnerService(null, gate, (key, up) =>
+            {
+                protectedInput &= gate.Suppressing;
+                events.Enqueue($"{key}:{up}");
+            }, (button, up) =>
+            {
+                protectedInput &= gate.Suppressing;
+                events.Enqueue($"{button}:{up}");
+                if (fail && !up) throw new InvalidOperationException("mouse send failed");
+            });
+            runner.RunOnce(settings);
+            Wait(() => !runner.IsRunning);
+            Check(protectedInput && !gate.Suppressing && hooks.Active.IsEmpty, "mouse playback remains protected and cleans up");
+            if (fail)
+                Check(events.Contains("Left:True") && events.Contains("17:True") && !events.Contains("Right:False"), "mouse failure releases click and modifiers and aborts rest of sequence");
+            else
+                Check(events.SequenceEqual(new[] { "72:False", "72:True", "17:False", "Left:False", "Left:True", "17:True", "Right:False", "Right:True", "49:False", "49:True" }), "mixed mouse/keyboard playback preserves order and modifiers");
         }
     }
 

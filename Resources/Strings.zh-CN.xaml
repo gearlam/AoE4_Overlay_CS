@@ -37,14 +37,15 @@
     <sys:String x:Key="Settings_MacroEnableHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">按触发热键开始/停止执行；最小化到托盘时持续运行，退出程序时自动停止</sys:String>
     <sys:String x:Key="Settings_MacroTriggerLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">触发热键：</sys:String>
     <sys:String x:Key="Settings_MacroSequenceLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">热键序列：</sys:String>
-    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">手动输入格式：H+Q+Q+Q，支持 Ctrl+A 与数字键（控制组编队）；点“录制”后依次按键追加，Esc 结束，Backspace 删除末位。减少干扰建议用编队选基地并回切部队，如 4+Q+1</sys:String>
+    <sys:String x:Key="Settings_MacroSequenceHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">手动输入格式：H+Q+MouseLeft+MouseRight，支持 Ctrl+A 与数字键；点“录制”后依次按键，或在蓝色录制区点击左/右键。Esc 结束，Backspace 删除最后一个动作；鼠标不记录坐标，回放点击当前位置</sys:String>
     <sys:String x:Key="Settings_MacroRecordButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">录制</sys:String>
     <sys:String x:Key="Settings_MacroClearButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">清空</sys:String>
     <sys:String x:Key="Settings_MacroIntervalLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">触发间隔（秒）：</sys:String>
     <sys:String x:Key="Settings_MacroIdleLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">操作避让（毫秒）：</sys:String>
+    <sys:String x:Key="Settings_MacroRecordingHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">录制中：在此按键或点击鼠标左/右键（不记录位置）；Esc 结束，Backspace 删除最后一个动作</sys:String>
     <sys:String x:Key="Settings_MacroIdleHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">检测到键鼠操作时推迟发送，空闲后才注入；0 = 不避让</sys:String>
     <sys:String x:Key="Settings_MacroShiftLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">监控 Shift：</sys:String>
-    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">勾选后，无限循环只在间隔结束前 1 秒检测 Shift；仍按住则等待，松开后立即发送组合键</sys:String>
+    <sys:String x:Key="Settings_MacroShiftHint" xmlns:sys="clr-namespace:System;assembly=System.Runtime">按住 Shift 时等待松开；无限循环在间隔结束前 1 秒开始检测。松开后仍须满足操作避让设置</sys:String>
     <sys:String x:Key="Settings_MacroRepeatLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">重复次数：</sys:String>
     <sys:String x:Key="Settings_MacroInfiniteLabel" xmlns:sys="clr-namespace:System;assembly=System.Runtime">无限循环</sys:String>
     <sys:String x:Key="Settings_MacroTestButton" xmlns:sys="clr-namespace:System;assembly=System.Runtime">测试</sys:String>
@@ -91,6 +92,7 @@
     <sys:String x:Key="Tr_Done" xmlns:sys="clr-namespace:System;assembly=System.Runtime">翻译完成，已保存到本地历史。</sys:String>
     <sys:String x:Key="Tr_Cancelled" xmlns:sys="clr-namespace:System;assembly=System.Runtime">请求已取消。</sys:String>
     <sys:String x:Key="Tr_Copied" xmlns:sys="clr-namespace:System;assembly=System.Runtime">已复制，请切回游戏粘贴。</sys:String>
+    <sys:String x:Key="Tr_CopiedShort" xmlns:sys="clr-namespace:System;assembly=System.Runtime">已复制 ✓</sys:String>
     <sys:String x:Key="Tr_Error" xmlns:sys="clr-namespace:System;assembly=System.Runtime">操作失败：</sys:String>
     <sys:String x:Key="Tr_StorageError" xmlns:sys="clr-namespace:System;assembly=System.Runtime">本地存储失败，请检查翻译数据文件及目录权限：</sys:String>
     <sys:String x:Key="Tr_InvalidHotkey" xmlns:sys="clr-namespace:System;assembly=System.Runtime">快捷键无效。请使用 F1–F24 或带 Ctrl/Alt/Shift 的组合键。</sys:String>

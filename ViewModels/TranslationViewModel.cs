@@ -37,6 +37,8 @@ namespace AoE4OverlayCS.ViewModels
         public event Action? SettingsSaved;
         public ICommand DeleteCommand { get; }
         public ICommand ClearCommand { get; }
+        /// <summary>剪贴板复制成功时触发（含翻译完成后自动复制），UI 用于按钮反馈动画。</summary>
+        public event Action? CopySucceeded;
         public event PropertyChangedEventHandler? PropertyChanged;
         private string T(string key) => System.Windows.Application.Current.TryFindResource(key)?.ToString() ?? key;
 
@@ -124,7 +126,7 @@ namespace AoE4OverlayCS.ViewModels
 
         private bool Copy(string text)
         {
-            try { System.Windows.Clipboard.SetText(text); Status = T("Tr_Copied"); return true; }
+            try { System.Windows.Clipboard.SetText(text); Status = T("Tr_Copied"); CopySucceeded?.Invoke(); return true; }
             catch (Exception ex) { Status = T("Tr_Error") + " " + ex.Message; return false; }
         }
         private void OpenHistoryFolder()

@@ -60,10 +60,10 @@ namespace AoE4OverlayCS.Services
                 key == Key.None || key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin ||
                 (modifiers == ModifierKeys.None && (key < Key.F1 || key > Key.F24)))
                 return T("Tr_InvalidHotkey");
-            var normalized = MainViewModel.NormalizeHotkeyString(settings.Hotkey);
+            var normalized = HotkeyCoordinator.NormalizeHotkeyString(settings.Hotkey);
             var conflicts = new[] { _appSettings.OverlayHotkey, _appSettings.OverlayPositionHotkey,
                 _appSettings.MacroEnabled ? _appSettings.MacroTriggerHotkey : "" };
-            if (conflicts.Any(h => MainViewModel.NormalizeHotkeyString(h) == normalized))
+            if (conflicts.Any(h => HotkeyCoordinator.NormalizeHotkeyString(h) == normalized))
             {
                 StopHotkey();
                 return T("Tr_Conflict");

@@ -14,6 +14,7 @@ namespace AoE4OverlayCS.Views
             InitializeComponent();
             System.Windows.DataObject.AddPastingHandler(MacroIntervalTextBox, MacroIntervalTextBox_Pasting);
             Loaded += (_, _) => { RefreshBackgroundColorUi(); RefreshMacroUi(); };
+            Unloaded += (_, _) => StopMacroSequenceRecording();
         }
 
         private bool _isRecording = false;
@@ -303,12 +304,17 @@ namespace AoE4OverlayCS.Views
             }
             _isRecordingMacroSequence = true;
             MacroRecordButton.Content = "Press keys... (Esc to finish)";
-            MacroSequenceTextBox.Focus();
+            MacroSequenceTextBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
+            MacroSequenceTextBox.IsReadOnly = true;
+            MacroRecordingArea.Visibility = Visibility.Visible;
+            MacroRecordingArea.Focus();
         }
 
         private void StopMacroSequenceRecording()
         {
             _isRecordingMacroSequence = false;
+            MacroSequenceTextBox.IsReadOnly = false;
+            MacroRecordingArea.Visibility = Visibility.Collapsed;
             MacroRecordButton.Content = TryFindResource("Settings_MacroRecordButton") as string ?? "Record";
         }
 
@@ -320,7 +326,8 @@ namespace AoE4OverlayCS.Views
             if (_isRecording || _isRecordingPosition || _isRecordingMacroTrigger) return;
 
             e.Handled = true;
-            var key = (e.Key == Key.System ? e.SystemKey : e.Key);
+            if (e.IsRepeat) return;
+            var key = RecordedKey(e);
 
             if (key == Key.Escape)
             {
@@ -333,8 +340,8 @@ namespace AoE4OverlayCS.Views
                 return;
             }
 
-            if (DataContext is not MainViewModel vm) return;
-            if (IsModifierKey(key) || key == Key.LWin || key == Key.RWin)
+            if (key is Key.None or Key.ImeProcessed or Key.DeadCharProcessed ||
+                IsModifierKey(key) || key == Key.LWin || key == Key.RWin)
             {
                 // 修饰键等待后续主键组合，不单独记录
                 return;
@@ -347,10 +354,39 @@ namespace AoE4OverlayCS.Views
             // 人性化显示：主键盘数字为 1-9，小键盘数字为 R1-R9（解析端对应还原）
             sb.Append(MacroRunnerService.KeyToDisplay(key));
 
-            var steps = SplitSequenceTokens(vm);
-            if (steps.Count >= MacroRunnerService.MaxKeys) return; // 达到上限忽略多余按键
-            steps.Add(sb.ToString());
-            vm.Settings.MacroSequence = string.Join("+", steps);
+            AppendMacroStep(sb.ToString());
+        }
+
+        private static Key RecordedKey(System.Windows.Input.KeyEventArgs e) => e.Key switch
+        {
+            Key.System => e.SystemKey,
+            Key.ImeProcessed => e.ImeProcessedKey,
+            Key.DeadCharProcessed => e.DeadCharProcessedKey,
+            _ => e.Key
+        };
+
+        private void MacroRecordingArea_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isRecordingMacroSequence) return;
+            e.Handled = true;
+            MacroRecordingArea.Focus();
+            if (e.ChangedButton is not (MouseButton.Left or MouseButton.Right)) return;
+            AppendMacroStep(MacroRunnerService.StepToDisplay(new MacroKeyStep(Key.None, Keyboard.Modifiers, e.ChangedButton)));
+        }
+
+        private void SettingsView_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (_isRecordingMacroSequence) e.Handled = true;
+        }
+
+        private void AppendMacroStep(string token)
+        {
+            if (DataContext is not MainViewModel vm) return;
+            var steps = MacroRunnerService.ParseSequence(vm.Settings.MacroSequence);
+            if (steps.Count >= MacroRunnerService.MaxKeys) return;
+            var sequence = steps.Select(MacroRunnerService.StepToDisplay).ToList();
+            sequence.Add(token);
+            vm.Settings.MacroSequence = string.Join("+", sequence);
         }
 
         private static bool IsModifierKey(Key key) =>
@@ -358,24 +394,13 @@ namespace AoE4OverlayCS.Views
             key == Key.LeftCtrl || key == Key.RightCtrl ||
             key == Key.LeftAlt || key == Key.RightAlt;
 
-        private static List<string> SplitSequenceTokens(MainViewModel vm)
-        {
-            if (string.IsNullOrWhiteSpace(vm.Settings.MacroSequence))
-            {
-                return new List<string>();
-            }
-            return vm.Settings.MacroSequence
-                .Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
-        }
-
         private void RemoveLastMacroKey()
         {
             if (DataContext is not MainViewModel vm) return;
-            var steps = SplitSequenceTokens(vm);
+            var steps = MacroRunnerService.ParseSequence(vm.Settings.MacroSequence);
             if (steps.Count == 0) return;
             steps.RemoveAt(steps.Count - 1);
-            vm.Settings.MacroSequence = string.Join("+", steps);
+            vm.Settings.MacroSequence = string.Join("+", steps.Select(MacroRunnerService.StepToDisplay));
         }
 
         private void MacroClearButton_Click(object sender, RoutedEventArgs e)

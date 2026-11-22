@@ -3,6 +3,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{DynamicResource Tr_Title}" Width="620" Height="620" MinWidth="440" MinHeight="400"
         Topmost="True" WindowStartupLocation="CenterScreen" PreviewKeyDown="Window_KeyDown">
+    <Window.Resources>
+        <!-- 按钮动态响应：悬停加粗、按压缩放 -->
+        <Style TargetType="Button">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="0.94" ScaleY="0.94"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
     <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
@@ -16,7 +35,7 @@
                  TextWrapping="Wrap" AcceptsReturn="True" Height="90" VerticalScrollBarVisibility="Auto" Margin="0,10" PreviewKeyDown="Input_KeyDown"/>
         <WrapPanel Grid.Row="2">
             <Button Content="{DynamicResource Tr_Translate}" Command="{Binding TranslateCommand}" Padding="12,5" Margin="0,0,8,0"/>
-            <Button Content="{DynamicResource Tr_Copy}" Command="{Binding CopyCommand}" Padding="12,5" Margin="0,0,8,0"/>
+            <Button x:Name="MainCopyButton" Content="{DynamicResource Tr_Copy}" Command="{Binding CopyCommand}" Click="Copy_Click" Padding="12,5" Margin="0,0,8,0"/>
             <Button Content="{DynamicResource Tr_ClearInput}" Command="{Binding ClearInputCommand}" Click="ClearInput_Click" Padding="12,5"/>
         </WrapPanel>
         <TextBox Grid.Row="3" Text="{Binding Output, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="85" VerticalScrollBarVisibility="Auto" Margin="0,10"/>
@@ -39,7 +58,7 @@
                             <TextBox Text="{Binding Original, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Padding="0" MinHeight="0" VerticalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent"/>
                             <TextBox Text="{Binding Translated, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Padding="0" MinHeight="0" VerticalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent" FontWeight="SemiBold"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="{DynamicResource Tr_Copy}" Margin="0,0,8,0"
+                                <Button Content="{DynamicResource Tr_Copy}" Margin="0,0,8,0" Click="Copy_Click"
                                         Command="{Binding DataContext.CopyHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Padding="8,2"/>
                                 <Button Content="{DynamicResource Tr_Delete}"
                                         Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Padding="8,2"/>
